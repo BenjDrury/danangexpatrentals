@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { SECTION_CLASS } from "../lib/constants";
+import { Section, SectionHero } from "../components/sections";
 import { getAreas, getApartmentTypes } from "@/lib/data";
+import { formatAliases, getAreaPriceTags, getWhoTags } from "@/lib/area-utils";
 
 export const metadata: Metadata = {
   title: "Apartments in Da Nang for Expats — Studios, 1BR, Serviced",
@@ -19,19 +20,13 @@ export default async function ApartmentsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero */}
-      <section className={`${SECTION_CLASS} bg-white`}>
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Apartments in Da Nang suitable for expats
-          </h1>
-          <p className="mt-6 text-lg text-slate-600">
-            We don’t list everything — we match you with verified options in expat-friendly areas. Studios, 1BR, serviced apartments, and more.
-          </p>
-        </div>
-      </section>
+      <SectionHero
+        variant="page"
+        title="Apartments in Da Nang suitable for expats"
+        subtitle="We don't list everything — we match you with verified options in expat-friendly areas. Studios, 1BR, serviced apartments, and more."
+      />
 
-      {/* Filter-style sections */}
-      <section className={`${SECTION_CLASS} bg-slate-50`}>
+      <Section bg="bg-slate-50">
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">What we help you find</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {apartmentTypes.map((card) => (
@@ -52,10 +47,9 @@ export default async function ApartmentsPage() {
             {CTA_TEXT}
           </Link>
         </p>
-      </section>
+      </Section>
 
-      {/* Area guides */}
-      <section className={`${SECTION_CLASS} bg-white`}>
+      <Section bg="bg-white">
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Area guides</h2>
         <p className="mt-4 text-slate-600">
           We work with agents across the most popular expat areas. Here’s a quick overview.
@@ -65,20 +59,44 @@ export default async function ApartmentsPage() {
             <article key={area.id} className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 shadow-sm">
               <div className="grid md:grid-cols-2 gap-0">
                 <Link href={`/areas/${area.id}`} className="relative block aspect-[4/3] md:aspect-auto md:min-h-[240px]">
-                  <Image
-                    src={area.image}
-                    alt={area.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
+                  {area.images?.[0] ? (
+                    <Image
+                      src={area.images[0]}
+                      alt={area.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-200" aria-hidden />
+                  )}
                 </Link>
                 <div className="p-8 flex flex-col justify-center">
                   <Link href={`/areas/${area.id}`} className="text-2xl font-bold text-slate-900 hover:text-teal-600 transition">
                     {area.name} apartments
                   </Link>
-                  <p className="mt-4 text-slate-700"><strong>Who it’s good for:</strong> {area.who}</p>
-                  <p className="mt-2 text-slate-700"><strong>Typical price range:</strong> {area.price_range}</p>
+                  {formatAliases((area as { aliases?: string | string[] | null }).aliases) && (
+                    <p className="mt-1 text-sm text-slate-500">
+                      {formatAliases((area as { aliases?: string | string[] | null }).aliases)}
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {area.vibe?.trim() && (
+                      <span className="inline-flex rounded-full bg-teal-100 px-3.5 py-1.5 text-sm font-medium text-teal-900">
+                        {area.vibe.trim()}
+                      </span>
+                    )}
+                    {getAreaPriceTags(area).map((label) => (
+                      <span key={label} className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-800">
+                        {label}
+                      </span>
+                    ))}
+                    {getWhoTags(area.who).map((label) => (
+                      <span key={label} className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-800">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       href={`/areas/${area.id}`}
@@ -106,7 +124,7 @@ export default async function ApartmentsPage() {
             {CTA_TEXT}
           </Link>
         </p>
-      </section>
+      </Section>
     </div>
   );
 }

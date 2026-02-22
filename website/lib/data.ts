@@ -1,4 +1,8 @@
 import type { Area, Apartment, ApartmentType } from "types";
+import { slugify } from "./area-utils";
+
+const AREAS_SELECT =
+  "id, name, images, vibe, price_range, who, created_at, snapshot_date, fx_usd_vnd, area_code, canonical_area_name, admin_districts_pre2025, wards_pre2025, wards_post2025_2025reorg, boundary_notes, centroid_lat, centroid_lon, centroid_note, rent_studio_vnd_min, rent_studio_vnd_max, rent_studio_usd_min, rent_studio_usd_max, rent_1br_vnd_min, rent_1br_vnd_max, rent_1br_usd_min, rent_1br_usd_max, rent_2br_vnd_min, rent_2br_vnd_max, rent_2br_usd_min, rent_2br_usd_max, rent_3br_vnd_min, rent_3br_vnd_max, rent_3br_usd_min, rent_3br_usd_max, expat_suitability_score, tenant_profile_tag, avg_lease_term_months, furnished_availability_pct_est, utilities_electricity_note, utilities_internet_note, transport_primary_modes, within5km_beach, within5km_hospital, within5km_international_school, within5km_supermarket, within5km_coworking, nightlife_intensity, safety_notes, noise_air_quality_notes, flood_typhoon_risk, expat_community_presence, sources_urls";
 
 export async function getAreas(): Promise<Area[]> {
   try {
@@ -10,13 +14,67 @@ export async function getAreas(): Promise<Area[]> {
     const supabase = createClient(url, key);
     const { data, error } = await supabase
       .from("areas")
-      .select("id, name, image, vibe, price_range, who")
+      .select("id, name, images, vibe, price_range, who, aliases, typical_rent_1br_usd, typical_rent_2br_usd")
       .order("id");
 
     if (error || !data) return [];
     return data as Area[];
   } catch {
     return [];
+  }
+}
+
+/** Fetch a single area by id with all columns. */
+export async function getAreaByIdFull(id: string): Promise<Area | null> {
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase
+      .from("areas")
+      .select(AREAS_SELECT)
+      .eq("id", id)
+      .single();
+
+    if (error || !data) return null;
+    return data as Area;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve slug or id to area. Tries id first, then slug from name/canonical_area_name. */
+export async function getAreaBySlugOrId(slugOrId: string): Promise<Area | null> {
+  const byId = await getAreaByIdFull(slugOrId);
+  if (byId) return byId;
+
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase
+      .from("areas")
+      .select(AREAS_SELECT)
+      .order("id");
+
+    if (error || !data || data.length === 0) return null;
+
+    const normalized = String(slugOrId).trim().toLowerCase().replace(/\s+/g, "-");
+    const areas = data as Area[];
+    const match = areas.find(
+      (a) =>
+        slugify(a.name) === normalized ||
+        (a.canonical_area_name != null && slugify(a.canonical_area_name) === normalized)
+    );
+    return match ?? null;
+  } catch {
+    return null;
   }
 }
 

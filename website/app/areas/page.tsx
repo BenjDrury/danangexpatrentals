@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { SECTION_CLASS } from "../lib/constants";
+import { Section, SectionHero } from "../components/sections";
 import { getAreas } from "@/lib/data";
+import { formatAliases, getAreaPriceTags, getWhoTags } from "@/lib/area-utils";
 
 export const metadata: Metadata = {
   title: "Best Areas to Live in Da Nang for Expats — An Thuong, My Khe, My An",
@@ -15,33 +16,34 @@ export default async function AreasPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <section className={`${SECTION_CLASS} bg-white`}>
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Best areas to live in Da Nang as an expat
-          </h1>
-          <p className="mt-6 text-lg text-slate-600">
-            Quick guides to An Thuong, My Khe, My An, and quieter spots — vibe, prices, and who each area suits.
-          </p>
-        </div>
-      </section>
+      <SectionHero
+        variant="page"
+        title="Best areas to live in Da Nang as an expat"
+        subtitle="Quick guides to An Thuong, My Khe, My An, and quieter spots — vibe, prices, and who each area suits."
+      />
 
-      <section className={`${SECTION_CLASS} bg-slate-50`}>
+      <Section bg="bg-slate-50">
         <div className="space-y-16">
-          {areas.map((area) => (
+          {areas.map((area) => {
+            const imageUrl = (area as { images?: string[] | null }).images?.[0];
+            return (
             <article
               key={area.id}
               className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm"
             >
               <div className="grid md:grid-cols-2 gap-0">
                 <Link href={`/areas/${area.id}`} className="relative block aspect-[4/3] md:aspect-auto md:min-h-[280px]">
-                  <Image
-                    src={area.image}
-                    alt={area.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
+                  {imageUrl ? (
+                    <Image
+                      src={imageUrl}
+                      alt={area.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-200" aria-hidden />
+                  )}
                 </Link>
                 <div className="p-8 flex flex-col justify-center">
                   <Link
@@ -50,9 +52,28 @@ export default async function AreasPage() {
                   >
                     {area.name}
                   </Link>
-                  <p className="mt-4 text-slate-700"><strong>Vibe:</strong> {area.vibe}</p>
-                  <p className="mt-2 text-slate-700"><strong>Typical price range:</strong> {area.price_range}</p>
-                  <p className="mt-2 text-slate-700"><strong>Who it's good for:</strong> {area.who}</p>
+                  {formatAliases((area as { aliases?: string | string[] | null }).aliases) && (
+                    <p className="mt-1 text-sm text-slate-500">
+                      {formatAliases((area as { aliases?: string | string[] | null }).aliases)}
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {area.vibe?.trim() && (
+                      <span className="inline-flex rounded-full bg-teal-100 px-3.5 py-1.5 text-sm font-medium text-teal-900">
+                        {area.vibe.trim()}
+                      </span>
+                    )}
+                    {getAreaPriceTags(area).map((label) => (
+                      <span key={label} className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-800">
+                        {label}
+                      </span>
+                    ))}
+                    {getWhoTags(area.who).map((label) => (
+                      <span key={label} className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-800">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
                   <div className="mt-6 flex flex-wrap gap-3">
                     <Link
                       href={`/areas/${area.id}`}
@@ -70,7 +91,8 @@ export default async function AreasPage() {
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
         <p className="mt-12 text-center">
           <Link
@@ -80,7 +102,7 @@ export default async function AreasPage() {
             Tell us your budget — we check availability
           </Link>
         </p>
-      </section>
+      </Section>
     </div>
   );
 }

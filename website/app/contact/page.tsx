@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { WHATSAPP_NUMBER } from "backend";
 import Link from "next/link";
 import { ConciergeForm } from "../components/ConciergeForm";
-import { SECTION_CLASS } from "../lib/constants";
+import { Section, SectionHero } from "../components/sections";
 
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
 
@@ -12,34 +12,34 @@ export const metadata: Metadata = {
     "Tell us your budget and move date. We'll send you verified apartment options in Da Nang within 24 hours. Form, WhatsApp, or email.",
 };
 
-export default function ContactPage() {
+type Props = { searchParams: Promise<{ [key: string]: string | string[] | undefined }> };
+
+export default async function ContactPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const preferredArea = typeof params.preferred_area === "string" ? params.preferred_area : "";
+  const areaId = typeof params.areaId === "string" ? params.areaId : undefined;
+  const apartmentId = typeof params.apartmentId === "string" ? params.apartmentId : undefined;
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero */}
-      <section className={`${SECTION_CLASS} bg-white`}>
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Tell us what you need — we&apos;ll help.
-          </h1>
-          <p className="mt-6 text-lg text-slate-600">
-            Use the form below, WhatsApp for the fastest reply, or email. We reply within 24 hours.
-          </p>
-        </div>
-      </section>
+      <SectionHero
+        variant="page"
+        title="Tell us what you need — we'll help."
+        subtitle="Use the form below, WhatsApp for the fastest reply, or email. We reply within 24 hours."
+      />
 
-      {/* 3 contact options */}
-      <section className={`${SECTION_CLASS} bg-slate-50`}>
+      <Section bg="bg-slate-50">
         <div className="grid gap-8 md:grid-cols-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Form (main)</h2>
             <p className="mt-2 text-slate-600">
-              Best if you want to share budget, move date, and area in one go. We’ll follow up on WhatsApp or email.
+              Best if you want to share budget, move date, and area in one go. We'll follow up on WhatsApp or email.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">WhatsApp (fastest)</h2>
             <p className="mt-2 text-slate-600">
-              Message us directly for a quick reply. Great if you’re already in Da Nang or have a tight timeline.
+              Message us directly for a quick reply. Great if you're already in Da Nang or have a tight timeline.
             </p>
             <Link
               href={WHATSAPP_URL}
@@ -56,39 +56,41 @@ export default function ContactPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">Email</h2>
             <p className="mt-2 text-slate-600">
-              Prefer email? We’ll reply to the address you give in the form. Same 24h response time.
+              Prefer email? We'll reply to the address you give in the form. Same 24h response time.
             </p>
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* Form card */}
-      <section className={`${SECTION_CLASS} bg-white`}>
+      <Section bg="bg-white">
         <div className="mx-auto max-w-xl">
-          <h2 className="text-2xl font-bold text-slate-900 text-center">
-            Tell us what you&apos;re looking for — we&apos;ll send options
+          <h2 className="text-center text-2xl font-bold text-slate-900">
+            Tell us what you're looking for — we'll send options
           </h2>
           <p className="mt-4 text-center text-slate-600">
             Free. No spam. No obligation. We reply within 24h.
           </p>
           <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50/50 p-8 shadow-lg sm:p-10">
-            <ConciergeForm />
+            <ConciergeForm
+              initialPreferredArea={preferredArea}
+              initialAreaId={areaId}
+              initialApartmentId={apartmentId}
+            />
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* What happens after */}
-      <section className={`${SECTION_CLASS} bg-slate-50`}>
+      <Section bg="bg-slate-50">
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">What happens after you contact us</h2>
         <ul className="mt-8 space-y-4 text-slate-700">
           <li><strong>Reply time:</strong> We aim to reply within a few hours, and always within 24 hours.</li>
           <li><strong>What info helps:</strong> Budget, move date, length of stay, and preferred area (if any).</li>
-          <li><strong>What you’ll get:</strong> A shortlist of available apartments that match, plus an intro to the agent. No obligation to take any of them.</li>
+          <li><strong>What you'll get:</strong> A shortlist of available apartments that match, plus an intro to the agent. No obligation to take any of them.</li>
         </ul>
         <p className="mt-8 rounded-xl border border-slate-200 bg-white p-6 text-slate-700">
-          <strong>Location reassurance:</strong> We work with agents across An Thuong, My An, My Khe, and other expat-friendly areas. Even if you’re booking remotely, we verify availability and help you secure a place before or after you arrive.
+          <strong>Location reassurance:</strong> We work with agents across An Thuong, My An, My Khe, and other expat-friendly areas. Even if you're booking remotely, we verify availability and help you secure a place before or after you arrive.
         </p>
-      </section>
+      </Section>
     </div>
   );
 }

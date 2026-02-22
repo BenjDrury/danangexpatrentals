@@ -5,7 +5,7 @@
 create table if not exists public.areas (
   id text primary key,
   name text not null,
-  image text not null,
+  images text[] not null default '{}',
   vibe text not null,
   price_range text not null,
   who text not null,
@@ -17,15 +17,15 @@ alter table public.areas enable row level security;
 create policy "Allow public read areas"
   on public.areas for select to anon using (true);
 
--- Seed areas (dummy data from app)
-insert into public.areas (id, name, image, vibe, price_range, who) values
-  ('an-thuong', 'An Thuong', 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80', 'Café strip, digital nomad hub, lots of Western food and coworking. Busy but walkable.', 'Studios from ~$280, 1BR from ~$350. Can go higher for prime spots.', 'Digital nomads, first-time Da Nang visitors, people who want everything in walking distance.'),
-  ('my-khe', 'My Khe', 'https://images.unsplash.com/photo-1529290130-4ca3753253ae?w=800&q=80', 'Beach-focused. Long stretch of sand, beachfront and near-beach buildings. More spread out.', '1BR from ~$400, 2BR from ~$600. Closer to sand = higher.', 'Beach lovers, long-term stays, families (2BR options). Quieter than An Thuong.'),
-  ('my-an', 'My An', 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80', 'Quieter streets, still near cafes and beach. Good value, less touristy.', 'Studios and 1BR typically $320–500/month.', 'People who want balance: not too busy, not too far. Good for 6+ month stays.'),
-  ('other', 'Quieter local areas', 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80', 'Further from the main expat strips. More local, lower prices, less English on the street.', 'Often $250–400 for studios/1BR. Depends on exact location.', 'Budget-conscious, people who don''t need the expat bubble, long-term.')
+-- Seed areas (dummy data from app; images = local /public assets)
+insert into public.areas (id, name, images, vibe, price_range, who) values
+  ('an-thuong', 'An Thuong', ARRAY['/danang-dragon-bridge.jpg'], 'Café strip, digital nomad hub, lots of Western food and coworking. Busy but walkable.', 'Studios from ~$280, 1BR from ~$350. Can go higher for prime spots.', 'Digital nomads, first-time Da Nang visitors, people who want everything in walking distance.'),
+  ('my-khe', 'My Khe', ARRAY['/danang-my-khe.jpg'], 'Beach-focused. Long stretch of sand, beachfront and near-beach buildings. More spread out.', '1BR from ~$400, 2BR from ~$600. Closer to sand = higher.', 'Beach lovers, long-term stays, families (2BR options). Quieter than An Thuong.'),
+  ('my-an', 'My An', ARRAY['/danang-hands.jpg'], 'Quieter streets, still near cafes and beach. Good value, less touristy.', 'Studios and 1BR typically $320–500/month.', 'People who want balance: not too busy, not too far. Good for 6+ month stays.'),
+  ('other', 'Quieter local areas', ARRAY['/danang-bana-hills.jpg'], 'Further from the main expat strips. More local, lower prices, less English on the street.', 'Often $250–400 for studios/1BR. Depends on exact location.', 'Budget-conscious, people who don''t need the expat bubble, long-term.')
 on conflict (id) do update set
   name = excluded.name,
-  image = excluded.image,
+  images = excluded.images,
   vibe = excluded.vibe,
   price_range = excluded.price_range,
   who = excluded.who;

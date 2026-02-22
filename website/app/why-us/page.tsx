@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { SECTION_CLASS } from "../lib/constants";
+import { Section, SectionHero } from "../components/sections";
+import { CtaButton } from "../components/CtaButton";
 
 export const metadata: Metadata = {
   title: "Why Foreigners Trust Us — Da Nang Expat Rentals",
@@ -11,40 +11,32 @@ export const metadata: Metadata = {
 export default function WhyUsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero */}
-      <section className={`${SECTION_CLASS} bg-white`}>
-        <div className="mx-auto max-w-2xl text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Why foreigners trust us to find apartments in Da Nang
-          </h1>
-          <p className="mt-6 text-lg text-slate-600">
-            We built this because we saw how hard it was for expats to rent here. Here’s what we do differently.
-          </p>
-        </div>
-      </section>
+      <SectionHero
+        variant="page"
+        title="Why foreigners trust us to find apartments in Da Nang"
+        subtitle="We built this because we saw how hard it was for expats to rent here. Here's what we do differently."
+      />
 
-      {/* Origin story */}
-      <section className={`${SECTION_CLASS} bg-slate-50`}>
+      <Section bg="bg-slate-50">
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Why we built this</h2>
         <p className="mt-6 text-slate-700">
-          Renting in Da Nang as a foreigner often means: Facebook groups full of outdated listings, agents who don’t speak clear English, prices that jump for foreigners, and real scam risk when you try to book before arriving. We got tired of watching people waste time and money — so we started checking availability ourselves and only sending options we’ve verified with agents we know.
+          Renting in Da Nang as a foreigner often means: Facebook groups full of outdated listings, agents who don't speak clear English, prices that jump for foreigners, and real scam risk when you try to book before arriving. We got tired of watching people waste time and money — so we started checking availability ourselves and only sending options we've verified with agents we know.
         </p>
-      </section>
+      </Section>
 
-      {/* What makes us different */}
-      <section className={`${SECTION_CLASS} bg-white`}>
+      <Section bg="bg-white">
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">What makes us different</h2>
         <div className="mt-10 space-y-12">
           <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-8">
             <h3 className="text-xl font-semibold text-slate-900">Verified apartments</h3>
             <p className="mt-4 text-slate-700">
-              We don’t just forward listing links. We check with agents that the place is still available and that it’s real. No fake photos or “already rented” surprises.
+              We don't just forward listing links. We check with agents that the place is still available and that it's real. No fake photos or "already rented" surprises.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-8">
             <h3 className="text-xl font-semibold text-slate-900">English-friendly agents</h3>
             <p className="mt-4 text-slate-700">
-              We work with agents who can communicate in English. You get clear answers about contracts, deposits, and what’s included — without the language stress.
+              We work with agents who can communicate in English. You get clear answers about contracts, deposits, and what's included — without the language stress.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-8">
@@ -56,14 +48,13 @@ export default function WhyUsPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-8">
             <h3 className="text-xl font-semibold text-slate-900">Remote help</h3>
             <p className="mt-4 text-slate-700">
-              WhatsApp, availability checks, and coordination with agents — even if you’re not in Da Nang yet. We help you secure a place before you land, or find something fast once you’re here.
+              WhatsApp, availability checks, and coordination with agents — even if you're not in Da Nang yet. We help you secure a place before you land, or find something fast once you're here.
             </p>
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* Testimonials */}
-      <section className={`${SECTION_CLASS} bg-slate-50`}>
+      <Section bg="bg-slate-50">
         <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">What expats say</h2>
         <div className="mt-10 grid gap-8 sm:grid-cols-2">
           {[
@@ -81,26 +72,19 @@ export default function WhyUsPage() {
             </blockquote>
           ))}
         </div>
-      </section>
+      </Section>
 
-      {/* CTA */}
-      <section className={`${SECTION_CLASS} bg-white text-center`}>
+      <Section bg="bg-white" className="text-center">
         <p className="text-lg text-slate-700">Ready to find your place?</p>
         <div className="mt-6 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/contact"
-            className="inline-flex rounded-xl bg-teal-500 px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:bg-teal-600"
-          >
+          <CtaButton href="/contact" primary>
             Get apartment matches
-          </Link>
-          <Link
-            href="/"
-            className="inline-flex rounded-xl border-2 border-slate-200 px-6 py-4 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
+          </CtaButton>
+          <CtaButton href="/">
             Back to home
-          </Link>
+          </CtaButton>
         </div>
-      </section>
+      </Section>
     </div>
   );
 }

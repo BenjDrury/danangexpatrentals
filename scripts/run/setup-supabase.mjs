@@ -18,8 +18,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const scriptsDir = join(__dirname, "..");
 const repoRoot = join(scriptsDir, "..");
 
+config({ path: join(scriptsDir, ".env") });
 config({ path: join(scriptsDir, ".secret.local") });
-config({ path: join(scriptsDir, "secrets") });
 
 const uri = process.env.SUPABASE_DB_URI;
 if (!uri) {

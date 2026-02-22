@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { WHATSAPP_NUMBER } from "backend";
+import { Footer } from "./components/Footer";
 import { Nav } from "./components/Nav";
 import "./globals.css";
 
@@ -24,9 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={dmSans.variable}>
-      <body className="font-sans text-slate-900">
-        <Nav whatsappUrl={whatsappUrl} />
-        {children}
+      <body className="font-sans text-slate-900 flex min-h-screen flex-col">
+        <Nav />
+        <main className="flex-1">{children}</main>
+        <Footer whatsappUrl={whatsappUrl} />
       </body>
     </html>
   );

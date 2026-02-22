@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { SECTION_CLASS } from "../../lib/constants";
+import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
 
 type Props = { params: Promise<{ id: string }> };
@@ -31,7 +31,8 @@ export default async function ApartmentPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <section className={`${SECTION_CLASS} bg-white`}>
+      <section className={`w-full ${SECTION_PADDING} bg-white`}>
+        <div className={CONTENT_CONTAINER}>
         <Link
           href={area ? `/areas/${area.id}` : "/apartments"}
           className="text-sm font-medium text-teal-600 hover:text-teal-700"
@@ -152,6 +153,7 @@ export default async function ApartmentPage({ params }: Props) {
               Inquire about this apartment
             </Link>
           </div>
+        </div>
         </div>
       </section>
     </div>

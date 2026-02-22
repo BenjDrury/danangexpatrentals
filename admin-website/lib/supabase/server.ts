@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
 function getSupabaseKey() {
@@ -30,5 +31,16 @@ export async function createClient() {
         },
       },
     }
+  );
+}
+
+/** Server-only client with service role (e.g. for storage). Use only after requireAdmin. */
+export function getServiceRoleClient() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return null;
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    key,
+    { auth: { persistSession: false } }
   );
 }

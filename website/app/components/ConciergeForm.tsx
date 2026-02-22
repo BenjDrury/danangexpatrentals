@@ -8,7 +8,20 @@ const initialState: LeadState = { ok: false, error: "" };
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition";
 
-export function ConciergeForm() {
+type ConciergeFormProps = {
+  /** Prefill preferred area (e.g. from /contact?preferred_area=An+Thuong) */
+  initialPreferredArea?: string;
+  /** Optional area ID for context (hidden input so we can include in notifications) */
+  initialAreaId?: string;
+  /** Optional apartment ID when requesting a specific listing (hidden input) */
+  initialApartmentId?: string;
+};
+
+export function ConciergeForm({
+  initialPreferredArea = "",
+  initialAreaId,
+  initialApartmentId,
+}: ConciergeFormProps = {}) {
   const [state, formAction, isPending] = useActionState(
     async (_: LeadState, formData: FormData) => submitLead(formData),
     initialState
@@ -76,10 +89,17 @@ export function ConciergeForm() {
           type="text"
           id="preferred_area"
           name="preferred_area"
+          defaultValue={initialPreferredArea}
           placeholder="e.g. An Thuong, My Khe"
           className={inputClass}
         />
       </div>
+      {initialAreaId && (
+        <input type="hidden" name="area_id" value={initialAreaId} />
+      )}
+      {initialApartmentId && (
+        <input type="hidden" name="apartment_id" value={initialApartmentId} />
+      )}
       <div>
         <label htmlFor="whatsapp" className="mb-1.5 block text-sm font-medium text-slate-700">
           WhatsApp number <span className="text-red-500">*</span>

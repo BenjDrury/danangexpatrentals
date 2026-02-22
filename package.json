@@ -8,13 +8,13 @@
     "admin-website"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=website",
+    "dev": "cd website && npm run dev",
     "build": "npm run build --workspace=backend && npm run build --workspace=types && npm run build --workspace=website && npm run build --workspace=admin-website",
     "start": "npm run start --workspace=website",
-    "dev:admin": "npm run dev --workspace=admin-website",
+    "dev:admin": "cd admin-website && npm run dev",
     "make-admin": "node scripts/run/make-admin.mjs",
     "setup-supabase": "node scripts/run/setup-supabase.mjs",
-    "seed-areas": "node scripts/run/seed-areas-from-csv.mjs"
+    "seed-areas": "node scripts/run/seed-areas-from-csv.mjs scripts/data/areas.csv"
   },
   "devDependencies": {
     "pg": "^8.13.0"

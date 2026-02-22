@@ -1,5 +1,7 @@
 "use server";
 
+import { LEAD_NOTIFY_EMAIL } from "backend/common/constants/lead-notify-email";
+import { RESEND_FROM_EMAIL } from "backend/common/constants/resend-from-email";
 import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
 
@@ -37,12 +39,11 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     }
   }
 
-  const notifyEmail = process.env.LEAD_NOTIFY_EMAIL;
-  if (resend && notifyEmail && process.env.RESEND_API_KEY) {
+  if (resend && LEAD_NOTIFY_EMAIL && process.env.RESEND_API_KEY) {
     try {
       await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || "Da Nang Expat Rentals <onboarding@resend.dev>",
-        to: notifyEmail,
+        from: RESEND_FROM_EMAIL,
+        to: LEAD_NOTIFY_EMAIL,
         subject: `New lead: ${whatsapp} – ${budgetRange || "no budget"} – ${moveDate || "no date"}`,
         text: [
           `WhatsApp: ${whatsapp}`,

@@ -2,7 +2,8 @@
   "name": "danangexpatrentals",
   "private": true,
   "workspaces": [
-    "website"
+    "website",
+    "backend"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=website",

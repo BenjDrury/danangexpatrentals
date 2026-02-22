@@ -12,8 +12,8 @@ MVP landing page + concierge form for expat rentals in Da Nang. Minimal stack: N
    Opens at [http://localhost:3000](http://localhost:3000).
 
 2. **Environment**
-   - In the `website` folder, copy `.env.example` to `.env.local` (or set the same vars in Vercel).
-   - Add Supabase URL + anon key, Resend API key, `LEAD_NOTIFY_EMAIL`, and optionally `NEXT_PUBLIC_WHATSAPP_NUMBER`.
+   - **Public** (in `website/.env`, committed): Supabase URL + publishable key. WhatsApp number is in `backend/common/constants/whatsapp-number.ts`.
+   - **Secrets** (in `website/.secret.local`, gitignored): Copy `.secret.local.example` to `.secret.local` and add `RESEND_API_KEY`. Lead notify email and Resend “from” address are set in `backend/common/constants/` (edit those files to change them).
 
 3. **Supabase**
    - Create a project at [supabase.com](https://supabase.com).
@@ -26,7 +26,7 @@ MVP landing page + concierge form for expat rentals in Da Nang. Minimal stack: N
 
 - Connect this repo to Vercel.
 - Set **Root Directory** to `website`.
-- Add the same env vars from `website/.env.example`.
+- Add public vars from `website/.env`. Add secret `RESEND_API_KEY` in Vercel dashboard. Set lead-notify and resend-from in `backend/common/constants/` or via build env if you override there.
 - Deploy.
 
 ## When leads come in

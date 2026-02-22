@@ -1,7 +1,7 @@
+import { WHATSAPP_NUMBER } from "backend/common/constants/whatsapp-number";
 import Link from "next/link";
 import { ConciergeForm } from "./components/ConciergeForm";
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "84912345678";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
 
 function CtaButton({

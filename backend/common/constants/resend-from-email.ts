@@ -1,1 +1,1 @@
-export const RESEND_FROM_EMAIL = "Da Nang Expat Rentals <onboarding@resend.dev>";
+export const RESEND_FROM_EMAIL = "Benjamin <benjamin@danangexpatrentals.com >";

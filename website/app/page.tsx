@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMBER } from "backend/common/constants/whatsapp-number";
+import { WHATSAPP_NUMBER } from "backend";
 import Link from "next/link";
 import { ConciergeForm } from "./components/ConciergeForm";
 

@@ -1,7 +1,6 @@
 "use server";
 
-import { LEAD_NOTIFY_EMAIL } from "backend/common/constants/lead-notify-email";
-import { RESEND_FROM_EMAIL } from "backend/common/constants/resend-from-email";
+import { LEAD_NOTIFY_EMAIL, RESEND_FROM_EMAIL } from "backend";
 import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
 

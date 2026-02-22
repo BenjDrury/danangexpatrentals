@@ -1,1 +1,1 @@
-export const LEAD_NOTIFY_EMAIL = "you@example.com";
+export const LEAD_NOTIFY_EMAIL = "drury.benj@gmail.com";

@@ -17,7 +17,7 @@ MVP landing page + concierge form for expat rentals in Da Nang. Minimal stack: N
 
 3. **Supabase**
    - Create a project at [supabase.com](https://supabase.com).
-   - Run `website/supabase-leads.sql` in the SQL Editor to create the `leads` table.
+   - In the SQL Editor, run the scripts in `supabase/` in order: `01-leads.sql`, `02-areas-apartments.sql`, `03-users.sql`. These create leads, areas, apartment types, apartments, and user profiles (with seed data for areas and apartment types).
 
 4. **Resend**
    - Get an API key at [resend.com](https://resend.com). Use a verified domain for production; for testing you can use `onboarding@resend.dev` as the from address.

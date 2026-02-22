@@ -3,11 +3,12 @@
   "private": true,
   "workspaces": [
     "website",
-    "backend"
+    "backend",
+    "types"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=website",
-    "build": "npm run build --workspace=backend && npm run build --workspace=website",
+    "build": "npm run build --workspace=backend && npm run build --workspace=types && npm run build --workspace=website",
     "start": "npm run start --workspace=website"
   }
 }

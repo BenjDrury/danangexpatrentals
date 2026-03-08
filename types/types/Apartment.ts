@@ -1,3 +1,5 @@
+import type { Feature } from "./Feature";
+
 /**
  * Apartment listing. area_id references public.areas(id).
  */
@@ -18,7 +20,7 @@ export interface Apartment {
   /** Size in square meters. */
   size_sqm: number | null;
   /** e.g. ["furnished", "balcony", "washing machine"] */
-  features: string[];
+  features: Feature[];
   /** ISO date when available. */
   available_from: string | null;
   /** Minimum lease length in months. */

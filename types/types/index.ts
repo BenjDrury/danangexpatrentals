@@ -3,4 +3,5 @@ export type JsonPrimitive = string | number | boolean | null;
 export type { Area } from "./Area";
 export type { Apartment } from "./Apartment";
 export type { ApartmentType } from "./ApartmentType";
+export type { Feature } from "./Feature";
 export type { User, UserRole } from "./User";

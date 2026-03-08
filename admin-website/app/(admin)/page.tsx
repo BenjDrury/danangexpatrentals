@@ -29,8 +29,14 @@ export default async function AdminDashboardPage() {
 
       <div className="mt-10 flex flex-wrap gap-4">
         <Link
-          href="/areas"
+          href="/apartments"
           className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+        >
+          View apartments
+        </Link>
+        <Link
+          href="/areas"
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           Manage areas
         </Link>

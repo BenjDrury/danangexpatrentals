@@ -1,11 +1,13 @@
 /**
  * User profile (public.profiles). id matches auth.users(id).
  */
-export type UserRole = "user" | "admin";
+export type UserRole = "user" | "admin" | "partner";
 
 export interface User {
   id: string;
   role: UserRole;
+  estate_company_id?: string | null;
+  display_name?: string | null;
   created_at?: string;
   updated_at?: string;
 }

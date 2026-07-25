@@ -11,12 +11,15 @@ export default async function EditAreaPage({ params }: Props) {
   if (!area) notFound();
 
   return (
-    <div>
-      <Link href="/areas" className="text-sm font-medium text-teal-600 hover:text-teal-700">
+    <div className="animate-fade-up">
+      <Link
+        href="/areas"
+        className="text-sm font-medium text-ocean transition hover:text-ocean-deep"
+      >
         ← Areas
       </Link>
-      <h1 className="mt-4 text-2xl font-bold text-slate-900">Edit area: {area.name}</h1>
-      <p className="mt-1 text-slate-500">ID: {area.id}</p>
+      <h1 className="mt-4 page-title">Edit area: {area.name}</h1>
+      <p className="mt-1 text-muted">ID: {area.id}</p>
 
       <AreaEditForm area={area} />
     </div>

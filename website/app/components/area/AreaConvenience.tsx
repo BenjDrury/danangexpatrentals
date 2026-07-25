@@ -6,47 +6,17 @@ import { isEmpty, normalizeYesNo, parseTransportModes } from "@/lib/area-utils";
 
 type AreaConvenienceProps = { area: Area };
 
-/** Capitalize first letter only, so "DanaBus" / "Grab" stay correct. */
 function formatTransportLabel(s: string): string {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function Tile({
-  label,
-  icon,
-}: {
-  label: string;
-  icon?: string;
-}) {
-  return (
-    <div className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-teal-200/60 hover:shadow-md">
-      {icon && (
-        <span
-          className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-xl transition group-hover:bg-teal-50"
-          aria-hidden
-        >
-          {icon}
-        </span>
-      )}
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-        {label}
-      </div>
-      <div className="mt-1.5 font-semibold text-teal-700">Nearby</div>
-    </div>
-  );
-}
-
-const WITHIN_5KM: { key: keyof Area; label: string; icon: string }[] = [
-  { key: "within5km_beach", label: "Beach (within 5km)", icon: "🏖️" },
-  { key: "within5km_hospital", label: "Hospital (5km)", icon: "🏥" },
-  {
-    key: "within5km_international_school",
-    label: "Int’l school (5km)",
-    icon: "🏫",
-  },
-  { key: "within5km_supermarket", label: "Supermarket (5km)", icon: "🛒" },
-  { key: "within5km_coworking", label: "Coworking (5km)", icon: "💻" },
+const WITHIN_5KM: { key: keyof Area; label: string }[] = [
+  { key: "within5km_beach", label: "Beach" },
+  { key: "within5km_hospital", label: "Hospital" },
+  { key: "within5km_international_school", label: "International school" },
+  { key: "within5km_supermarket", label: "Supermarket" },
+  { key: "within5km_coworking", label: "Coworking" },
 ];
 
 export function AreaConvenience({ area }: AreaConvenienceProps) {
@@ -54,7 +24,7 @@ export function AreaConvenience({ area }: AreaConvenienceProps) {
     const v = area[key] as string | null | undefined;
     if (isEmpty(v)) return false;
     return normalizeYesNo(v as string) === true;
-  }).map(({ key, label, icon }) => ({ label, icon }));
+  }).map(({ label }) => label);
 
   const transportModes = parseTransportModes(area.transport_primary_modes);
   const safetyNotes = !isEmpty(area.safety_notes) ? area.safety_notes! : null;
@@ -75,80 +45,64 @@ export function AreaConvenience({ area }: AreaConvenienceProps) {
   if (!hasAny) return null;
 
   return (
-    <Section bg="bg-slate-50/80">
-      <p className="text-sm font-medium uppercase tracking-wider text-teal-600">
-        Living here
-      </p>
-      <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-        What&apos;s nearby & how to get around
-      </h2>
-      <p className="mt-2 max-w-2xl text-slate-600">
-        Amenities within 5km, transport options, and things to keep in mind.
-      </p>
-      <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {withinTiles.map((t) => (
-          <Tile key={t.label} label={t.label} icon={t.icon} />
-        ))}
+    <Section bg="bg-white">
+      <div className="max-w-2xl">
+        <p className="text-sm font-medium text-ocean">Living here</p>
+        <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
+          What&apos;s nearby & how to get around
+        </h2>
+        <p className="mt-4 text-lg leading-relaxed text-muted">
+          Amenities within about 5km, transport options, and a few practical notes.
+        </p>
+      </div>
+
+      {withinTiles.length > 0 && (
+        <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {withinTiles.map((label) => (
+            <li
+              key={label}
+              className="rounded-2xl border border-line bg-foam p-5 shadow-[0_6px_24px_rgba(42,42,40,0.03)]"
+            >
+              <p className="text-sm text-muted">Within 5km</p>
+              <p className="mt-1 font-display text-lg font-semibold text-charcoal">{label}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className={`grid gap-4 sm:grid-cols-2 ${withinTiles.length > 0 ? "mt-4" : "mt-10"}`}>
         {transportModes.length > 0 && (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-teal-200/60 hover:shadow-md sm:col-span-2">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-base">
-                  🛵
-                </span>
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Getting around
-                </span>
-              </div>
+          <div className="rounded-2xl border border-line bg-foam p-6 shadow-[0_6px_24px_rgba(42,42,40,0.03)]">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="font-display text-lg font-semibold text-charcoal">Getting around</h3>
               {TRANSPORT_COSTS_BLOG_URL && (
                 <Link
                   href={TRANSPORT_COSTS_BLOG_URL}
-                  className="text-sm font-medium text-teal-600 underline decoration-teal-300 underline-offset-2 hover:text-teal-700 hover:decoration-teal-500"
+                  className="text-sm font-medium text-ocean transition hover:text-ocean-deep"
                 >
-                  Transport costs guide →
+                  Transport costs →
                 </Link>
               )}
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {transportModes.map((m) => (
-                <span
-                  key={m}
-                  className="rounded-full bg-teal-50 px-3.5 py-1.5 text-sm font-medium text-teal-800"
-                >
-                  {formatTransportLabel(m)}
-                </span>
-              ))}
-            </div>
+            <p className="mt-3 text-base leading-relaxed text-muted">
+              {transportModes.map(formatTransportLabel).join(" · ")}
+            </p>
           </div>
         )}
+
         {(safetyNotes || noiseNotes) && (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-teal-200/60 hover:shadow-md">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-base">
-                🛡️
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Safety & noise
-              </span>
-            </div>
-            <div className="mt-3 text-sm leading-relaxed text-slate-700">
+          <div className="rounded-2xl border border-line bg-foam p-6 shadow-[0_6px_24px_rgba(42,42,40,0.03)]">
+            <h3 className="font-display text-lg font-semibold text-charcoal">Safety & noise</h3>
+            <p className="mt-3 text-sm leading-relaxed text-muted">
               {[safetyNotes, noiseNotes].filter(Boolean).join(" ")}
-            </div>
+            </p>
           </div>
         )}
+
         {weatherRisk && (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-base">
-                🌧️
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Weather risk
-              </span>
-            </div>
-            <div className="mt-3 text-sm leading-relaxed text-slate-700">
-              {weatherRisk}
-            </div>
+          <div className="rounded-2xl border border-line bg-foam p-6 shadow-[0_6px_24px_rgba(42,42,40,0.03)]">
+            <h3 className="font-display text-lg font-semibold text-charcoal">Weather risk</h3>
+            <p className="mt-3 text-sm leading-relaxed text-muted">{weatherRisk}</p>
           </div>
         )}
       </div>

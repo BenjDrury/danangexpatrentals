@@ -1,4 +1,4 @@
-import type { Area, Apartment, ApartmentType } from "types";
+import type { Area, Apartment, ApartmentType, CoworkingSpace, Activity } from "types";
 import { slugify } from "./area-utils";
 
 const AREAS_SELECT =
@@ -108,9 +108,44 @@ export async function getApartmentTypes(): Promise<ApartmentType[]> {
   }
 }
 
+const APARTMENT_SELECT =
+  "id, area_id, title, description, price, price_display, price_amount, price_currency, price_usd, price_vnd, main_image, images, bedrooms, bathrooms, size_sqm, features, available_from, min_lease_months, sort_order, created_at, updated_at, status, public_slug, last_validity_check";
+
+function mapApartmentRow(row: Record<string, unknown>): Apartment {
+  return {
+    id: String(row.id),
+    area_id: row.area_id as string,
+    title: row.title as string,
+    description: (row.description as string | null) ?? null,
+    price: Number(row.price),
+    price_display: String(row.price_display ?? ""),
+    price_amount: row.price_amount != null ? Number(row.price_amount) : null,
+    price_currency:
+      row.price_currency === "USD" || row.price_currency === "VND"
+        ? row.price_currency
+        : null,
+    price_usd: row.price_usd != null ? Number(row.price_usd) : null,
+    price_vnd: row.price_vnd != null ? Number(row.price_vnd) : null,
+    main_image: row.main_image as string,
+    images: Array.isArray(row.images) ? (row.images as string[]) : [],
+    bedrooms: Number(row.bedrooms),
+    bathrooms: row.bathrooms != null ? Number(row.bathrooms) : null,
+    size_sqm: row.size_sqm != null ? Number(row.size_sqm) : null,
+    features: Array.isArray(row.features) ? (row.features as Apartment["features"]) : [],
+    available_from: (row.available_from as string | null) ?? null,
+    min_lease_months: row.min_lease_months != null ? Number(row.min_lease_months) : null,
+    sort_order: Number(row.sort_order ?? 0),
+    status: (row.status as Apartment["status"]) ?? undefined,
+    public_slug: (row.public_slug as string | null) ?? null,
+    created_at: row.created_at as string | undefined,
+    updated_at: row.updated_at as string | undefined,
+  };
+}
+
 export async function getApartments(opts?: { area_id?: string }): Promise<Apartment[]> {
   try {
     const { createClient } = await import("@supabase/supabase-js");
+    const { validityPublicCutoffIso } = await import("./listing-validity");
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) return [];
@@ -118,7 +153,9 @@ export async function getApartments(opts?: { area_id?: string }): Promise<Apartm
     const supabase = createClient(url, key);
     let query = supabase
       .from("apartments")
-      .select("id, area_id, title, description, price, price_display, main_image, images, bedrooms, bathrooms, size_sqm, features, available_from, min_lease_months, sort_order, created_at, updated_at")
+      .select(APARTMENT_SELECT)
+      .or("status.is.null,status.eq.available")
+      .gte("last_validity_check", validityPublicCutoffIso())
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
 
@@ -126,65 +163,192 @@ export async function getApartments(opts?: { area_id?: string }): Promise<Apartm
     const { data, error } = await query;
 
     if (error || !data) return [];
-    return data.map((row) => ({
-      id: String(row.id),
-      area_id: row.area_id,
-      title: row.title,
-      description: row.description ?? null,
-      price: row.price,
-      price_display: row.price_display,
-      main_image: row.main_image,
-      images: Array.isArray(row.images) ? row.images : [],
-      bedrooms: row.bedrooms,
-      bathrooms: row.bathrooms ?? null,
-      size_sqm: row.size_sqm ?? null,
-      features: Array.isArray(row.features) ? row.features : [],
-      available_from: row.available_from ?? null,
-      min_lease_months: row.min_lease_months ?? null,
-      sort_order: row.sort_order ?? 0,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-    })) as Apartment[];
+    return data.map((row) => mapApartmentRow(row as Record<string, unknown>));
   } catch {
     return [];
+  }
+}
+
+export type ApartmentsPaginated = {
+  apartments: Apartment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+/** Fetch apartments with pagination, newest first. 1-based page. */
+export async function getApartmentsPaginated(
+  page: number,
+  limit: number
+): Promise<ApartmentsPaginated> {
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const { validityPublicCutoffIso } = await import("./listing-validity");
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      return { apartments: [], total: 0, page: 1, limit, totalPages: 0 };
+    }
+
+    const supabase = createClient(url, key);
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    const { data, error, count } = await supabase
+      .from("apartments")
+      .select(APARTMENT_SELECT, {
+        count: "exact",
+      })
+      .or("status.is.null,status.eq.available")
+      .gte("last_validity_check", validityPublicCutoffIso())
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error || !data) {
+      return { apartments: [], total: 0, page, limit, totalPages: 0 };
+    }
+
+    const total = count ?? 0;
+    const apartments = data.map((row) => mapApartmentRow(row as Record<string, unknown>));
+
+    return {
+      apartments,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    };
+  } catch {
+    return { apartments: [], total: 0, page: 1, limit, totalPages: 0 };
   }
 }
 
 export async function getApartmentById(id: string): Promise<Apartment | null> {
   try {
     const { createClient } = await import("@supabase/supabase-js");
+    const { validityPublicCutoffIso } = await import("./listing-validity");
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) return null;
 
     const supabase = createClient(url, key);
-    const { data, error } = await supabase
+    const cutoff = validityPublicCutoffIso();
+
+    let { data, error } = await supabase
       .from("apartments")
-      .select("id, area_id, title, description, price, price_display, main_image, images, bedrooms, bathrooms, size_sqm, features, available_from, min_lease_months, sort_order, created_at, updated_at")
+      .select(APARTMENT_SELECT)
       .eq("id", id)
-      .single();
+      .or("status.is.null,status.eq.available")
+      .gte("last_validity_check", cutoff)
+      .maybeSingle();
+
+    if ((!data || error) && id) {
+      const bySlug = await supabase
+        .from("apartments")
+        .select(APARTMENT_SELECT)
+        .eq("public_slug", id)
+        .or("status.is.null,status.eq.available")
+        .gte("last_validity_check", cutoff)
+        .maybeSingle();
+      data = bySlug.data;
+      error = bySlug.error;
+    }
 
     if (error || !data) return null;
-    return {
-      id: String(data.id),
-      area_id: data.area_id,
-      title: data.title,
-      description: data.description ?? null,
-      price: data.price,
-      price_display: data.price_display,
-      main_image: data.main_image,
-      images: Array.isArray(data.images) ? data.images : [],
-      bedrooms: data.bedrooms,
-      bathrooms: data.bathrooms ?? null,
-      size_sqm: data.size_sqm ?? null,
-      features: Array.isArray(data.features) ? data.features : [],
-      available_from: data.available_from ?? null,
-      min_lease_months: data.min_lease_months ?? null,
-      sort_order: data.sort_order ?? 0,
-      created_at: data.created_at,
-      updated_at: data.updated_at,
-    } as Apartment;
+    return mapApartmentRow(data as Record<string, unknown>);
   } catch {
     return null;
+  }
+}
+
+function mapCoworking(row: Record<string, unknown>): CoworkingSpace {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    area_id: (row.area_id as string | null) ?? null,
+    neighbourhood_label: (row.neighbourhood_label as string | null) ?? null,
+    description: String(row.description ?? ""),
+    address: (row.address as string | null) ?? null,
+    day_pass_usd: row.day_pass_usd != null ? Number(row.day_pass_usd) : null,
+    monthly_usd: row.monthly_usd != null ? Number(row.monthly_usd) : null,
+    price_note: (row.price_note as string | null) ?? null,
+    wifi_note: (row.wifi_note as string | null) ?? null,
+    best_for: (row.best_for as string | null) ?? null,
+    website_url: (row.website_url as string | null) ?? null,
+    maps_url: (row.maps_url as string | null) ?? null,
+    images: Array.isArray(row.images) ? (row.images as string[]) : [],
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
+    sort_order: Number(row.sort_order ?? 0),
+    published: row.published !== false,
+    created_at: row.created_at as string | undefined,
+    updated_at: row.updated_at as string | undefined,
+  };
+}
+
+function mapActivity(row: Record<string, unknown>): Activity {
+  return {
+    id: String(row.id),
+    name: String(row.name),
+    category: String(row.category ?? "general"),
+    area_id: (row.area_id as string | null) ?? null,
+    neighbourhood_label: (row.neighbourhood_label as string | null) ?? null,
+    description: String(row.description ?? ""),
+    typical_price_usd: row.typical_price_usd != null ? Number(row.typical_price_usd) : null,
+    price_note: (row.price_note as string | null) ?? null,
+    duration_note: (row.duration_note as string | null) ?? null,
+    website_url: (row.website_url as string | null) ?? null,
+    maps_url: (row.maps_url as string | null) ?? null,
+    booking_url: (row.booking_url as string | null) ?? null,
+    images: Array.isArray(row.images) ? (row.images as string[]) : [],
+    tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
+    sort_order: Number(row.sort_order ?? 0),
+    published: row.published !== false,
+    created_at: row.created_at as string | undefined,
+    updated_at: row.updated_at as string | undefined,
+  };
+}
+
+export async function getCoworkingSpaces(): Promise<CoworkingSpace[]> {
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return [];
+
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase
+      .from("coworking_spaces")
+      .select("*")
+      .eq("published", true)
+      .order("sort_order")
+      .order("name");
+
+    if (error || !data) return [];
+    return data.map((row) => mapCoworking(row as Record<string, unknown>));
+  } catch {
+    return [];
+  }
+}
+
+export async function getActivities(): Promise<Activity[]> {
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return [];
+
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase
+      .from("activities")
+      .select("*")
+      .eq("published", true)
+      .order("sort_order")
+      .order("name");
+
+    if (error || !data) return [];
+    return data.map((row) => mapActivity(row as Record<string, unknown>));
+  } catch {
+    return [];
   }
 }

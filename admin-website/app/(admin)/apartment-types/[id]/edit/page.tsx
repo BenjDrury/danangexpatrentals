@@ -11,11 +11,14 @@ export default async function EditApartmentTypePage({ params }: Props) {
   if (!type_) notFound();
 
   return (
-    <div>
-      <Link href="/apartment-types" className="text-sm font-medium text-teal-600 hover:text-teal-700">
+    <div className="animate-fade-up">
+      <Link
+        href="/apartment-types"
+        className="text-sm font-medium text-ocean transition hover:text-ocean-deep"
+      >
         ← Apartment types
       </Link>
-      <h1 className="mt-4 text-2xl font-bold text-slate-900">Edit: {type_.title}</h1>
+      <h1 className="mt-4 page-title">Edit: {type_.title}</h1>
 
       <ApartmentTypeEditForm type_={type_} />
     </div>

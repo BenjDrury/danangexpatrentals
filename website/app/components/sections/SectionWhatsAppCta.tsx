@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Section } from "./Section";
+import { CONTENT_CONTAINER, SECTION_PADDING } from "@/app/lib/constants";
 
 type SectionWhatsAppCtaProps = {
   title: string;
@@ -16,9 +16,6 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-/**
- * Dark full-width section with green WhatsApp card and CTA button.
- */
 export function SectionWhatsAppCta({
   title,
   description,
@@ -26,20 +23,31 @@ export function SectionWhatsAppCta({
   buttonLabel = "Chat on WhatsApp",
 }: SectionWhatsAppCtaProps) {
   return (
-    <Section bg="bg-slate-900 text-white" withContainer={true}>
-      <div className="mx-auto max-w-2xl rounded-3xl bg-[#25D366] p-10 text-center shadow-2xl sm:p-14">
-        <h2 className="text-2xl font-bold sm:text-3xl">{title}</h2>
-        <p className="mt-4 text-lg opacity-95">{description}</p>
-        <Link
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-8 inline-flex items-center justify-center gap-3 rounded-xl bg-white px-8 py-4 text-lg font-bold text-[#25D366] shadow-lg transition hover:bg-slate-50"
+    <section className={`w-full ${SECTION_PADDING} bg-foam`}>
+      <div className={CONTENT_CONTAINER}>
+        <div
+          className="flex flex-col items-start justify-between gap-6 rounded-2xl px-6 py-8 sm:flex-row sm:items-center sm:px-8 sm:py-9"
+          style={{ backgroundColor: "#e8f2f4" }}
         >
-          <WhatsAppIcon className="h-7 w-7" />
-          {buttonLabel}
-        </Link>
+          <div className="max-w-md">
+            <p className="text-sm font-medium text-ocean">WhatsApp</p>
+            <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-charcoal sm:text-3xl">
+              {title}
+            </h2>
+            <p className="mt-2 text-base leading-relaxed text-muted">{description}</p>
+          </div>
+          <Link
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-white transition hover:opacity-90"
+            style={{ backgroundColor: "#2f6f7e" }}
+          >
+            <WhatsAppIcon className="h-4 w-4" />
+            {buttonLabel}
+          </Link>
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

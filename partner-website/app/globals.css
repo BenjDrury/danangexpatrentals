@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foam: #faf8f5;
+  --sand: #f1ebe2;
+  --sand-deep: #e2d6c6;
+  --ocean: #2f6f7e;
+  --ocean-deep: #1e4f5a;
+  --palm: #3f6b55;
+  --palm-soft: #e8f0eb;
+  --charcoal: #2a2a28;
+  --muted: #6b6a66;
+  --line: #e6e0d6;
+  --white: #ffffff;
+  /* Partner accents (stale, destructive) — keep coastal coral */
+  --coral: #c45c3e;
+  --coral-deep: #9a3f28;
+  --coral-soft: #f7e8e2;
+  --amber: #c48a2e;
+  /* Admin-only chrome — purple so partners never confuse it with studio UI */
+  --admin: #7c3aed;
+  --admin-deep: #5b21b6;
+  --admin-soft: #f3e8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply antialiased;
+  background: var(--foam);
+  color: var(--charcoal);
+  min-height: 100vh;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ocean) 22%, white);
+}
+
+/* Soft coastal atmosphere behind studio surfaces */
+.studio-atmosphere {
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, color-mix(in srgb, var(--ocean) 12%, transparent), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in srgb, var(--palm) 10%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--foam) 0%, var(--sand) 100%);
+}
+
+.studio-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-up-delay {
+  animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+/* Thin violet stripe for admin chrome */
+.admin-stripe {
+  background: linear-gradient(
+    90deg,
+    var(--admin) 0%,
+    color-mix(in srgb, var(--admin) 70%, white) 55%,
+    var(--admin-deep) 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-up-delay,
+  .animate-soft-pulse {
+    animation: none;
+  }
+}

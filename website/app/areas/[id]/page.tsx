@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   AreaApartmentsSection,
-  AreaConvenience,
   AreaHero,
   AreaLocation,
-  AreaRentSnapshot,
-  AreaRightForYou,
-  AreaTrustFooter,
+  AreaOverview,
   StickyAreaCta,
 } from "@/app/components/area";
 import { getAreaBySlugOrId, getApartments } from "@/lib/data";
@@ -50,18 +47,15 @@ export default async function AreaPage({ params }: Props) {
   const apartments = await getApartments({ area_id: area.id });
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-foam pb-24">
       <AreaHero area={area} />
-      <AreaRightForYou area={area} />
-      <AreaRentSnapshot area={area} />
-      <AreaConvenience area={area} />
+      <AreaOverview area={area} />
       <AreaLocation area={area} />
       <AreaApartmentsSection
         areaId={area.id}
         areaName={area.name}
         apartments={apartments}
       />
-      <AreaTrustFooter area={area} />
       <StickyAreaCta areaId={area.id} areaName={area.name} />
     </div>
   );

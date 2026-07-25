@@ -8,42 +8,37 @@ export default async function AdminDashboardPage() {
   ]);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-      <p className="mt-2 text-slate-600">
+    <div className="animate-fade-up">
+      <h1 className="page-title">Dashboard</h1>
+      <p className="page-lead">
         Overview. Manage areas and apartment types from the subpages.
       </p>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Leads</h2>
-          <p className="mt-1 text-3xl font-bold text-teal-600">{leadsCount}</p>
-          <p className="mt-1 text-sm text-slate-500">Contact form submissions</p>
+      <dl className="mt-10 grid gap-8 sm:grid-cols-2">
+        <div className="border-t border-line/80 pt-5">
+          <dt className="text-sm font-medium text-muted">Leads</dt>
+          <dd className="mt-1 font-display text-4xl font-semibold text-ocean">
+            {leadsCount}
+          </dd>
+          <p className="mt-1 text-sm text-muted">Contact form submissions</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Apartments</h2>
-          <p className="mt-1 text-3xl font-bold text-teal-600">{apartmentsCount}</p>
-          <p className="mt-1 text-sm text-slate-500">Listings in DB</p>
+        <div className="border-t border-line/80 pt-5">
+          <dt className="text-sm font-medium text-muted">Apartments</dt>
+          <dd className="mt-1 font-display text-4xl font-semibold text-ocean">
+            {apartmentsCount}
+          </dd>
+          <p className="mt-1 text-sm text-muted">Listings in DB</p>
         </div>
-      </div>
+      </dl>
 
-      <div className="mt-10 flex flex-wrap gap-4">
-        <Link
-          href="/apartments"
-          className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-        >
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Link href="/apartments" className="btn-primary">
           View apartments
         </Link>
-        <Link
-          href="/areas"
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
+        <Link href="/areas" className="btn-secondary">
           Manage areas
         </Link>
-        <Link
-          href="/apartment-types"
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
+        <Link href="/apartment-types" className="btn-secondary">
           Manage apartment types
         </Link>
       </div>

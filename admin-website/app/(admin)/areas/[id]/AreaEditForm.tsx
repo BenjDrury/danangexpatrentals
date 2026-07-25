@@ -106,30 +106,28 @@ export function AreaEditForm({ area }: { area: Area }) {
 
   return (
     <div className="mt-6 max-w-xl space-y-6">
-      <form onSubmit={handleUpload} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <h3 className="text-sm font-semibold text-slate-800">Upload to bucket</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Upload a file to the <code className="rounded bg-slate-200 px-1">areas</code> bucket; the new URL will be added to this area’s images below.
+      <form onSubmit={handleUpload} className="surface bg-sand/40 p-4">
+        <h3 className="font-display text-sm font-semibold text-charcoal">Upload to bucket</h3>
+        <p className="mt-1 text-xs text-muted">
+          Upload a file to the{" "}
+          <code className="rounded-quieter bg-sand-deep/60 px-1.5 py-0.5 text-charcoal">areas</code>{" "}
+          bucket; the new URL will be added to this area’s images below.
         </p>
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-slate-600">File</span>
-            <input name="file" type="file" accept="image/*" className="text-sm" required disabled={uploading} />
+            <span className="text-xs text-muted">File</span>
+            <input name="file" type="file" accept="image/*" className="text-sm text-charcoal" required disabled={uploading} />
           </label>
-          <button
-            type="submit"
-            disabled={uploading}
-            className="rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
-          >
+          <button type="submit" disabled={uploading} className="btn-primary px-3 py-2">
             {uploading ? "Uploading…" : "Upload"}
           </button>
         </div>
-        {uploadError && <p className="mt-2 text-sm text-red-600">{uploadError}</p>}
+        {uploadError && <p className="mt-2 text-sm text-coral-deep">{uploadError}</p>}
       </form>
 
       <form action={formAction} className="space-y-6">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="name" className="field-label">
             Name
           </label>
           <input
@@ -137,15 +135,15 @@ export function AreaEditForm({ area }: { area: Area }) {
             name="name"
             defaultValue={area.name}
             required
-            className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="field-input"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700">
+          <label className="field-label">
             Area images (order = hero order; first = main)
           </label>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted">
             Reorder with ↑/↓; add from bucket below or paste URLs in the box.
           </p>
           <textarea
@@ -155,22 +153,22 @@ export function AreaEditForm({ area }: { area: Area }) {
             value={images.join("\n")}
             onChange={(e) => setImages(parseImagesRaw(e.target.value))}
             placeholder="Or paste URLs, one per line"
-            className="mt-2 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="field-input mt-2 text-sm"
           />
           {images.length > 0 && (
             <ul className="mt-3 flex flex-wrap gap-3">
               {images.map((url, i) => (
                 <li
                   key={`${url}-${i}`}
-                  className="flex flex-col rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden"
+                  className="flex flex-col overflow-hidden rounded-quieter border border-line/80 bg-white"
                 >
-                  <div className="relative aspect-video w-32 bg-slate-100 sm:w-40">
+                  <div className="relative aspect-video w-32 bg-sand sm:w-40">
                     <img
                       src={url}
                       alt=""
                       className="h-full w-full object-cover"
                     />
-                    <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-xs font-medium text-white">
+                    <span className="absolute left-1.5 top-1.5 rounded-quieter bg-charcoal/70 px-1.5 py-0.5 text-xs font-medium text-white">
                       {i + 1}
                     </span>
                   </div>
@@ -180,7 +178,7 @@ export function AreaEditForm({ area }: { area: Area }) {
                         type="button"
                         onClick={() => moveImage(i, "up")}
                         disabled={i === 0}
-                        className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 disabled:hover:bg-transparent"
+                        className="rounded-quieter p-1 text-muted transition hover:bg-sand hover:text-charcoal disabled:opacity-40 disabled:hover:bg-transparent"
                         aria-label="Move up"
                       >
                         ↑
@@ -189,7 +187,7 @@ export function AreaEditForm({ area }: { area: Area }) {
                         type="button"
                         onClick={() => moveImage(i, "down")}
                         disabled={i === images.length - 1}
-                        className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 disabled:hover:bg-transparent"
+                        className="rounded-quieter p-1 text-muted transition hover:bg-sand hover:text-charcoal disabled:opacity-40 disabled:hover:bg-transparent"
                         aria-label="Move down"
                       >
                         ↓
@@ -198,7 +196,7 @@ export function AreaEditForm({ area }: { area: Area }) {
                     <button
                       type="button"
                       onClick={() => removeImage(i)}
-                      className="rounded p-1 text-slate-500 hover:bg-red-50 hover:text-red-600"
+                      className="rounded-quieter p-1 text-muted transition hover:bg-coral-soft hover:text-coral-deep"
                       aria-label="Remove"
                     >
                       ×
@@ -210,128 +208,125 @@ export function AreaEditForm({ area }: { area: Area }) {
           )}
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <h3 className="text-sm font-semibold text-slate-800">Add from bucket</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Select an image from the bucket to add its URL to this area’s images.
-        </p>
-        {bucketError && <p className="mt-2 text-sm text-red-600">{bucketError}</p>}
-        {bucketFiles.length > 0 && (
-          <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {bucketFiles.map((f) => (
-              <li key={f.url} className="flex flex-col rounded border border-slate-200 bg-white overflow-hidden">
-                <img src={f.url} alt="" className="h-20 w-full object-cover" />
-                <div className="flex items-center justify-between gap-1 p-1.5">
-                  <span className="truncate text-xs text-slate-700" title={f.name}>
-                    {f.name}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {pendingDeleteName === f.name ? (
-                      <>
-                        <span className="text-xs text-slate-600">Sure?</span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteFromBucket(f.name)}
-                          disabled={deletingName === f.name}
-                          className="rounded bg-red-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                        >
-                          {deletingName === f.name ? "…" : "Yes, delete"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPendingDeleteName(null)}
-                          className="rounded bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700 hover:bg-slate-300"
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => addImage(f.url)}
-                          className="rounded bg-teal-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-teal-700"
-                        >
-                          Add
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPendingDeleteName(f.name)}
-                          disabled={deletingName !== null}
-                          className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 hover:bg-red-200 disabled:opacity-50"
-                          title="Delete from bucket"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+        <div className="surface bg-sand/40 p-4">
+          <h3 className="font-display text-sm font-semibold text-charcoal">Add from bucket</h3>
+          <p className="mt-1 text-xs text-muted">
+            Select an image from the bucket to add its URL to this area’s images.
+          </p>
+          {bucketError && <p className="mt-2 text-sm text-coral-deep">{bucketError}</p>}
+          {bucketFiles.length > 0 && (
+            <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {bucketFiles.map((f) => (
+                <li
+                  key={f.url}
+                  className="flex flex-col overflow-hidden rounded-quieter border border-line/80 bg-white"
+                >
+                  <img src={f.url} alt="" className="h-20 w-full object-cover" />
+                  <div className="flex items-center justify-between gap-1 p-1.5">
+                    <span className="truncate text-xs text-charcoal" title={f.name}>
+                      {f.name}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {pendingDeleteName === f.name ? (
+                        <>
+                          <span className="text-xs text-muted">Sure?</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteFromBucket(f.name)}
+                            disabled={deletingName === f.name}
+                            className="btn-danger"
+                          >
+                            {deletingName === f.name ? "…" : "Yes, delete"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingDeleteName(null)}
+                            className="rounded-quieter bg-sand px-2 py-0.5 text-xs font-medium text-charcoal transition hover:bg-sand-deep"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => addImage(f.url)}
+                            className="rounded-quieter bg-ocean px-2 py-0.5 text-xs font-medium text-white transition hover:bg-ocean-deep"
+                          >
+                            Add
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingDeleteName(f.name)}
+                            disabled={deletingName !== null}
+                            className="rounded-quieter bg-coral-soft px-2 py-0.5 text-xs font-medium text-coral-deep transition hover:bg-coral/20 disabled:opacity-50"
+                            title="Delete from bucket"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!bucketError && bucketFiles.length === 0 && (
+            <p className="mt-2 text-sm text-muted">No files in bucket yet. Upload one above.</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor="vibe" className="field-label">
+            Vibe
+          </label>
+          <textarea
+            id="vibe"
+            name="vibe"
+            rows={3}
+            defaultValue={area.vibe}
+            required
+            className="field-input"
+          />
+        </div>
+        <div>
+          <label htmlFor="price_range" className="field-label">
+            Price range
+          </label>
+          <input
+            id="price_range"
+            name="price_range"
+            defaultValue={area.price_range ?? ""}
+            className="field-input"
+          />
+        </div>
+        <div>
+          <label htmlFor="who" className="field-label">
+            Who it&apos;s for
+          </label>
+          <textarea
+            id="who"
+            name="who"
+            rows={2}
+            defaultValue={area.who}
+            required
+            className="field-input"
+          />
+        </div>
+        {state?.error && (
+          <p className="text-sm text-coral-deep" role="alert">
+            {state.error}
+          </p>
         )}
-        {!bucketError && bucketFiles.length === 0 && (
-          <p className="mt-2 text-sm text-slate-500">No files in bucket yet. Upload one above.</p>
-        )}
-      </div>
-      <div>
-        <label htmlFor="vibe" className="block text-sm font-medium text-slate-700">
-          Vibe
-        </label>
-        <textarea
-          id="vibe"
-          name="vibe"
-          rows={3}
-          defaultValue={area.vibe}
-          required
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        />
-      </div>
-      <div>
-        <label htmlFor="price_range" className="block text-sm font-medium text-slate-700">
-          Price range
-        </label>
-        <input
-          id="price_range"
-          name="price_range"
-          defaultValue={area.price_range ?? ""}
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        />
-      </div>
-      <div>
-        <label htmlFor="who" className="block text-sm font-medium text-slate-700">
-          Who it&apos;s for
-        </label>
-        <textarea
-          id="who"
-          name="who"
-          rows={2}
-          defaultValue={area.who}
-          required
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
-        />
-      </div>
-      {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
-          {state.error}
-        </p>
-      )}
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-        >
-          Save
-        </button>
-        <Link
-          href="/areas"
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
-          Cancel
-        </Link>
-      </div>
-    </form>
+        <div className="flex gap-3">
+          <button type="submit" className="btn-primary">
+            Save
+          </button>
+          <Link href="/areas" className="btn-secondary">
+            Cancel
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }

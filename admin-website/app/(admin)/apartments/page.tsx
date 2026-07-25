@@ -14,9 +14,9 @@ export default async function AdminApartmentsPage() {
   ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-slate-900">Apartments</h1>
-      <p className="mt-2 text-slate-600">
+    <div className="animate-fade-up">
+      <h1 className="page-title">Apartments</h1>
+      <p className="page-lead">
         View all listings. Filter by price, size (sqm), and features.
       </p>
 

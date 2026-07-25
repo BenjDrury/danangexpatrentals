@@ -3,7 +3,8 @@
 import Link from "next/link";
 import type { Apartment } from "types";
 import { useMemo, useState } from "react";
-import { CONTENT_CONTAINER } from "@/app/lib/constants";
+import { Section } from "@/app/components/sections";
+import { CtaButton } from "@/app/components/CtaButton";
 import { ApartmentCard } from "./ApartmentCard";
 import { FilterBar, type AreaListFilters } from "./FilterBar";
 import { useAreaApartments } from "@/app/hooks/useAreaApartments";
@@ -49,63 +50,57 @@ export function AreaApartmentsSection({
 
   const hasAnyListings = apartments.length > 0;
   const noListingsAtAll = !hasAnyListings;
-  const filtersApplied = hasAnyListings && filtered.length === 0;
 
   return (
-    <section className="w-full py-16 sm:py-24 bg-slate-50">
-      <div className={CONTENT_CONTAINER}>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Apartments in {areaName}
-        </h2>
-        <p className="mt-2 text-slate-600">Filter by size, budget, and lease length.</p>
-        <div className="mt-6">
-          <FilterBar
-            filters={filters}
-            onChange={setFilters}
-            currencyLabel="USD"
-          />
+    <Section bg="bg-white" className="!py-12 sm:!py-16">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-ocean">Listings</p>
+          <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-charcoal sm:text-3xl">
+            Apartments in {areaName}
+          </h2>
         </div>
-        {filtered.length > 0 ? (
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((apt) => (
-              <ApartmentCard
-                key={apt.id}
-                apartment={apt}
-                areaName={areaName}
-                contactHref={buildContactHref(areaId, areaName, apt.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-10 text-center">
-            {noListingsAtAll ? (
-              <>
-                <p className="text-slate-600">
-                  No listings in {areaName} right now. Tell us your budget and dates — we&apos;ll find options in 24 hours.
-                </p>
-                <Link
-                  href={contactHrefBase}
-                  className="mt-6 inline-flex rounded-xl bg-teal-500 px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:bg-teal-600"
-                >
-                  Get apartment matches
-                </Link>
-              </>
-            ) : (
-              <>
-                <p className="text-slate-600">
-                  No apartments match your filters. Try adjusting filters or ask us to find something for you.
-                </p>
-                <Link
-                  href={contactHrefBase}
-                  className="mt-6 inline-flex rounded-xl bg-teal-500 px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:bg-teal-600"
-                >
-                  Get apartment matches
-                </Link>
-              </>
-            )}
-          </div>
+        {hasAnyListings && (
+          <Link
+            href="/apartments"
+            className="text-sm font-semibold text-ocean transition hover:text-ocean-deep"
+          >
+            Browse all →
+          </Link>
         )}
       </div>
-    </section>
+
+      {hasAnyListings && (
+        <div className="mt-6">
+          <FilterBar filters={filters} onChange={setFilters} currencyLabel="USD" />
+        </div>
+      )}
+
+      {filtered.length > 0 ? (
+        <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((apt) => (
+            <ApartmentCard
+              key={apt.id}
+              apartment={apt}
+              areaName={areaName}
+              contactHref={buildContactHref(areaId, areaName, apt.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-8 border-t border-line pt-8 text-center sm:text-left">
+          <p className="max-w-md text-sm leading-relaxed text-muted">
+            {noListingsAtAll
+              ? `No listings in ${areaName} right now. Tell us your budget and dates — we’ll find options in 24 hours.`
+              : "No apartments match your filters. Try adjusting them, or ask us to find something."}
+          </p>
+          <div className="mt-5 flex justify-center sm:justify-start">
+            <CtaButton href={contactHrefBase} variant="primary">
+              Get apartment matches
+            </CtaButton>
+          </div>
+        </div>
+      )}
+    </Section>
   );
 }

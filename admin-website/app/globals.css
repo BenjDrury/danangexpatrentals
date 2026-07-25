@@ -2,13 +2,114 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --foam: #faf8f5;
+  --sand: #f1ebe2;
+  --sand-deep: #e2d6c6;
+  --ocean: #2f6f7e;
+  --ocean-deep: #1e4f5a;
+  --palm: #3f6b55;
+  --palm-soft: #e8f0eb;
+  --charcoal: #2a2a28;
+  --muted: #6b6a66;
+  --line: #e6e0d6;
+  --white: #ffffff;
+  --coral: #c45c3e;
+  --coral-deep: #9a3f28;
+  --coral-soft: #f7e8e2;
+}
+
 * {
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply antialiased;
+  background: var(--foam);
+  color: var(--charcoal);
   min-height: 100vh;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ocean) 22%, white);
+  color: var(--charcoal);
+}
+
+/* Soft coastal atmosphere behind admin surfaces */
+.studio-atmosphere {
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, color-mix(in srgb, var(--ocean) 12%, transparent), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, color-mix(in srgb, var(--palm) 10%, transparent), transparent 50%),
+    linear-gradient(180deg, var(--foam) 0%, var(--sand) 100%);
+}
+
+.studio-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-quieter bg-ocean px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep focus:outline-none focus:ring-2 focus:ring-ocean/40 focus:ring-offset-2 focus:ring-offset-foam disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-quieter border border-line bg-white/80 px-4 py-2.5 text-sm font-semibold text-charcoal transition hover:border-ocean/40 hover:text-ocean focus:outline-none focus:ring-2 focus:ring-ocean/20 disabled:opacity-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-quieter bg-coral px-3 py-1.5 text-xs font-medium text-white transition hover:bg-coral-deep disabled:opacity-50;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium text-charcoal;
+  }
+
+  .field-input {
+    @apply mt-1.5 block w-full rounded-quieter border border-line bg-foam/60 px-3.5 py-2.5 text-charcoal outline-none transition placeholder:text-muted/70 focus:border-ocean focus:ring-2 focus:ring-ocean/20;
+  }
+
+  .field-select {
+    @apply rounded-quieter border border-line bg-foam/60 px-3.5 py-2.5 text-sm text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20;
+  }
+
+  .surface {
+    @apply rounded-soft border border-line/80 bg-white/70;
+  }
+
+  .page-title {
+    @apply font-display text-2xl font-semibold text-charcoal sm:text-3xl;
+  }
+
+  .page-lead {
+    @apply mt-2 text-muted;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-fade-up {
+    animation: none;
+  }
 }

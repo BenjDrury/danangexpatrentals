@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
+import { AdminNav } from "./AdminNav";
 import { SignOutButton } from "./SignOutButton";
 
 export default async function AdminLayout({
@@ -14,35 +14,32 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <span className="font-semibold text-slate-900">
-            Da Nang Expat Rentals — Admin
-          </span>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-600">{result.user.email}</span>
-            <SignOutButton />
+    <div className="studio-atmosphere relative min-h-screen">
+      <div className="studio-grain pointer-events-none absolute inset-0 opacity-40" aria-hidden />
+      <header className="relative border-b border-line/70 bg-white/55 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="font-display text-xs font-semibold uppercase tracking-[0.14em] text-ocean">
+                Admin
+              </p>
+              <p className="mt-1 font-display text-lg font-semibold text-charcoal sm:text-xl">
+                Da Nang Expat Rentals
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1.5 text-right">
+              <span className="max-w-[14rem] truncate text-xs text-muted sm:text-sm">
+                {result.user.email}
+              </span>
+              <SignOutButton />
+            </div>
           </div>
+          <AdminNav />
         </div>
       </header>
-      <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl gap-6 px-6 py-2">
-          <Link href="/" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Dashboard
-          </Link>
-          <Link href="/apartments" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Apartments
-          </Link>
-          <Link href="/areas" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Areas
-          </Link>
-          <Link href="/apartment-types" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Apartment types
-          </Link>
-        </div>
-      </nav>
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+      <main className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+        {children}
+      </main>
     </div>
   );
 }

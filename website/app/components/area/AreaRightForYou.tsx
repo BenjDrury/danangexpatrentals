@@ -1,123 +1,116 @@
 import Image from "next/image";
 import type { Area } from "types";
 import { Section } from "@/app/components/sections";
+import {
+  formatTenantProfile,
+  parseIntensity,
+  titleCasePhrase,
+} from "@/lib/area-display";
 import { getWhoTags, isEmpty } from "@/lib/area-utils";
+import { InsightCard, LevelMeter, MeterCard, TagChip } from "./AreaMeters";
 
 type AreaRightForYouProps = { area: Area };
 
-function Card({
-  title,
-  children,
-  variant = "default",
-}: {
-  title: string;
-  children: React.ReactNode;
-  variant?: "default" | "tradeoff";
-}) {
-  return (
-    <div
-      className={
-        variant === "tradeoff"
-          ? "rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50/80 to-white p-5 shadow-sm"
-          : "rounded-2xl border border-teal-200/60 bg-gradient-to-br from-teal-50/40 to-white p-5 shadow-sm"
-      }
-    >
-      <h3
-        className={
-          variant === "tradeoff"
-            ? "text-sm font-semibold uppercase tracking-wider text-amber-800"
-            : "text-sm font-semibold uppercase tracking-wider text-teal-800"
-        }
-      >
-        {title}
-      </h3>
-      <div className="mt-3 text-slate-700">{children}</div>
-    </div>
-  );
-}
-
 export function AreaRightForYou({ area }: AreaRightForYouProps) {
-  const whoTags = getWhoTags(area.who);
-  const extraBestFor: string[] = [];
-  if (!isEmpty(area.tenant_profile_tag)) extraBestFor.push(area.tenant_profile_tag!);
-  if (!isEmpty(area.expat_community_presence))
-    extraBestFor.push(`Expat community: ${area.expat_community_presence!}`);
+  const whoTags = getWhoTags(area.who).map(titleCasePhrase);
+  const profileLabel = formatTenantProfile(area.tenant_profile_tag);
+  const community = parseIntensity(area.expat_community_presence);
 
-  const tradeoffs: { title: string; text: string }[] = [];
-  if (!isEmpty(area.safety_notes))
-    tradeoffs.push({ title: "Safety", text: area.safety_notes! });
-  if (!isEmpty(area.noise_air_quality_notes))
-    tradeoffs.push({
-      title: "Noise & air",
-      text: area.noise_air_quality_notes!,
+  const weatherLevel = parseIntensity(area.flood_typhoon_risk);
+  const weatherNote =
+    !isEmpty(area.flood_typhoon_risk) && !weatherLevel
+      ? area.flood_typhoon_risk!
+      : null;
+
+  const insights: {
+    title: string;
+    level?: ReturnType<typeof parseIntensity>;
+    note?: string | null;
+  }[] = [];
+
+  if (!isEmpty(area.safety_notes)) {
+    insights.push({
+      title: "Safety",
+      level: parseIntensity(area.safety_notes),
+      note: area.safety_notes,
     });
-  if (!isEmpty(area.flood_typhoon_risk))
-    tradeoffs.push({ title: "Weather risk", text: area.flood_typhoon_risk! });
+  }
+  if (!isEmpty(area.noise_air_quality_notes)) {
+    insights.push({
+      title: "Noise & air",
+      level: parseIntensity(area.noise_air_quality_notes),
+      note: area.noise_air_quality_notes,
+    });
+  }
+  if (weatherLevel || weatherNote) {
+    insights.push({
+      title: "Weather risk",
+      level: weatherLevel,
+      note: weatherNote,
+    });
+  }
 
-  const hasBestFor = whoTags.length > 0 || extraBestFor.length > 0;
-  if (!hasBestFor && tradeoffs.length === 0) return null;
+  const hasBestFor = whoTags.length > 0 || profileLabel != null || community != null;
+  if (!hasBestFor && insights.length === 0) return null;
 
-  const gallery = (area as { images?: string[] | null }).images?.filter(Boolean) ?? [];
-  const sideImage = gallery.length > 1 ? gallery[1] : gallery[0] ?? null;
+  const gallery = area.images?.filter(Boolean) ?? [];
+  const sideImage = gallery.length > 1 ? gallery[1]! : gallery[0] ?? null;
 
   return (
     <Section bg="bg-white">
-      <p className="text-sm font-medium uppercase tracking-wider text-teal-600">
-        A good fit?
-      </p>
-      <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-        Who {area.name} suits — and what to know
-      </h2>
-      <p className="mt-2 max-w-2xl text-slate-600">
-        Best for certain lifestyles; a few things to keep in mind before you decide.
-      </p>
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr,minmax(280px,360px)] lg:items-start">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold text-slate-800">Best for</h3>
-            {hasBestFor ? (
-              <Card title="Who it suits">
-                <div className="flex flex-wrap gap-2">
+      <div className="max-w-2xl">
+        <p className="text-sm font-medium text-ocean">A good fit?</p>
+        <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
+          Who {area.name} suits — and what to know
+        </h2>
+        <p className="mt-4 text-lg leading-relaxed text-muted">
+          A quick read on lifestyle fit, plus the practical things to keep in mind.
+        </p>
+      </div>
+
+      <div className="mt-12 grid gap-10 lg:grid-cols-[1fr,minmax(280px,360px)] lg:items-start">
+        <div className="space-y-4">
+          {hasBestFor && (
+            <div className="rounded-2xl border border-line bg-foam p-6 shadow-[0_6px_24px_rgba(42,42,40,0.03)]">
+              <h3 className="font-display text-lg font-semibold text-charcoal">Best for</h3>
+              {(whoTags.length > 0 || profileLabel) && (
+                <div className="mt-4 flex flex-wrap gap-2">
                   {whoTags.map((label) => (
-                    <span
-                      key={label}
-                      className="inline-flex rounded-full bg-teal-100 px-3.5 py-1.5 text-sm font-medium text-teal-800"
-                    >
-                      {label}
-                    </span>
+                    <TagChip key={label}>{label}</TagChip>
                   ))}
+                  {profileLabel && <TagChip>{profileLabel}</TagChip>}
                 </div>
-                {extraBestFor.length > 0 && (
-                  <ul className="mt-3 list-inside list-disc space-y-1 text-sm leading-relaxed text-slate-700">
-                    {extraBestFor.map((text, i) => (
-                      <li key={i}>{text}</li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-            ) : (
-              <p className="text-slate-500">—</p>
-            )}
-          </div>
-          <div className="space-y-3">
-            <h3 className="text-base font-semibold text-slate-800">Things to know</h3>
-            {tradeoffs.length > 0 ? (
-              <div className="space-y-3">
-                {tradeoffs.map((t) => (
-                  <Card key={t.title} title={t.title} variant="tradeoff">
-                    <p className="text-sm leading-relaxed">{t.text}</p>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-500">
-                No major tradeoffs noted for this area.
-              </p>
-            )}
-          </div>
+              )}
+              {community && (
+                <div className="mt-5 max-w-xs">
+                  <MeterCard label="Expat community" className="!shadow-none border-line/70 bg-white">
+                    <LevelMeter level={community} />
+                  </MeterCard>
+                </div>
+              )}
+            </div>
+          )}
+
+          {insights.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {insights.map((item) => (
+                <InsightCard
+                  key={item.title}
+                  title={item.title}
+                  level={item.level}
+                  note={item.note}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-line bg-foam p-6">
+              <p className="text-sm text-muted">No major tradeoffs noted for this area.</p>
+            </div>
+          )}
         </div>
+
         {sideImage && (
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-md lg:sticky lg:top-6">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-sand lg:sticky lg:top-24">
             <Image
               src={sideImage}
               alt=""

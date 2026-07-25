@@ -1,146 +1,115 @@
-import { WHATSAPP_NUMBER } from "backend";
-import Link from "next/link";
+import { WHATSAPP_URL } from "./lib/contact-links";
 import {
   SectionApartmentCards,
   SectionCta,
   SectionHero,
+  SectionMovingGuide,
+  SectionNeighbourhoodGuides,
   SectionTrustTeaser,
-  SectionWhatsAppCta,
-  SectionWithImage,
 } from "./components/sections";
 
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
-
-const EXAMPLE_APARTMENTS = [
+const CURATED_APARTMENTS = [
   {
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=80",
-    title: "Modern 1BR near My Khe Beach",
-    price: "$480/month",
+    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=80",
+    title: "Bright 1BR near the beach",
+    price: "$480/mo",
     location: "My Khe",
-    features: ["Furnished", "5 min walk to beach", "6-month lease possible"],
+    type: "1 bedroom · Furnished",
+    features: ["5 min walk to beach", "Natural light", "Flexible lease"],
+    href: "/apartments",
   },
   {
-    image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&q=80",
-    title: "Studio in An Thuong expat area",
-    price: "$320/month",
+    image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=900&q=80",
+    title: "Studio in the café strip",
+    price: "$320/mo",
     location: "An Thuong",
-    features: ["Balcony", "Utilities separate", "Available March"],
+    type: "Studio",
+    features: ["Balcony", "Near coworking", "Utilities separate"],
+    href: "/apartments",
   },
   {
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=80",
-    title: "2BR serviced apartment near cafes",
-    price: "$720/month",
+    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&q=80",
+    title: "Serviced 2BR, ready to stay",
+    price: "$720/mo",
     location: "My An",
-    features: ["Cleaning included", "Quiet street", "Flexible lease"],
+    type: "2 bedroom · Serviced",
+    features: ["Cleaning included", "Quiet street", "Short or long stays"],
+    href: "/apartments",
+  },
+];
+
+const NEIGHBOURHOODS = [
+  {
+    id: "DN-A",
+    name: "My An & An Thuong",
+    tagline: "Remote work friendly",
+    description: "Cafés, coworking, and an easy beach rhythm — a popular first base in Da Nang.",
+    image: "/danang-my-khe.jpg",
+  },
+  {
+    id: "DN-B",
+    name: "Son Tra",
+    tagline: "Beach lifestyle",
+    description: "Long stretches of sand, ocean mornings, and a calmer coastal pace.",
+    image: "/danang-my-khe-hotels.jpg",
+  },
+  {
+    id: "DN-C",
+    name: "Hai Chau",
+    tagline: "City living",
+    description: "Closer to the Han River, markets, and everyday Vietnamese city life.",
+    image: "/danang-dragon-bridge.jpeg",
+  },
+  {
+    id: "DN-E",
+    name: "FPT / Hoa Hai",
+    tagline: "Quieter stays",
+    description: "More space and a slower rhythm — nice for longer stays and families.",
+    image: "/danang-hands.jpg",
   },
 ];
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="bg-foam">
       <SectionHero
         variant="home"
-        title="Verified apartments in Da Nang — no scams, no stress."
-        subtitle="We help expats and remote workers find trusted rentals. Tell us your budget and move date — we'll send you real options within 24 hours."
-        primaryCta={{ href: "/contact", label: "Get apartment matches" }}
-        secondaryCta={{ href: WHATSAPP_URL, label: "Message us on WhatsApp" }}
+        title="Find your home in Da Nang"
+        subtitle="Verified apartments and honest neighbourhood guides — for a few months or a few years."
+        primaryCta={{ href: "/apartments", label: "Explore apartments" }}
+        secondaryCta={{ href: "/areas", label: "See neighbourhoods" }}
       />
-
-      <SectionWithImage
-        bg="bg-white"
-        imageSrc="/danang-my-khe.jpg"
-        imageAlt="My Khe Beach and Da Nang coastline"
-        imageSide="right"
-      >
-        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          Beach, city, and mountains
-        </h2>
-        <p className="mt-4 text-lg text-slate-600">
-          Da Nang gives you the coast, a growing city, and easy trips to places like Ba Na Hills. 
-          We help you find a base that fits how you want to live — beachfront, café strip, or somewhere quieter.
-        </p>
-        <Link
-          href="/areas"
-          className="mt-6 inline-flex font-semibold text-teal-600 hover:text-teal-700"
-        >
-          Explore areas →
-        </Link>
-      </SectionWithImage>
-
-      <SectionTrustTeaser
-        heading="Why foreigners trust us"
-        description="Verified apartments only. English-friendly agents. Transparent pricing. We fix the usual chaos of renting in Da Nang as an expat."
-        linkHref="/why-us"
-        linkLabel="Learn more about us →"
-        testimonials={[
-          { quote: "Found my apartment within 3 days after arriving.", author: "Mark, UK" },
-          { quote: "Way easier than dealing with random Facebook agents.", author: "Lisa, Germany" },
-        ]}
-      />
-
-      <SectionWithImage
-        bg="bg-slate-50"
-        imageSrc="/danang-dragon-bridge.jpeg"
-        imageAlt="Dragon Bridge over Han River at sunset"
-        imageSide="left"
-      >
-        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          A city that works for expats
-        </h2>
-        <p className="mt-4 text-lg text-slate-600">
-          From the Dragon Bridge to the Han River waterfront, Da Nang has become a real hub for remote workers and families. 
-          We only work with agents who speak English and list places we’ve actually verified.
-        </p>
-      </SectionWithImage>
 
       <SectionApartmentCards
-        heading="Example apartments we help expats find"
-        cards={EXAMPLE_APARTMENTS}
-        secondaryCta={{ href: "/apartments", label: "See more options & area guides" }}
-        primaryCta={{ href: "/contact", label: "Tell us your budget — get matches" }}
+        heading="Apartments worth a look"
+        description="A few verified places to start with — real photos, clear prices, short and longer stays."
+        cards={CURATED_APARTMENTS}
+        primaryCta={{ href: "/apartments", label: "Browse all apartments" }}
+        secondaryCta={{ href: "/contact", label: "Get help finding one" }}
       />
 
-      <SectionWithImage
-        bg="bg-white"
-        imageSrc="/danang-hands.jpg"
-        imageAlt="Golden Bridge at Ba Na Hills"
-        imageSide="right"
-      >
-        <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
-          Explore once you’re here
-        </h2>
-        <p className="mt-4 text-lg text-slate-600">
-          Weekends at Ba Na Hills, mornings at the beach, evenings by the river. 
-          Find your apartment first — then make the most of the city.
-        </p>
-        <Link
-          href="/moving-guide"
-          className="mt-6 inline-flex font-semibold text-teal-600 hover:text-teal-700"
-        >
-          Moving to Da Nang guide →
-        </Link>
-      </SectionWithImage>
+      <SectionNeighbourhoodGuides
+        heading="Find your neighbourhood"
+        description="Beach, cafés, city energy, or somewhere quieter — here’s a feel for the main areas."
+        guides={NEIGHBOURHOODS}
+      />
+
+      <SectionTrustTeaser
+        heading="What you can expect from us"
+        description="We shortlist real apartments and help you understand the area — so choosing a place feels clearer."
+        linkLabel="How we work"
+      />
+
+      <SectionMovingGuide />
 
       <SectionCta
-        bg="bg-amber-50/30"
-        title="Tell us what you need — we'll send real options in 24h."
-        subtitle={
-          <>
-            Free. No spam. No obligation.{" "}
-            <Link href="/how-it-works" className="text-teal-600 font-medium hover:underline">
-              See how it works
-            </Link>
-            .
-          </>
-        }
-        primaryCta={{ href: "/contact", label: "Get apartment matches" }}
-        secondaryCta={{ href: WHATSAPP_URL, label: "Chat on WhatsApp" }}
-      />
-
-      <SectionWhatsAppCta
-        title="Already in Da Nang?"
-        description="Message us now and we'll help you find a place faster."
-        whatsappUrl={WHATSAPP_URL}
+        bg="bg-foam"
+        title="Tell us what you’re looking for"
+        subtitle="Share your budget and timing — we’ll send a few solid options within 24 hours."
+        primaryCta={{ href: "/contact", label: "Get matched" }}
+        secondaryCta={{ href: "/how-it-works", label: "How it works" }}
+        whatsapp={{ href: WHATSAPP_URL }}
+        partnersHref="/partners"
       />
     </div>
   );

@@ -1,57 +1,81 @@
 import Link from "next/link";
 import { Section } from "./Section";
 
-export type Testimonial = {
-  quote: string;
-  author: string;
-};
+const TRUST_POINTS = [
+  {
+    title: "Verified listings",
+    body: "Every apartment we share has been checked for availability and basic accuracy.",
+    icon: "1",
+  },
+  {
+    title: "Honest photos",
+    body: "You see the place as it is — not heavily staged marketing images.",
+    icon: "2",
+  },
+  {
+    title: "Clear pricing",
+    body: "Monthly rent up front, with notes on deposits and utilities when we have them.",
+    icon: "3",
+  },
+  {
+    title: "Local guidance",
+    body: "Neighbourhood advice from someone living in Da Nang and working with local agents.",
+    icon: "4",
+  },
+];
 
 type SectionTrustTeaserProps = {
-  heading: string;
-  description: string;
-  linkHref: string;
-  linkLabel: string;
-  testimonials: Testimonial[];
+  heading?: string;
+  description?: string;
+  linkHref?: string;
+  linkLabel?: string;
+  testimonials?: { quote: string; author: string }[];
 };
 
-/**
- * "Why foreigners trust us" style section: heading, short text, link, and 2 testimonial blockquotes.
- */
 export function SectionTrustTeaser({
-  heading,
-  description,
-  linkHref,
-  linkLabel,
-  testimonials,
+  heading = "What you can expect",
+  description = "We shortlist real apartments and help you understand the area — so you can decide with less guesswork.",
+  linkHref = "/why-us",
+  linkLabel = "How we work",
 }: SectionTrustTeaserProps) {
   return (
     <Section bg="bg-white">
-      <div className="text-center">
-        <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-sm font-medium text-ocean">Why it works</p>
+        <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
           {heading}
         </h2>
-        <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
-          {description}
-        </p>
+        <p className="mt-4 text-lg leading-relaxed text-muted">{description}</p>
+      </div>
+
+      <ul className="mt-12 grid gap-4 sm:grid-cols-2">
+        {TRUST_POINTS.map((point) => (
+          <li
+            key={point.title}
+            className="rounded-2xl border border-line bg-foam p-6 shadow-[0_6px_24px_rgba(42,42,40,0.03)]"
+          >
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full font-display text-sm font-semibold text-white"
+              style={{ backgroundColor: "#2f6f7e" }}
+              aria-hidden
+            >
+              {point.icon}
+            </div>
+            <h3 className="mt-4 font-display text-lg font-semibold text-charcoal">
+              {point.title}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">{point.body}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-10 text-center">
         <Link
           href={linkHref}
-          className="mt-6 inline-flex text-teal-600 font-semibold hover:text-teal-700"
+          className="inline-flex text-sm font-semibold text-ocean transition hover:text-ocean-deep"
         >
-          {linkLabel}
+          {linkLabel} →
         </Link>
-      </div>
-      <div className="mt-12 grid gap-6 sm:grid-cols-2">
-        {testimonials.map((t) => (
-          <blockquote
-            key={t.author}
-            className="rounded-2xl border border-slate-200 bg-slate-50/80 p-8"
-          >
-            <p className="text-slate-700">&ldquo;{t.quote}&rdquo;</p>
-            <footer className="mt-4 font-medium text-slate-900">
-              — {t.author}
-            </footer>
-          </blockquote>
-        ))}
       </div>
     </Section>
   );

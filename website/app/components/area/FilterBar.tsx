@@ -44,17 +44,17 @@ export function FilterBar({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
+    <div className="flex flex-col gap-4 rounded-2xl border border-line bg-foam p-4 sm:p-5">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Unit type */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label className="mb-1.5 block text-sm font-medium text-muted">
             Unit type
           </label>
           <select
             value={filters.unitType}
             onChange={(e) => update({ unitType: e.target.value as UnitFilter })}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-charcoal focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15"
           >
             {UNIT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -66,7 +66,7 @@ export function FilterBar({
 
         {/* Min price */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label className="mb-1.5 block text-sm font-medium text-muted">
             Min price ({currencyLabel})
           </label>
           <input
@@ -79,13 +79,13 @@ export function FilterBar({
               const v = e.target.value ? Number(e.target.value) : null;
               update({ minPrice: v });
             }}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-charcoal placeholder:text-muted focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15"
           />
         </div>
 
         {/* Max price */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label className="mb-1.5 block text-sm font-medium text-muted">
             Max price ({currencyLabel})
           </label>
           <input
@@ -98,19 +98,19 @@ export function FilterBar({
               const v = e.target.value ? Number(e.target.value) : null;
               update({ maxPrice: v });
             }}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-charcoal placeholder:text-muted focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15"
           />
         </div>
 
         {/* Sort */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-slate-700">
+          <label className="mb-1.5 block text-sm font-medium text-muted">
             Sort by
           </label>
           <select
             value={filters.sort}
             onChange={(e) => update({ sort: e.target.value as SortOption })}
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-charcoal focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15"
           >
             {SORT_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -127,12 +127,12 @@ export function FilterBar({
             type="checkbox"
             checked={filters.furnishedOnly}
             onChange={(e) => update({ furnishedOnly: e.target.checked })}
-            className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            className="h-4 w-4 rounded border-line text-ocean focus:ring-ocean/30"
           />
-          <span className="text-sm font-medium text-slate-700">Furnished only</span>
+          <span className="text-sm font-medium text-muted">Furnished only</span>
         </label>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-slate-700">Min. lease (months)</label>
+          <label className="text-sm font-medium text-muted">Min. lease (months)</label>
           <input
             type="number"
             min={1}
@@ -143,7 +143,7 @@ export function FilterBar({
               const v = e.target.value ? Number(e.target.value) : null;
               update({ minLeaseMonths: v });
             }}
-            className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="w-24 rounded-xl border border-line bg-white px-3 py-2 text-charcoal placeholder:text-muted focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15"
           />
         </div>
       </div>

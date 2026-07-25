@@ -3,105 +3,93 @@ import Link from "next/link";
 import Image from "next/image";
 import { Section, SectionHero } from "../components/sections";
 import { getAreas } from "@/lib/data";
-import { formatAliases, getAreaPriceTags, getWhoTags } from "@/lib/area-utils";
+import { formatAliases } from "@/lib/area-utils";
 
 export const metadata: Metadata = {
-  title: "Best Areas to Live in Da Nang for Expats — An Thuong, My Khe, My An",
+  title: "Neighbourhood guides — Where to live in Da Nang",
   description:
-    "Where to live in Da Nang as an expat: An Thuong, My Khe beach, My An, and quieter local areas. Vibe, price ranges, and who each area suits.",
+    "Editorial guides to Da Nang neighbourhoods for expats: My An, An Thuong, Son Tra, Hai Chau, and quieter coastal areas.",
 };
 
 export default async function AreasPage() {
   const areas = await getAreas();
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-foam">
       <SectionHero
         variant="page"
-        title="Best areas to live in Da Nang as an expat"
-        subtitle="Quick guides to An Thuong, My Khe, My An, and quieter spots — vibe, prices, and who each area suits."
+        title="Neighbourhoods"
+        subtitle="A simple guide to the main areas expats live in — vibe, lifestyle fit, and who each place suits."
       />
 
-      <Section bg="bg-slate-50">
-        <div className="space-y-16">
-          {areas.map((area) => {
-            const imageUrl = (area as { images?: string[] | null }).images?.[0];
+      <Section bg="bg-foam">
+        <div className="space-y-20">
+          {areas.map((area, index) => {
+            const imageUrl = area.images?.[0];
+            const imageLeft = index % 2 === 1;
             return (
-            <article
-              key={area.id}
-              className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm"
-            >
-              <div className="grid md:grid-cols-2 gap-0">
-                <Link href={`/areas/${area.id}`} className="relative block aspect-[4/3] md:aspect-auto md:min-h-[280px]">
+              <article
+                key={area.id}
+                className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
+              >
+                <Link
+                  href={`/areas/${area.id}`}
+                  className={`relative block aspect-[5/4] overflow-hidden rounded-2xl bg-sand ${
+                    imageLeft ? "lg:order-1" : "lg:order-2"
+                  }`}
+                >
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
                       alt={area.name}
                       fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover transition duration-700 ease-soft hover:scale-[1.03]"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-slate-200" aria-hidden />
+                    <div className="absolute inset-0 bg-sand-deep" aria-hidden />
                   )}
                 </Link>
-                <div className="p-8 flex flex-col justify-center">
+
+                <div className={imageLeft ? "lg:order-2" : "lg:order-1"}>
+                  {area.vibe?.trim() && (
+                    <p className="text-sm font-medium tracking-wide text-ocean">
+                      {area.vibe.trim()}
+                    </p>
+                  )}
                   <Link
                     href={`/areas/${area.id}`}
-                    className="text-2xl font-bold text-slate-900 hover:text-teal-600 transition"
+                    className="mt-2 block font-display text-3xl font-semibold tracking-tight text-charcoal transition hover:text-ocean"
                   >
                     {area.name}
                   </Link>
-                  {formatAliases((area as { aliases?: string | string[] | null }).aliases) && (
-                    <p className="mt-1 text-sm text-slate-500">
-                      {formatAliases((area as { aliases?: string | string[] | null }).aliases)}
+                  {formatAliases(area.aliases) && (
+                    <p className="mt-2 text-sm text-muted">{formatAliases(area.aliases)}</p>
+                  )}
+                  {area.who?.trim() && (
+                    <p className="mt-5 text-lg leading-relaxed text-muted">
+                      Best for {area.who.trim()}.
                     </p>
                   )}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {area.vibe?.trim() && (
-                      <span className="inline-flex rounded-full bg-teal-100 px-3.5 py-1.5 text-sm font-medium text-teal-900">
-                        {area.vibe.trim()}
-                      </span>
-                    )}
-                    {getAreaPriceTags(area).map((label) => (
-                      <span key={label} className="inline-flex rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-800">
-                        {label}
-                      </span>
-                    ))}
-                    {getWhoTags(area.who).map((label) => (
-                      <span key={label} className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-800">
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-6 flex flex-wrap gap-3">
+                  <div className="mt-8 flex flex-wrap gap-3">
                     <Link
                       href={`/areas/${area.id}`}
-                      className="inline-flex rounded-xl border border-teal-500 px-5 py-2.5 text-sm font-semibold text-teal-600 transition hover:bg-teal-50"
+                      className="inline-flex rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
                     >
-                      View {area.name} guide
+                      Read the guide
                     </Link>
                     <Link
-                      href="/contact"
-                      className="inline-flex rounded-xl bg-teal-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-600"
+                      href={`/contact?preferred_area=${encodeURIComponent(area.name)}&areaId=${area.id}`}
+                      className="inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
                     >
-                      Find apartments in {area.name}
+                      Find a home here
                     </Link>
                   </div>
                 </div>
-              </div>
-            </article>
+              </article>
             );
           })}
         </div>
-        <p className="mt-12 text-center">
-          <Link
-            href="/contact"
-            className="inline-flex rounded-xl bg-teal-500 px-6 py-4 text-base font-semibold text-white shadow-lg transition hover:bg-teal-600"
-          >
-            Tell us your budget — we check availability
-          </Link>
-        </p>
       </Section>
     </div>
   );

@@ -1,0 +1,30 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Secret env (never commit)
+.secret.local
+**/.secret.local
+scripts/secrets
+
+# Build output
+backend/dist
+types/dist
+# Next.js local env (may contain secrets)
+.env.local
+**/.env.local
+.env*.local
+**/.env*.local
+
+# Env files with secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
+!**/.secret.local.example
+
+# Temp scrape/debug data
+tmp_fb/

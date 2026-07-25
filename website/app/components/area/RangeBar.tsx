@@ -23,15 +23,19 @@ export function RangeBar({ label, min, max, currency, scaleMax }: RangeBarProps)
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-sm">
-        <span className="font-medium text-slate-700">{label}</span>
-        <span className="text-slate-600">
+        <span className="font-medium text-charcoal/80">{label}</span>
+        <span className="text-muted">
           {format(displayMin)} – {format(displayMax)}
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-sand">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-teal-400 to-teal-600"
-          style={{ marginLeft: `${pctMin}%`, width: `${Math.max(pctWidth, 8)}%` }}
+          className="h-full rounded-full"
+          style={{
+            marginLeft: `${pctMin}%`,
+            width: `${Math.max(pctWidth, 8)}%`,
+            backgroundColor: "#2f6f7e",
+          }}
         />
       </div>
     </div>

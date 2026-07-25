@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 const AreaMap = dynamic(() => import("./AreaMap").then((m) => ({ default: m.AreaMap })), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[280px] w-full items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+    <div className="flex h-full min-h-[280px] w-full items-center justify-center rounded-quieter bg-sand text-muted">
       Loading map…
     </div>
   ),

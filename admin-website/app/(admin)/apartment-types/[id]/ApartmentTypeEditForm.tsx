@@ -25,9 +25,9 @@ export function ApartmentTypeEditForm({ type_ }: { type_: ApartmentType }) {
   );
 
   return (
-    <form action={formAction} className="mt-6 max-w-xl space-y-4">
+    <form action={formAction} className="mt-6 max-w-xl space-y-5">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="title" className="field-label">
           Title
         </label>
         <input
@@ -35,11 +35,11 @@ export function ApartmentTypeEditForm({ type_ }: { type_: ApartmentType }) {
           name="title"
           defaultValue={type_.title}
           required
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="field-input"
         />
       </div>
       <div>
-        <label htmlFor="desc" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="desc" className="field-label">
           Description
         </label>
         <textarea
@@ -48,11 +48,11 @@ export function ApartmentTypeEditForm({ type_ }: { type_: ApartmentType }) {
           rows={3}
           defaultValue={type_.desc}
           required
-          className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="field-input"
         />
       </div>
       <div>
-        <label htmlFor="sort_order" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="sort_order" className="field-label">
           Sort order
         </label>
         <input
@@ -62,25 +62,19 @@ export function ApartmentTypeEditForm({ type_ }: { type_: ApartmentType }) {
           min={0}
           defaultValue={type_.sort_order}
           required
-          className="mt-1 block w-full max-w-[8rem] rounded-lg border border-slate-300 px-3 py-2 text-slate-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="field-input max-w-[8rem]"
         />
       </div>
       {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
+        <p className="text-sm text-coral-deep" role="alert">
           {state.error}
         </p>
       )}
       <div className="flex gap-3">
-        <button
-          type="submit"
-          className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-        >
+        <button type="submit" className="btn-primary">
           Save
         </button>
-        <Link
-          href="/apartment-types"
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-        >
+        <Link href="/apartment-types" className="btn-secondary">
           Cancel
         </Link>
       </div>

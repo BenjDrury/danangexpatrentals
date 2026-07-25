@@ -8,29 +8,30 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.894 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" />
-    </svg>
-  );
-}
-
-const linkClass = "text-slate-500 transition hover:text-slate-900";
+const linkClass = "text-muted transition hover:text-charcoal";
 
 export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Column 1 — Platform */}
+    <footer className="border-t border-line bg-sand/40">
+      <div className="content-band py-14 sm:py-16">
+        <div className="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Platform
+            <p className="font-display text-xl font-semibold tracking-tight text-charcoal">
+              Da Nang Expat Rentals
+            </p>
+            <p className="mt-4 max-w-sm text-base leading-relaxed text-muted">
+              Helping expats and remote workers find a place to stay in Da Nang —
+              verified apartments, honest area guides, and friendly support.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-display text-sm font-semibold tracking-wide text-charcoal">
+              Explore
             </h3>
-            <ul className="mt-4 flex flex-col gap-3">
+            <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
                 <Link href="/apartments" className={linkClass}>
                   Apartments
@@ -38,31 +39,40 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
               </li>
               <li>
                 <Link href="/areas" className={linkClass}>
-                  Areas
+                  Neighbourhoods
                 </Link>
               </li>
+              <li>
+                <Link href="/moving-guide" className={linkClass}>
+                  Living in Da Nang
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className={linkClass}>
+                  Get matched
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-display text-sm font-semibold tracking-wide text-charcoal">
+              Resources
+            </h3>
+            <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
                 <Link href="/how-it-works" className={linkClass}>
                   How it works
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className={linkClass}>
-                  Get matches
+                <Link href="/why-us" className={linkClass}>
+                  Why trust us
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          {/* Column 2 — Resources */}
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Resources
-            </h3>
-            <ul className="mt-4 flex flex-col gap-3">
               <li>
                 <Link href="/avoid-scams" className={linkClass}>
-                  Avoid scams in Da Nang
+                  Avoid scams
                 </Link>
               </li>
               <li>
@@ -70,28 +80,17 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
                   FAQ
                 </Link>
               </li>
-              <li>
-                <Link href="/moving-guide" className={linkClass}>
-                  Moving to Da Nang guide
-                </Link>
-              </li>
             </ul>
           </div>
 
-          {/* Column 3 — Company */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Company
+            <h3 className="font-display text-sm font-semibold tracking-wide text-charcoal">
+              Contact
             </h3>
-            <ul className="mt-4 flex flex-col gap-3">
-              <li>
-                <Link href="/why-us" className={linkClass}>
-                  About / Why us
-                </Link>
-              </li>
+            <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
                 <Link href="/contact" className={linkClass}>
-                  Contact
+                  Concierge form
                 </Link>
               </li>
               <li>
@@ -99,45 +98,28 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-slate-500 transition hover:text-slate-900"
+                  className="inline-flex items-center gap-2 text-muted transition hover:text-charcoal"
                 >
                   <WhatsAppIcon className="h-4 w-4 shrink-0" />
                   WhatsApp
                 </a>
               </li>
-            </ul>
-          </div>
-
-          {/* Column 4 — Trust */}
-          <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
-              Trust
-            </h3>
-            <ul className="mt-4 flex flex-col gap-3 text-slate-600">
-              <li className="flex items-start gap-2">
-                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
-                <span>Verified apartments only</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
-                <span>English-friendly agents</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" />
-                <span>Transparent pricing</span>
+              <li>
+                <Link href="/partners" className={linkClass}>
+                  For agents & owners
+                </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom row */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-100 pt-8 sm:flex-row">
-          <p className="text-sm text-slate-500">
-            © {currentYear} Da Nang Expat Rentals. All rights reserved.
+        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 sm:flex-row sm:items-center">
+          <p className="text-sm text-muted">
+            © {currentYear} Da Nang Expat Rentals
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
+          <div className="flex flex-wrap gap-6 text-sm">
             <Link href="/privacy" className={linkClass}>
-              Privacy policy
+              Privacy
             </Link>
             <Link href="/terms" className={linkClass}>
               Terms

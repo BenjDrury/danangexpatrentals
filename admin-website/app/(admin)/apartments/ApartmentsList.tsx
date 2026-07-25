@@ -70,17 +70,14 @@ export function ApartmentsList({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+    <div className="mt-8 space-y-8">
+      <div className="surface p-5 sm:p-6">
+        <h2 className="mb-4 font-display text-sm font-semibold tracking-wide text-muted">
           Filters
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Min price (USD)
-            </label>
+            <label className="field-label">Min price (USD)</label>
             <input
               type="number"
               min={0}
@@ -93,13 +90,11 @@ export function ApartmentsList({
                   minPrice: e.target.value ? Number(e.target.value) : null,
                 }))
               }
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+              className="field-input"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Max price (USD)
-            </label>
+            <label className="field-label">Max price (USD)</label>
             <input
               type="number"
               min={0}
@@ -112,13 +107,11 @@ export function ApartmentsList({
                   maxPrice: e.target.value ? Number(e.target.value) : null,
                 }))
               }
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+              className="field-input"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Min sqm
-            </label>
+            <label className="field-label">Min sqm</label>
             <input
               type="number"
               min={0}
@@ -131,13 +124,11 @@ export function ApartmentsList({
                   minSqm: e.target.value ? Number(e.target.value) : null,
                 }))
               }
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+              className="field-input"
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Max sqm
-            </label>
+            <label className="field-label">Max sqm</label>
             <input
               type="number"
               min={0}
@@ -150,16 +141,16 @@ export function ApartmentsList({
                   maxSqm: e.target.value ? Number(e.target.value) : null,
                 }))
               }
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+              className="field-input"
             />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <label className="text-sm font-medium text-slate-700">Features:</label>
+          <label className="text-sm font-medium text-charcoal">Features:</label>
           <select
             value={selectedFeature}
             onChange={(e) => setSelectedFeature(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="field-select"
           >
             <option value="">Select feature</option>
             {allFeatures.map((f) => (
@@ -172,7 +163,7 @@ export function ApartmentsList({
             type="button"
             onClick={addFeatureFilter}
             disabled={!selectedFeature}
-            className="rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50"
+            className="btn-primary px-3 py-2"
           >
             Add filter
           </button>
@@ -181,13 +172,13 @@ export function ApartmentsList({
               {filters.features.map((f) => (
                 <span
                   key={f}
-                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700"
+                  className="inline-flex items-center gap-1 rounded-quieter bg-sand px-2.5 py-1 text-xs font-medium text-charcoal"
                 >
                   {f}
                   <button
                     type="button"
                     onClick={() => removeFeatureFilter(f)}
-                    className="rounded-full p-0.5 hover:bg-slate-200"
+                    className="rounded-quieter p-0.5 text-muted transition hover:bg-sand-deep hover:text-charcoal"
                     aria-label={`Remove ${f}`}
                   >
                     ×
@@ -197,55 +188,54 @@ export function ApartmentsList({
             </span>
           )}
         </div>
-        <p className="mt-3 text-sm text-slate-500">
+        <p className="mt-3 text-sm text-muted">
           Showing {filtered.length} of {apartments.length} apartments
         </p>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="surface overflow-hidden">
         {filtered.length === 0 ? (
-          <p className="p-8 text-center text-slate-500">No apartments match the filters.</p>
+          <p className="p-8 text-center text-muted">No apartments match the filters.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-line/80">
+              <thead className="bg-sand/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                     Title
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                     Area
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted">
                     Price
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted">
                     Sqm
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                     Features
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
+              <tbody className="divide-y divide-line/60">
                 {filtered.map((apt) => (
-                  <tr key={apt.id} className="hover:bg-slate-50/50">
+                  <tr key={apt.id} className="transition hover:bg-sand/30">
                     <td className="px-4 py-3">
-                      <span className="font-medium text-slate-900">{apt.title}</span>
-                      <span className="ml-2 text-xs text-slate-400">({apt.bedrooms} BR)</span>
+                      <span className="font-medium text-charcoal">{apt.title}</span>
+                      <span className="ml-2 text-xs text-muted">({apt.bedrooms} BR)</span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
+                    <td className="px-4 py-3 text-sm text-muted">
                       {areaNames[apt.area_id] ?? apt.area_id}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium text-slate-900">
+                    <td className="px-4 py-3 text-right text-sm font-medium text-charcoal">
                       ${apt.price}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-slate-600">
+                    <td className="px-4 py-3 text-right text-sm text-muted">
                       {apt.size_sqm != null ? `${apt.size_sqm} m²` : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-sm text-slate-600">
+                      <span className="text-sm text-muted">
                         {apt.features.length > 0 ? apt.features.join(", ") : "—"}
                       </span>
                     </td>

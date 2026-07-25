@@ -9,105 +9,85 @@ type SectionHeroProps = {
   variant: HeroVariant;
   title: string;
   subtitle: string;
-  /** For "page": optional. For "home": primary + secondary */
+  brand?: string;
   primaryCta?: { href: string; label: string };
   secondaryCta?: { href: string; label: string; external?: boolean };
-  /** Only for variant="home": optional right-column image (if not set, uses background image only) */
   image?: { src: string; alt: string };
 };
 
-/**
- * Hero section. "page" = centered title + subtitle (white bg). "home" = dark gradient, two columns, optional image.
- */
 export function SectionHero({
   variant,
   title,
   subtitle,
+  brand = "Da Nang Expat Rentals",
   primaryCta,
   secondaryCta,
-  image,
 }: SectionHeroProps) {
   if (variant === "page") {
     return (
-      <Section bg="bg-white">
-        <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              {title}
-            </h1>
-            <p className="mt-6 text-lg text-slate-600">{subtitle}</p>
-            {(primaryCta || secondaryCta) && (
-              <div className="mt-10 flex flex-wrap justify-center gap-4">
-                {primaryCta && (
-                  <CtaButton href={primaryCta.href} primary>
-                    {primaryCta.label}
-                  </CtaButton>
-                )}
-                {secondaryCta && (
-                  <CtaButton
-                    href={secondaryCta.href}
-                    className={secondaryCta.external ? "border-slate-500 text-white hover:bg-slate-700/50" : undefined}
-                  >
-                    {secondaryCta.label}
-                  </CtaButton>
-                )}
-              </div>
-            )}
-          </div>
+      <Section bg="bg-foam" className="pt-28 sm:pt-36">
+        <div className="mx-auto max-w-3xl text-center">
+          <h1 className="font-display text-4xl font-semibold tracking-tight text-charcoal sm:text-5xl text-balance">
+            {title}
+          </h1>
+          <p className="mt-6 text-lg leading-relaxed text-muted sm:text-xl">{subtitle}</p>
+          {(primaryCta || secondaryCta) && (
+            <div className="mt-10 flex flex-wrap justify-center gap-3">
+              {primaryCta && (
+                <CtaButton href={primaryCta.href} variant="primary">
+                  {primaryCta.label}
+                </CtaButton>
+              )}
+              {secondaryCta && (
+                <CtaButton href={secondaryCta.href} variant="secondary">
+                  {secondaryCta.label}
+                </CtaButton>
+              )}
+            </div>
+          )}
+        </div>
       </Section>
     );
   }
 
-  // variant === "home" — full-bleed hero with background image
   return (
-    <section className="relative min-h-[70vh] overflow-hidden text-white flex flex-col justify-center">
-      {/* Background image */}
+    <section className="relative flex min-h-[85svh] items-end overflow-hidden sm:min-h-[90svh]">
       <div className="absolute inset-0">
         <Image
           src="/danang-hero-bg.jpg"
-          alt=""
+          alt="Da Nang coastline at golden hour"
           fill
-          className="object-cover object-center"
+          className="object-cover object-center animate-soft-zoom"
           sizes="100vw"
           priority
         />
+        <div className="hero-scrim" aria-hidden />
       </div>
-      {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-slate-900/55" aria-hidden />
-      {/* Content */}
-      <div className={`${SECTION_CLASS} relative z-10 ${image ? "grid gap-12 lg:grid-cols-2 lg:gap-16 lg:items-center" : ""}`}>
+
+      <div className={`${SECTION_CLASS} relative z-10 w-full pb-14 pt-28 sm:pb-20 sm:pt-36`}>
         <div className="max-w-2xl">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl drop-shadow-sm">
+          <p className="animate-fade-up font-display text-sm font-medium hero-copy sm:text-base">
+            {brand}
+          </p>
+          <h1 className="animate-fade-up-delay mt-4 font-display text-4xl font-semibold tracking-tight text-balance hero-copy sm:text-5xl lg:text-[3.5rem]">
             {title}
           </h1>
-          <p className="mt-6 text-lg text-slate-200 sm:text-xl drop-shadow-sm">{subtitle}</p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          <p className="animate-fade-up-delay-2 mt-5 max-w-xl text-lg leading-relaxed hero-copy-muted sm:text-xl">
+            {subtitle}
+          </p>
+          <div className="animate-fade-up-delay-2 mt-9 flex flex-wrap gap-3">
             {primaryCta && (
-              <CtaButton href={primaryCta.href} primary>
+              <CtaButton href={primaryCta.href} variant="onDark">
                 {primaryCta.label}
               </CtaButton>
             )}
             {secondaryCta && (
-              <CtaButton
-                href={secondaryCta.href}
-                className="border-slate-400 text-white hover:bg-white/10 hover:border-slate-300"
-              >
+              <CtaButton href={secondaryCta.href} variant="onDarkSecondary">
                 {secondaryCta.label}
               </CtaButton>
             )}
           </div>
         </div>
-        {image && (
-          <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-2xl lg:aspect-square ring-2 ring-white/20">
-            <Image
-              src={image.src}
-              alt={image.alt}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority
-            />
-          </div>
-        )}
       </div>
     </section>
   );

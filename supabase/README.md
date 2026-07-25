@@ -1,12 +1,11 @@
 # Supabase migrations & seed
 
-Run these in the **Supabase SQL Editor** in order:
+Run these in the **Supabase SQL Editor** in order (or via `scripts` / `psql` with `SUPABASE_DB_URI`):
 
-1. **01-leads.sql** — leads table (contact form)
-2. **02-areas-apartments.sql** — areas, apartment_types, apartments + seed data
-3. **03-users.sql** — profiles (for admin-website roles)
-4. **04-admin-rls.sql** — lets logged-in admins read areas, apartment types, apartments, leads
-5. **05-admin-write.sql** — lets authenticated users update/insert/delete areas and apartment_types
-6. **06-admin-only-write.sql** — restricts those writes to users with `role = 'admin'` in `profiles` (run after 05)
+Numbered files in this folder (`01` … `16`). Notable recent:
 
-Use the same Supabase project for the main website and admin-website.
+- **14-listing-validity.sql** — `last_validity_check` for public freshness
+- **15-partner-integrations.sql** — partner OAuth / integrations
+- **16-listing-status-approval.sql** — `pending_review`, default status `draft`, `live_requested_at`, partner cannot set `available` (trigger)
+
+Use the same Supabase project for the main website, admin-website, and partner-website.

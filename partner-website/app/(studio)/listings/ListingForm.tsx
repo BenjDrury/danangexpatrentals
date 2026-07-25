@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   convertPrice,
   formatUsd,
@@ -16,6 +16,7 @@ import {
 } from "./actions";
 import {
   ALL_LISTING_STATUSES,
+  type ListingStatus,
 } from "@/lib/listing-status";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -85,8 +86,13 @@ export function ListingForm({
     }
   }, [amountStr, currency, usdVndRate]);
 
-  const currentStatus = listing?.status ?? "draft";
-  const statusOptions: string[] = isAdmin ? [...ALL_LISTING_STATUSES] : [];
+  const currentStatus = (listing?.status ?? "draft") as ListingStatus;
+  const statusOptions: ListingStatus[] = isAdmin ? [...ALL_LISTING_STATUSES] : [];
+  const [statusValue, setStatusValue] = useState<ListingStatus>(currentStatus);
+
+  useEffect(() => {
+    setStatusValue(currentStatus);
+  }, [currentStatus]);
 
   async function uploadFile(file: File): Promise<string | null> {
     const supabase = createClient();
@@ -273,7 +279,8 @@ export function ListingForm({
             <select
               id="status"
               name="status"
-              defaultValue={currentStatus}
+              value={statusValue}
+              onChange={(e) => setStatusValue(e.target.value as ListingStatus)}
               className="mt-1.5 w-full rounded-quieter border border-admin/35 bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-admin focus:ring-2 focus:ring-admin/25"
             >
               {statusOptions.map((s) => (
@@ -282,7 +289,7 @@ export function ListingForm({
                 </option>
               ))}
             </select>
-            {currentStatus === "reserved" ? (
+            {statusValue === "reserved" ? (
               <p className="mt-1.5 text-xs text-muted">{t("status.reservedHint")}</p>
             ) : null}
           </div>

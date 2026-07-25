@@ -1,6 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   requestListingLive,
   updateListingStatus,
@@ -12,6 +13,7 @@ import {
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { statusMessageKey } from "@/lib/i18n/messages";
 import { StatusChip } from "@/components/StatusChip";
+import type { Apartment } from "types";
 
 type Props = {
   listingId: string;
@@ -22,10 +24,17 @@ type Props = {
 
 export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Props) {
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [value, setValue] = useState(status ?? "draft");
+  const router = useRouter();
   const { t } = useLocale();
-  const value = status ?? "draft";
   const canRequestLive = value === "draft";
   const isPendingReview = value === "pending_review";
+
+  // Keep local select in sync when the server revalidates props.
+  useEffect(() => {
+    setValue(status ?? "draft");
+  }, [status]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -38,8 +47,17 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
               disabled={pending}
               onChange={(e) => {
                 const next = e.target.value;
+                const prev = value;
+                setError(null);
+                setValue(next);
                 startTransition(async () => {
-                  await updateListingStatus(listingId, next);
+                  const result = await updateListingStatus(listingId, next);
+                  if (result.error) {
+                    setValue(prev);
+                    setError(result.error);
+                    return;
+                  }
+                  router.refresh();
                 });
               }}
               className="rounded-quieter border border-admin/35 bg-white px-3 py-2 text-charcoal outline-none focus:border-admin focus:ring-2 focus:ring-admin/25"
@@ -51,11 +69,16 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
               ))}
             </select>
           </label>
+          {error ? (
+            <p className="mt-2 text-xs text-coral" role="alert">
+              {error}
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="font-medium text-charcoal">{t("status.label")}</span>
-          <StatusChip status={value} />
+          <StatusChip status={value as Apartment["status"]} />
           <span className="text-xs text-muted">{t("status.partnerReadOnlyHint")}</span>
         </div>
       )}
@@ -76,8 +99,15 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
           type="button"
           disabled={pending}
           onClick={() => {
+            setError(null);
             startTransition(async () => {
-              await requestListingLive(listingId);
+              const result = await requestListingLive(listingId);
+              if (result.error) {
+                setError(result.error);
+                return;
+              }
+              setValue("pending_review");
+              router.refresh();
             });
           }}
           className="w-fit rounded-quieter bg-ocean px-4 py-2 text-sm font-semibold text-white transition hover:bg-ocean-deep disabled:opacity-60"
@@ -95,8 +125,15 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
           type="button"
           disabled={pending}
           onClick={() => {
+            setError(null);
             startTransition(async () => {
-              await approveListingLive(listingId);
+              const result = await approveListingLive(listingId);
+              if (result.error) {
+                setError(result.error);
+                return;
+              }
+              setValue("available");
+              router.refresh();
             });
           }}
           className="w-fit rounded-quieter bg-admin px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-admin-deep disabled:opacity-60"

@@ -116,7 +116,12 @@ async function readListingFields(
     // New partner listings always start as draft (even if form is tampered).
     status = "draft";
   } else {
-    const requested = String(formData.get("status") ?? opts.existingStatus ?? "draft");
+    // Empty string is a real FormData value — don't treat it as missing via ??.
+    const rawStatus = formData.get("status");
+    const requested =
+      typeof rawStatus === "string" && rawStatus.trim()
+        ? rawStatus.trim()
+        : (opts.existingStatus ?? "draft");
     if (opts.isAdmin) {
       if (!(ALL_LISTING_STATUSES as readonly string[]).includes(requested)) {
         return { error: "Invalid status." } as const;
@@ -125,6 +130,7 @@ async function readListingFields(
     } else {
       // Partners cannot change status via the edit form — keep existing.
       // pending_review goes through requestListingLive; live via admin approve.
+      // Never honor a partner-submitted `available` (or any other change).
       const existing = opts.existingStatus ?? "draft";
       status = (
         (ALL_LISTING_STATUSES as readonly string[]).includes(existing)
@@ -224,16 +230,35 @@ export async function updateListing(
   });
   if ("error" in fields) return { error: fields.error };
 
-  const { error } = await supabase
+  const patch: Record<string, unknown> = {
+    ...fields,
+    updated_at: new Date().toISOString(),
+  };
+  // Match updateListingStatus side-effects when admin changes lifecycle status.
+  if (session.isAdmin) {
+    if (fields.status === "available") {
+      patch.last_bumped_at = new Date().toISOString();
+      patch.last_validity_check = new Date().toISOString();
+      patch.live_rejection_note = null;
+    }
+    if (fields.status === "draft") {
+      patch.live_requested_at = null;
+    }
+  }
+
+  const { data, error } = await supabase
     .from("apartments")
-    .update({
-      ...fields,
-      updated_at: new Date().toISOString(),
-    })
+    .update(patch)
     .eq("id", id)
-    .eq("estate_company_id", session.estateCompanyId);
+    .eq("estate_company_id", session.estateCompanyId)
+    .select("id, status")
+    .maybeSingle();
 
   if (error) return { error: error.message };
+  if (!data) return { error: "Could not update listing." };
+  if (session.isAdmin && data.status !== fields.status) {
+    return { error: "Status could not be updated." };
+  }
 
   revalidateListingPaths(id);
   return { ok: true };
@@ -265,13 +290,19 @@ export async function updateListingStatus(id: string, status: string): Promise<L
     patch.live_requested_at = null;
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("apartments")
     .update(patch)
     .eq("id", id)
-    .eq("estate_company_id", session.estateCompanyId);
+    .eq("estate_company_id", session.estateCompanyId)
+    .select("id, status")
+    .maybeSingle();
 
   if (error) return { error: error.message };
+  if (!data) return { error: "Could not update listing status." };
+  if (data.status !== status) {
+    return { error: "Status could not be updated." };
+  }
 
   revalidateListingPaths(id);
   return { ok: true };

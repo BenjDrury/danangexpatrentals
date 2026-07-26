@@ -30,6 +30,11 @@ function stageKey(stage: string): MessageKey {
   return STAGE_KEYS[stage] ?? "contacts.stage.inquiry";
 }
 
+function whatsappHref(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : `https://wa.me/`;
+}
+
 type Props = {
   listingId: string;
   deals: ListingDealRow[];
@@ -42,12 +47,13 @@ function DealCommissionEditor({ deal }: { deal: ListingDealRow }) {
   const [state, action, pending] = useActionState<DealActionState, FormData>(bound, {});
   const [disconnectPending, startDisconnect] = useTransition();
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
+  const isContact = Boolean(deal.contact_id);
 
   return (
     <li className="space-y-2.5 py-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          {deal.contact_id && deal.contact_name ? (
+          {isContact && deal.contact_name ? (
             <Link
               href={`/contacts/${deal.contact_id}`}
               className="font-display text-base font-semibold text-charcoal transition hover:text-ocean"
@@ -60,8 +66,43 @@ function DealCommissionEditor({ deal }: { deal: ListingDealRow }) {
             </p>
           )}
           <p className="mt-0.5 text-xs text-muted">{t(stageKey(deal.stage))}</p>
+          {isContact ? (
+            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              {deal.contact_phone ? (
+                <a
+                  href={`tel:${deal.contact_phone}`}
+                  className="font-medium text-ocean hover:underline"
+                >
+                  {deal.contact_phone}
+                </a>
+              ) : null}
+              {deal.contact_whatsapp ? (
+                <a
+                  href={whatsappHref(deal.contact_whatsapp)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-palm hover:underline"
+                >
+                  WhatsApp
+                </a>
+              ) : null}
+              {deal.contact_email ? (
+                <a
+                  href={`mailto:${deal.contact_email}`}
+                  className="font-medium text-ocean hover:underline"
+                >
+                  {deal.contact_email}
+                </a>
+              ) : null}
+              {!deal.contact_phone && !deal.contact_whatsapp && !deal.contact_email ? (
+                <span className="text-muted">{t("workspace.contacts.noReach")}</span>
+              ) : null}
+            </div>
+          ) : (
+            <p className="mt-1 text-xs text-muted">{t("commission.setDefaultHint")}</p>
+          )}
         </div>
-        {deal.contact_id ? (
+        {isContact ? (
           <Button
             type="button"
             variant="ghost"
@@ -128,79 +169,95 @@ export function ListingDealsPanel({ listingId, deals, availableContacts }: Props
   >(boundConnect, {});
 
   return (
-    <Section title={t("commission.sectionTitle")} description={t("commission.sectionHint")} bare>
-      {contactDeals.length > 0 || listingDefault ? (
-        <ul className="divide-y divide-line/80 border-y border-line/80">
-          {listingDefault ? <DealCommissionEditor deal={listingDefault} /> : null}
-          {contactDeals.map((deal) => (
-            <DealCommissionEditor key={deal.id} deal={deal} />
-          ))}
-        </ul>
-      ) : (
-        <p className="rounded-lg border border-dashed border-line bg-white/50 px-4 py-5 text-sm text-muted">
-          {t("commission.empty")}
-        </p>
-      )}
+    <div className="space-y-5">
+      <Section
+        title={t("workspace.contacts.tabTitle")}
+        description={t("workspace.contacts.tabHint")}
+        bare
+      >
+        {contactDeals.length > 0 ? (
+          <ul className="divide-y divide-line/80 border-y border-line/80">
+            {contactDeals.map((deal) => (
+              <DealCommissionEditor key={deal.id} deal={deal} />
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-lg border border-dashed border-line bg-white/50 px-4 py-5 text-sm text-muted">
+            {t("workspace.contacts.empty")}
+          </p>
+        )}
 
-      {!listingDefault ? (
-        <form
-          action={defaultAction}
-          className="mt-4 space-y-2.5 rounded-lg border border-line/70 bg-foam/40 p-3.5"
-        >
-          <p className="text-sm font-medium text-charcoal">{t("commission.setDefault")}</p>
-          <p className="text-xs text-muted">{t("commission.setDefaultHint")}</p>
-          <CommissionFields compact />
-          {defaultState.error && (
-            <p className="text-sm text-red-700" role="alert">
-              {defaultState.error}
-            </p>
-          )}
-          {defaultState.ok && (
-            <p className="text-sm text-palm" role="status">
-              {t("commission.saved")}
-            </p>
-          )}
-          <Button type="submit" variant="secondary" size="sm" disabled={defaultPending}>
-            {defaultPending ? t("commission.saving") : t("commission.save")}
-          </Button>
-        </form>
-      ) : null}
-
-      {availableContacts.length > 0 ? (
-        <form
-          action={connectAction}
-          className="mt-4 space-y-2.5 rounded-lg border border-line/70 bg-foam/40 p-3.5"
-        >
-          <p className="text-sm font-medium text-charcoal">{t("commission.connectContact")}</p>
-          <label className="block text-sm">
-            <span className="sr-only">{t("commission.pickContact")}</span>
-            <select name="contact_id" required defaultValue="" className={inputClass}>
-              <option value="" disabled>
-                {t("commission.pickContact")}
-              </option>
-              {availableContacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+        {availableContacts.length > 0 ? (
+          <form
+            action={connectAction}
+            className="mt-4 space-y-2.5 rounded-lg border border-line/70 bg-foam/40 p-3.5"
+          >
+            <p className="text-sm font-medium text-charcoal">{t("commission.connectContact")}</p>
+            <label className="block text-sm">
+              <span className="sr-only">{t("commission.pickContact")}</span>
+              <select name="contact_id" required defaultValue="" className={inputClass}>
+                <option value="" disabled>
+                  {t("commission.pickContact")}
                 </option>
-              ))}
-            </select>
-          </label>
-          <CommissionFields compact />
-          {connectState.error && (
-            <p className="text-sm text-red-700" role="alert">
-              {connectState.error}
-            </p>
-          )}
-          {connectState.ok && (
-            <p className="text-sm text-palm" role="status">
-              {t("commission.connected")}
-            </p>
-          )}
-          <Button type="submit" variant="secondary" size="sm" disabled={connecting}>
-            {connecting ? t("contacts.connecting") : t("contacts.connect")}
-          </Button>
-        </form>
-      ) : null}
-    </Section>
+                {availableContacts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="text-xs text-muted">{t("commission.fieldsHint")}</p>
+            <CommissionFields compact />
+            {connectState.error && (
+              <p className="text-sm text-red-700" role="alert">
+                {connectState.error}
+              </p>
+            )}
+            {connectState.ok && (
+              <p className="text-sm text-palm" role="status">
+                {t("commission.connected")}
+              </p>
+            )}
+            <Button type="submit" variant="secondary" size="sm" disabled={connecting}>
+              {connecting ? t("contacts.connecting") : t("contacts.connect")}
+            </Button>
+          </form>
+        ) : (
+          <p className="mt-3 text-sm text-muted">
+            <Link href="/contacts" className="font-medium text-ocean hover:underline">
+              {t("workspace.contacts.addFirst")}
+            </Link>
+          </p>
+        )}
+      </Section>
+
+      <Section
+        title={t("commission.listingDefault")}
+        description={t("commission.setDefaultHint")}
+      >
+        {listingDefault ? (
+          <ul className="divide-y divide-line/80 border-t border-line/80">
+            <DealCommissionEditor deal={listingDefault} />
+          </ul>
+        ) : (
+          <form action={defaultAction} className="space-y-2.5">
+            <CommissionFields compact />
+            {defaultState.error && (
+              <p className="text-sm text-red-700" role="alert">
+                {defaultState.error}
+              </p>
+            )}
+            {defaultState.ok && (
+              <p className="text-sm text-palm" role="status">
+                {t("commission.saved")}
+              </p>
+            )}
+            <Button type="submit" variant="secondary" size="sm" disabled={defaultPending}>
+              {defaultPending ? t("commission.saving") : t("commission.save")}
+            </Button>
+          </form>
+        )}
+      </Section>
+    </div>
   );
 }

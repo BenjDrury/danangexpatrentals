@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { listingPriceLabel, type Apartment } from "types";
 import { StatusChip } from "@/components/StatusChip";
 import { ListingImage } from "@/components/ListingImage";
-import { Button, PageHeader, inputClass } from "@/components/ui";
+import { Button, PageHeader } from "@/components/ui";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ALL_LISTING_STATUSES } from "@/lib/listing-status";
 import { statusMessageKey } from "@/lib/i18n/messages";
@@ -193,24 +193,22 @@ export function ListingsView({
         </div>
       ) : (
         <>
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="min-w-[12rem] flex-1">
-              <label htmlFor="listings-search" className="sr-only">
-                {t("listings.filter.search")}
-              </label>
-              <input
-                id="listings-search"
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("listings.filter.search")}
-                className={inputClass}
-              />
-            </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="listings-search" className="sr-only">
+              {t("listings.filter.search")}
+            </label>
+            <input
+              id="listings-search"
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("listings.filter.search")}
+              className="h-9 min-w-[12rem] flex-1 rounded-md border border-line bg-white px-3 text-sm text-charcoal outline-none transition placeholder:text-muted/70 focus:border-ocean focus:ring-2 focus:ring-ocean/20 sm:max-w-xs"
+            />
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className={`${inputClass} w-auto min-w-[8rem]`}
+              className="h-9 rounded-md border border-line bg-white px-2.5 text-sm text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
               aria-label={t("listings.filter.status")}
             >
               <option value="all">{t("listings.filter.allStatuses")}</option>
@@ -223,7 +221,7 @@ export function ListingsView({
             <select
               value={areaId}
               onChange={(e) => setAreaId(e.target.value)}
-              className={`${inputClass} w-auto min-w-[8rem]`}
+              className="h-9 max-w-[10rem] rounded-md border border-line bg-white px-2.5 text-sm text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
               aria-label={t("listings.filter.area")}
             >
               <option value="all">{t("listings.filter.allAreas")}</option>
@@ -236,7 +234,7 @@ export function ListingsView({
             <select
               value={attention}
               onChange={(e) => setAttention(e.target.value as AttentionFilter)}
-              className={`${inputClass} w-auto min-w-[9rem]`}
+              className="h-9 rounded-md border border-line bg-white px-2.5 text-sm text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
               aria-label={t("listings.filter.attention")}
             >
               <option value="all">{t("listings.filter.allAttention")}</option>
@@ -247,14 +245,13 @@ export function ListingsView({
               <option value="stale">{t("listings.filter.staleOnly")}</option>
               <option value="bump">{t("listings.filter.bumpOnly")}</option>
             </select>
+            <p className="ml-auto text-xs text-muted">
+              {t("listings.filter.resultCount", {
+                shown: filtered.length,
+                total: listings.length,
+              })}
+            </p>
           </div>
-
-          <p className="text-xs text-muted">
-            {t("listings.filter.resultCount", {
-              shown: filtered.length,
-              total: listings.length,
-            })}
-          </p>
 
           {filtered.length === 0 ? (
             <div className="rounded-lg border border-dashed border-line bg-white/50 px-5 py-8 text-center text-sm text-muted">
@@ -265,14 +262,14 @@ export function ListingsView({
               <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-line/80 bg-foam/70 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted">
-                    <th className="px-3 py-2.5 font-semibold">{t("listings.col.listing")}</th>
-                    <th className="px-2 py-2.5 font-semibold">{t("listings.col.status")}</th>
-                    <th className="px-2 py-2.5 font-semibold">{t("listings.col.price")}</th>
-                    <th className="px-2 py-2.5 font-semibold">{t("listings.col.details")}</th>
-                    <th className="px-2 py-2.5 font-semibold">{t("listings.col.commission")}</th>
-                    <th className="px-2 py-2.5 font-semibold">{t("listings.col.contact")}</th>
-                    <th className="px-2 py-2.5 font-semibold">{t("listings.col.updated")}</th>
-                    <th className="px-3 py-2.5 font-semibold">{t("listings.col.actions")}</th>
+                    <th className="whitespace-nowrap px-3 py-2.5 font-semibold">{t("listings.col.listing")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.status")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.price")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.details")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.commission")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.contact")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.updated")}</th>
+                    <th className="whitespace-nowrap px-3 py-2.5 font-semibold">{t("listings.col.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line/70">
@@ -312,7 +309,7 @@ export function ListingsView({
                               ) : null}
                             </span>
                             <span className="min-w-0">
-                              <span className="line-clamp-2 font-display text-sm font-semibold text-charcoal group-hover:text-ocean">
+                              <span className="truncate font-display text-sm font-semibold text-charcoal group-hover:text-ocean">
                                 {apt.title}
                               </span>
                               <span className="mt-0.5 flex flex-wrap gap-1">
@@ -357,7 +354,7 @@ export function ListingsView({
                         <td className="max-w-[9rem] px-2 py-2 align-middle">
                           {rel?.commissionDisplay ? (
                             <Link
-                              href={`/listings/${apt.id}?tab=deals`}
+                              href={`/listings/${apt.id}?tab=contacts`}
                               className="line-clamp-2 text-charcoal hover:text-ocean"
                               title={rel.commissionDisplay}
                             >

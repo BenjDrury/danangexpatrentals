@@ -79,3 +79,18 @@ export const PARTNER_GUIDE_LINKS: PartnerGuideLink[] = [
     path: "/avoid-scams",
   },
 ];
+
+/** Guides most useful to share alongside a specific listing. */
+export const LISTING_RELEVANT_GUIDE_PATHS = [
+  "/moving-guide/neighbourhoods",
+  "/moving-guide/cost-of-living",
+  "/avoid-scams",
+  "/moving-guide",
+] as const;
+
+export function getListingRelevantGuides(): PartnerGuideLink[] {
+  const byPath = new Map(PARTNER_GUIDE_LINKS.map((g) => [g.path, g]));
+  return LISTING_RELEVANT_GUIDE_PATHS.map((path) => byPath.get(path)).filter(
+    (g): g is PartnerGuideLink => Boolean(g)
+  );
+}

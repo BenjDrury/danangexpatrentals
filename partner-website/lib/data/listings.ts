@@ -194,6 +194,9 @@ export type PartnerDeal = {
 /** Deal row for listing detail commission / contact panel. */
 export type ListingDealRow = PartnerDeal & {
   contact_name: string | null;
+  contact_phone: string | null;
+  contact_whatsapp: string | null;
+  contact_email: string | null;
 };
 
 export async function getPartnerContacts(estateCompanyId: string): Promise<PartnerContact[]> {
@@ -251,6 +254,14 @@ export async function getContactDeals(
   }));
 }
 
+type ListingDealContact = {
+  id: string;
+  name: string;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+};
+
 type ListingDealQueryRow = {
   id: string;
   contact_id: string | null;
@@ -260,7 +271,7 @@ type ListingDealQueryRow = {
   expected_commission_usd: number | null;
   expected_commission_pct: number | null;
   updated_at: string | null;
-  partner_contacts: { id: string; name: string } | { id: string; name: string }[] | null;
+  partner_contacts: ListingDealContact | ListingDealContact[] | null;
 };
 
 export async function getListingDeals(
@@ -273,7 +284,7 @@ export async function getListingDeals(
   const { data, error } = await supabase
     .from("partner_deals")
     .select(
-      "id, contact_id, apartment_id, notes, stage, expected_commission_usd, expected_commission_pct, updated_at, partner_contacts ( id, name )"
+      "id, contact_id, apartment_id, notes, stage, expected_commission_usd, expected_commission_pct, updated_at, partner_contacts ( id, name, phone, whatsapp, email )"
     )
     .eq("estate_company_id", estateCompanyId)
     .eq("apartment_id", apartmentId)
@@ -296,6 +307,9 @@ export async function getListingDeals(
         row.expected_commission_pct != null ? Number(row.expected_commission_pct) : null,
       updated_at: row.updated_at ?? undefined,
       contact_name: contact?.name ?? null,
+      contact_phone: contact?.phone ?? null,
+      contact_whatsapp: contact?.whatsapp ?? null,
+      contact_email: contact?.email ?? null,
     };
   });
 }

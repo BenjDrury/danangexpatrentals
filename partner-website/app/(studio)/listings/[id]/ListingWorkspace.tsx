@@ -5,8 +5,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { listingPriceLabel, type Apartment, type Area } from "types";
 import { StatusChip } from "@/components/StatusChip";
-import { CopyButton } from "@/components/CopyButton";
-import { ListingImage } from "@/components/ListingImage";
 import { Button, PageHeader, Section, Tabs } from "@/components/ui";
 import { isListingLiveStatus } from "@/lib/listing-status";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
@@ -19,12 +17,15 @@ import { StatusToggle } from "./StatusToggle";
 import { PostComposer } from "./PostComposer";
 import { DeleteListingButton } from "./DeleteListingButton";
 import { ListingDealsPanel } from "./ListingDealsPanel";
+import { ListingShareLinks } from "./ListingShareLinks";
+import { ListingContactsCard } from "./ListingContactsCard";
 
-export type ListingTab = "overview" | "details" | "photos" | "deals" | "promote";
+export type ListingTab = "overview" | "details" | "photos" | "contacts" | "promote";
 
-const TABS: ListingTab[] = ["overview", "details", "photos", "deals", "promote"];
+const TABS: ListingTab[] = ["overview", "details", "photos", "contacts", "promote"];
 
 function normalizeTab(raw: string | null): ListingTab {
+  if (raw === "deals") return "contacts";
   if (raw && (TABS as string[]).includes(raw)) return raw as ListingTab;
   return "overview";
 }
@@ -122,8 +123,8 @@ export function ListingWorkspace({
       badge: photoCount > 0 ? photoCount : null,
     },
     {
-      id: "deals" as const,
-      label: t("workspace.tab.deals"),
+      id: "contacts" as const,
+      label: t("workspace.tab.contacts"),
       badge: contactDeals > 0 ? contactDeals : null,
     },
     {
@@ -182,7 +183,7 @@ export function ListingWorkspace({
         className="min-h-[12rem] pt-1"
       >
         {tab === "overview" ? (
-          <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
             <div className="space-y-4">
               {stale || bump ? (
                 <Section
@@ -217,56 +218,6 @@ export function ListingWorkspace({
                 </Section>
               ) : null}
 
-              {isLive ? (
-                <section className="rounded-lg border border-palm/25 bg-palm-soft/40 px-4 py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="inline-flex items-center gap-2 text-sm font-semibold text-palm">
-                        <span className="size-1.5 rounded-full bg-palm" aria-hidden />
-                        {t("listings.liveBadge")}
-                      </p>
-                      <p className="mt-0.5 text-sm text-muted">{t("listings.liveHint")}</p>
-                    </div>
-                    <CopyButton
-                      text={publicUrl}
-                      label={t("listings.copyPublicLink")}
-                      copiedLabel={t("listings.linkCopied")}
-                    />
-                  </div>
-                  <ul className="mt-3 space-y-1.5">
-                    <li className="min-w-0">
-                      <p className="text-[0.65rem] font-medium uppercase tracking-wide text-muted">
-                        {t("listings.publicListingLink")}
-                      </p>
-                      <a
-                        href={publicUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-0.5 block truncate text-sm font-medium text-ocean underline-offset-2 hover:underline"
-                      >
-                        {publicUrl}
-                      </a>
-                    </li>
-                    {areaPublicUrl ? (
-                      <li className="min-w-0">
-                        <p className="text-[0.65rem] font-medium uppercase tracking-wide text-muted">
-                          {t("listings.publicAreaLink")}
-                          {areaName ? ` · ${areaName}` : ""}
-                        </p>
-                        <a
-                          href={areaPublicUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-0.5 block truncate text-sm font-medium text-ocean underline-offset-2 hover:underline"
-                        >
-                          {areaPublicUrl}
-                        </a>
-                      </li>
-                    ) : null}
-                  </ul>
-                </section>
-              ) : null}
-
               <ListingGallery
                 listingId={listing.id}
                 mainImage={listing.main_image}
@@ -274,9 +225,11 @@ export function ListingWorkspace({
               />
 
               {listing.description ? (
-                <p className="max-w-2xl text-sm leading-relaxed text-muted">
-                  {listing.description}
-                </p>
+                <Section title={t("form.description")} bare>
+                  <p className="max-w-2xl text-sm leading-relaxed text-muted">
+                    {listing.description}
+                  </p>
+                </Section>
               ) : null}
 
               {listing.partner_notes ? (
@@ -285,6 +238,13 @@ export function ListingWorkspace({
                   {listing.partner_notes}
                 </p>
               ) : null}
+
+              <ListingShareLinks
+                publicUrl={publicUrl}
+                areaPublicUrl={areaPublicUrl}
+                areaName={areaName}
+                isLive={isLive}
+              />
             </div>
 
             <aside className="space-y-4">
@@ -299,6 +259,25 @@ export function ListingWorkspace({
 
               <Section title={t("workspace.summary")}>
                 <dl className="space-y-2 text-sm">
+                  {areaName ? (
+                    <div>
+                      <dt className="text-xs text-muted">{t("form.area")}</dt>
+                      <dd className="font-medium text-charcoal">
+                        {areaPublicUrl ? (
+                          <a
+                            href={areaPublicUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-ocean hover:underline"
+                          >
+                            {areaName}
+                          </a>
+                        ) : (
+                          areaName
+                        )}
+                      </dd>
+                    </div>
+                  ) : null}
                   {availableFromLabel ? (
                     <div>
                       <dt className="text-xs text-muted">{t("listings.availableFrom")}</dt>
@@ -334,17 +313,11 @@ export function ListingWorkspace({
                 </div>
               </Section>
 
-              {listing.main_image ? (
-                <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-sand lg:hidden">
-                  <ListingImage
-                    src={listing.main_image}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="100vw"
-                  />
-                </div>
-              ) : null}
+              <ListingContactsCard
+                listingId={listing.id}
+                deals={deals}
+                availableContacts={availableContacts}
+              />
             </aside>
           </div>
         ) : null}
@@ -373,7 +346,7 @@ export function ListingWorkspace({
           </div>
         ) : null}
 
-        {tab === "deals" ? (
+        {tab === "contacts" ? (
           <div className="max-w-2xl">
             <ListingDealsPanel
               listingId={listing.id}

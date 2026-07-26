@@ -138,23 +138,145 @@ export function ListingForm({
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-6">
       <input type="hidden" name="main_image" value={mainImage} />
       <input type="hidden" name="images" value={gallery.join("\n")} />
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t("form.title")} htmlFor="title" className="sm:col-span-2">
-          <input
-            id="title"
-            name="title"
-            required
-            defaultValue={listing?.title}
-            className={inputClass}
-            placeholder={t("form.titlePlaceholder")}
-          />
-        </Field>
+      <fieldset className="space-y-3">
+        <legend className="font-display text-base font-semibold text-charcoal">
+          {t("form.section.basics")}
+        </legend>
+        <p className="text-xs text-muted">{t("form.section.basicsHint")}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t("form.title")} htmlFor="title" className="sm:col-span-2">
+            <input
+              id="title"
+              name="title"
+              required
+              defaultValue={listing?.title}
+              className={inputClass}
+              placeholder={t("form.titlePlaceholder")}
+            />
+          </Field>
 
-        <div className="space-y-2 sm:col-span-2">
+          <Field label={t("form.bedrooms")} htmlFor="bedrooms">
+            <input
+              id="bedrooms"
+              name="bedrooms"
+              type="number"
+              min={0}
+              required
+              defaultValue={listing?.bedrooms ?? 1}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={t("form.bathrooms")} htmlFor="bathrooms">
+            <input
+              id="bathrooms"
+              name="bathrooms"
+              type="number"
+              min={0}
+              step={0.5}
+              defaultValue={listing?.bathrooms ?? ""}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={t("form.size")} htmlFor="size_sqm">
+            <input
+              id="size_sqm"
+              name="size_sqm"
+              type="number"
+              min={0}
+              defaultValue={listing?.size_sqm ?? ""}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={t("form.area")} htmlFor="area_id">
+            <select
+              id="area_id"
+              name="area_id"
+              required
+              defaultValue={listing?.area_id ?? ""}
+              className={inputClass}
+            >
+              <option value="" disabled>
+                {t("form.selectArea")}
+              </option>
+              {areas.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field
+            label={t("form.availableFrom")}
+            htmlFor="available_from"
+            hint={t("form.availableFromHint")}
+            className="sm:col-span-2"
+          >
+            <input
+              id="available_from"
+              name="available_from"
+              type="date"
+              defaultValue={toDateInputValue(listing?.available_from)}
+              className={inputClass}
+            />
+          </Field>
+
+          {isEdit && isAdmin ? (
+            <div className="rounded-md border border-admin/30 bg-admin-soft/50 p-3 sm:col-span-2">
+              <label htmlFor="status" className="block text-sm font-medium text-admin-deep">
+                {t("status.label")}
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={statusValue}
+                onChange={(e) => setStatusValue(e.target.value as ListingStatus)}
+                className="mt-1 w-full rounded-md border border-admin/35 bg-white px-3 py-2 text-sm text-charcoal outline-none focus:border-admin focus:ring-2 focus:ring-admin/25"
+              >
+                {statusOptions.map((s) => (
+                  <option key={s} value={s}>
+                    {t(statusMessageKey(s))}
+                  </option>
+                ))}
+              </select>
+              {statusValue === "reserved" ? (
+                <p className="mt-1.5 text-xs text-muted">{t("status.reservedHint")}</p>
+              ) : null}
+            </div>
+          ) : isEdit ? (
+            <div className="sm:col-span-2">
+              <p className="block text-sm font-medium text-charcoal">{t("status.label")}</p>
+              <p className="mt-1 text-sm text-charcoal">
+                {t(statusMessageKey(currentStatus))}
+              </p>
+              <p className="mt-1 text-xs text-muted">{t("status.partnerReadOnlyHint")}</p>
+              {currentStatus === "reserved" ? (
+                <p className="mt-1.5 text-xs text-muted">{t("status.reservedHint")}</p>
+              ) : null}
+              <input type="hidden" name="status" value={currentStatus} />
+            </div>
+          ) : (
+            <div className="sm:col-span-2">
+              <p className="block text-sm font-medium text-charcoal">{t("status.label")}</p>
+              <p className="mt-1 text-sm text-muted">{t("status.newListingDraft")}</p>
+              <input type="hidden" name="status" value="draft" />
+            </div>
+          )}
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-3 border-t border-line/70 pt-5">
+        <legend className="font-display text-base font-semibold text-charcoal">
+          {t("form.section.pricing")}
+        </legend>
+        <div className="space-y-2">
           <div className="flex flex-wrap items-end gap-3">
             <Field label={t("form.priceCurrency")} htmlFor="price_currency">
               <div className="mt-1 flex rounded-md border border-line bg-foam/70 p-0.5">
@@ -205,153 +327,49 @@ export function ListingForm({
             </p>
           ) : null}
         </div>
+      </fieldset>
 
-        <Field label={t("form.bedrooms")} htmlFor="bedrooms">
-          <input
-            id="bedrooms"
-            name="bedrooms"
-            type="number"
-            min={0}
-            required
-            defaultValue={listing?.bedrooms ?? 1}
-            className={inputClass}
+      <fieldset className="space-y-3 border-t border-line/70 pt-5">
+        <legend className="font-display text-base font-semibold text-charcoal">
+          {t("form.section.copy")}
+        </legend>
+        <p className="text-xs text-muted">{t("form.section.copyHint")}</p>
+        <div className="grid gap-4">
+          <Field label={t("form.description")} htmlFor="description">
+            <textarea
+              id="description"
+              name="description"
+              rows={4}
+              defaultValue={listing?.description ?? ""}
+              className={inputClass}
+              placeholder={t("form.descriptionPlaceholder")}
+            />
+          </Field>
+
+          <FeaturesMultiSelect
+            label={t("form.features")}
+            hint={t("form.featuresHint")}
+            initialSelected={listing?.features ?? []}
+            placeholder={t("form.featuresPlaceholder")}
+            searchPlaceholder={t("form.featuresSearch")}
+            selectedCountLabel={(count) => t("form.featuresSelected", { count: String(count) })}
           />
-        </Field>
 
-        <Field label={t("form.bathrooms")} htmlFor="bathrooms">
-          <input
-            id="bathrooms"
-            name="bathrooms"
-            type="number"
-            min={0}
-            step={0.5}
-            defaultValue={listing?.bathrooms ?? ""}
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label={t("form.size")} htmlFor="size_sqm">
-          <input
-            id="size_sqm"
-            name="size_sqm"
-            type="number"
-            min={0}
-            defaultValue={listing?.size_sqm ?? ""}
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label={t("form.area")} htmlFor="area_id">
-          <select
-            id="area_id"
-            name="area_id"
-            required
-            defaultValue={listing?.area_id ?? ""}
-            className={inputClass}
+          <Field
+            label={t("form.privateNotes")}
+            htmlFor="partner_notes"
+            hint={t("form.privateNotesHint")}
           >
-            <option value="" disabled>
-              {t("form.selectArea")}
-            </option>
-            {areas.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field
-          label={t("form.availableFrom")}
-          htmlFor="available_from"
-          hint={t("form.availableFromHint")}
-        >
-          <input
-            id="available_from"
-            name="available_from"
-            type="date"
-            defaultValue={toDateInputValue(listing?.available_from)}
-            className={inputClass}
-          />
-        </Field>
-
-        {isEdit && isAdmin ? (
-          <div className="rounded-md border border-admin/30 bg-admin-soft/50 p-3 sm:col-span-2">
-            <label htmlFor="status" className="block text-sm font-medium text-admin-deep">
-              {t("status.label")}
-            </label>
-            <select
-              id="status"
-              name="status"
-              value={statusValue}
-              onChange={(e) => setStatusValue(e.target.value as ListingStatus)}
-              className="mt-1 w-full rounded-md border border-admin/35 bg-white px-3 py-2 text-sm text-charcoal outline-none focus:border-admin focus:ring-2 focus:ring-admin/25"
-            >
-              {statusOptions.map((s) => (
-                <option key={s} value={s}>
-                  {t(statusMessageKey(s))}
-                </option>
-              ))}
-            </select>
-            {statusValue === "reserved" ? (
-              <p className="mt-1.5 text-xs text-muted">{t("status.reservedHint")}</p>
-            ) : null}
-          </div>
-        ) : isEdit ? (
-          <div>
-            <p className="block text-sm font-medium text-charcoal">{t("status.label")}</p>
-            <p className="mt-1 text-sm text-charcoal">
-              {t(statusMessageKey(currentStatus))}
-            </p>
-            <p className="mt-1 text-xs text-muted">{t("status.partnerReadOnlyHint")}</p>
-            {currentStatus === "reserved" ? (
-              <p className="mt-1.5 text-xs text-muted">{t("status.reservedHint")}</p>
-            ) : null}
-            <input type="hidden" name="status" value={currentStatus} />
-          </div>
-        ) : (
-          <div>
-            <p className="block text-sm font-medium text-charcoal">{t("status.label")}</p>
-            <p className="mt-1 text-sm text-muted">{t("status.newListingDraft")}</p>
-            <input type="hidden" name="status" value="draft" />
-          </div>
-        )}
-
-        <Field label={t("form.description")} htmlFor="description" className="sm:col-span-2">
-          <textarea
-            id="description"
-            name="description"
-            rows={4}
-            defaultValue={listing?.description ?? ""}
-            className={inputClass}
-            placeholder={t("form.descriptionPlaceholder")}
-          />
-        </Field>
-
-        <FeaturesMultiSelect
-          className="sm:col-span-2"
-          label={t("form.features")}
-          hint={t("form.featuresHint")}
-          initialSelected={listing?.features ?? []}
-          placeholder={t("form.featuresPlaceholder")}
-          searchPlaceholder={t("form.featuresSearch")}
-          selectedCountLabel={(count) => t("form.featuresSelected", { count: String(count) })}
-        />
-
-        <Field
-          label={t("form.privateNotes")}
-          htmlFor="partner_notes"
-          hint={t("form.privateNotesHint")}
-          className="sm:col-span-2"
-        >
-          <textarea
-            id="partner_notes"
-            name="partner_notes"
-            rows={2}
-            defaultValue={listing?.partner_notes ?? ""}
-            className={inputClass}
-          />
-        </Field>
-      </div>
+            <textarea
+              id="partner_notes"
+              name="partner_notes"
+              rows={2}
+              defaultValue={listing?.partner_notes ?? ""}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+      </fieldset>
 
       {includePhotos ? (
         <div className="space-y-3 rounded-lg border border-line/80 bg-white/70 p-4">

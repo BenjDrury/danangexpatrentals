@@ -14,7 +14,7 @@ export type AreaListFilters = {
   minPrice: number | null;
   maxPrice: number | null;
   furnishedOnly: boolean;
-  /** Show listings whose required min lease is at most this many months (or flexible). */
+  /** Show listings whose required min lease is at most this many months (excludes unspecified). */
   maxLeaseMonths: number | null;
   /** Show listings whose deposit is at most this many months of rent (excludes unspecified). */
   maxDepositMonths: number | null;

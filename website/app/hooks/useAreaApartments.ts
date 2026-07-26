@@ -43,9 +43,9 @@ export function useAreaApartments(
       if (filters.maxPrice != null && apt.price > filters.maxPrice) return false;
       if (filters.furnishedOnly && !isFurnished(apt)) return false;
       if (filters.maxLeaseMonths != null) {
-        // Keep flexible (null) or required min lease within what the renter will accept.
+        // Only keep listings with a known min lease at or under what the renter will accept.
         if (
-          apt.min_lease_months != null &&
+          apt.min_lease_months == null ||
           apt.min_lease_months > filters.maxLeaseMonths
         ) {
           return false;

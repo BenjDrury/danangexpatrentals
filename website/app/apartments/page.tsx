@@ -39,27 +39,29 @@ export default async function ApartmentsPage() {
         </div>
       </section>
 
-      <Section bg="bg-sand/40">
-        <h2 className="font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
-          What we help you find
-        </h2>
-        <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {apartmentTypes.map((card) => (
-            <div key={card.id} className="border-t border-line pt-6">
-              <h3 className="font-display text-xl font-semibold text-charcoal">{card.title}</h3>
-              <p className="mt-3 text-muted leading-relaxed">{card.desc}</p>
-            </div>
-          ))}
-        </div>
-        <TrackedLink
-          href="/contact"
-          event="contact_cta_clicked"
-          eventProps={{ source: "apartments_types" }}
-          className="mt-12 inline-flex text-sm font-semibold text-ocean transition hover:text-ocean-deep"
-        >
-          Tell us your budget — get matched →
-        </TrackedLink>
-      </Section>
+      {apartmentTypes.length > 0 ? (
+        <Section bg="bg-sand/40">
+          <h2 className="font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
+            What we help you find
+          </h2>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {apartmentTypes.map((card) => (
+              <div key={card.id} className="border-t border-line pt-6">
+                <h3 className="font-display text-xl font-semibold text-charcoal">{card.title}</h3>
+                <p className="mt-3 text-muted leading-relaxed">{card.desc}</p>
+              </div>
+            ))}
+          </div>
+          <TrackedLink
+            href="/contact"
+            event="contact_cta_clicked"
+            eventProps={{ source: "apartments_types" }}
+            className="mt-12 inline-flex text-sm font-semibold text-ocean transition hover:text-ocean-deep"
+          >
+            Tell us your budget — get matched →
+          </TrackedLink>
+        </Section>
+      ) : null}
 
       <Section bg="bg-foam">
         <h2 className="font-display text-2xl font-semibold tracking-tight text-charcoal sm:text-3xl">

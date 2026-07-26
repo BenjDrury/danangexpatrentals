@@ -58,68 +58,77 @@ export function SectionApartmentCards({
         )}
       </div>
 
-      <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card, i) => {
-          const content = (
-            <>
-              <div className="relative aspect-[4/3] overflow-hidden bg-sand">
-                <Image
-                  src={card.image}
-                  alt={card.title}
-                  fill
-                  className="object-cover transition duration-700 ease-soft group-hover:scale-[1.03]"
-                  sizes="(max-width: 768px) 100vw, 18rem"
-                />
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-sm text-muted">{card.location}</p>
-                  <p className="font-display text-lg font-semibold text-ocean">{card.price}</p>
+      {cards.length > 0 ? (
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {cards.map((card, i) => {
+            const content = (
+              <>
+                <div className="relative aspect-[4/3] overflow-hidden bg-sand">
+                  <Image
+                    src={card.image}
+                    alt={card.title}
+                    fill
+                    className="object-cover transition duration-700 ease-soft group-hover:scale-[1.03]"
+                    sizes="(max-width: 768px) 100vw, 18rem"
+                  />
                 </div>
-                <h3 className="mt-2 font-display text-xl font-semibold tracking-tight text-charcoal">
-                  {card.title}
-                </h3>
-                {card.type && <p className="mt-1 text-sm text-muted">{card.type}</p>}
-                {card.features.length > 0 && (
-                  <ul className="mt-4 space-y-2 text-sm text-muted">
-                    {card.features.slice(0, 3).map((f) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <IconCheck />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </>
-          );
+                <div className="flex flex-1 flex-col p-5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-sm text-muted">{card.location}</p>
+                    <p className="font-display text-lg font-semibold text-ocean">{card.price}</p>
+                  </div>
+                  <h3 className="mt-2 font-display text-xl font-semibold tracking-tight text-charcoal">
+                    {card.title}
+                  </h3>
+                  {card.type && <p className="mt-1 text-sm text-muted">{card.type}</p>}
+                  {card.features.length > 0 && (
+                    <ul className="mt-4 space-y-2 text-sm text-muted">
+                      {card.features.slice(0, 3).map((f) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <IconCheck />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
+            );
 
-          return card.href ? (
-            <Link
-              key={i}
-              href={card.href}
-              onClick={() =>
-                capture("listing_card_clicked", {
-                  href: card.href,
-                  title: card.title,
-                  location: card.location,
-                  source: "home_featured",
-                })
-              }
-              className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_rgba(42,42,40,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(42,42,40,0.08)]"
-            >
-              {content}
-            </Link>
-          ) : (
-            <article
-              key={i}
-              className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_rgba(42,42,40,0.04)]"
-            >
-              {content}
-            </article>
-          );
-        })}
-      </div>
+            return card.href ? (
+              <Link
+                key={i}
+                href={card.href}
+                onClick={() =>
+                  capture("listing_card_clicked", {
+                    href: card.href,
+                    title: card.title,
+                    location: card.location,
+                    source: "home_featured",
+                  })
+                }
+                className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_rgba(42,42,40,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(42,42,40,0.08)]"
+              >
+                {content}
+              </Link>
+            ) : (
+              <article
+                key={i}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_rgba(42,42,40,0.04)]"
+              >
+                {content}
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-10 max-w-lg rounded-2xl border border-line bg-white px-6 py-8">
+          <p className="text-base leading-relaxed text-muted">
+            No featured listings right now — browse the full list, or ask us to shortlist
+            options for you.
+          </p>
+        </div>
+      )}
 
       <div className="mt-12 flex flex-wrap gap-3">
         {primaryCta && (

@@ -43,11 +43,15 @@ export default async function ActivitiesRegistryPage() {
           <ActivitiesRegistry activities={activities} areaHrefById={areaHrefById} />
         ) : (
           <div className="mt-10 rounded-2xl border border-line bg-white px-6 py-10">
-            <p className="text-muted">
-              No activities published yet. Run the Supabase migration{" "}
-              <code className="text-sm">11-coworking-activities.sql</code> or add rows in the{" "}
-              <code className="text-sm">activities</code> table.
+            <p className="text-base leading-relaxed text-muted">
+              No activities listed yet. The daily-life guide still covers weekends, errands,
+              and getting settled in Da Nang.
             </p>
+            <div className="mt-5">
+              <CtaButton href="/moving-guide/daily-life" variant="primary">
+                Daily life guide
+              </CtaButton>
+            </div>
           </div>
         )}
 

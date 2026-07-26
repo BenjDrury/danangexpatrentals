@@ -6,24 +6,15 @@ import { TrackedLink } from "@/app/components/TrackedLink";
 import { ApartmentCard } from "@/app/components/area/ApartmentCard";
 import {
   FilterBar,
+  createDefaultAreaListFilters,
   type AreaListFilters,
 } from "@/app/components/area/FilterBar";
 import { useAreaApartments } from "@/app/hooks/useAreaApartments";
 import { areaDisplayName } from "@/lib/area-utils";
 import type { Area } from "types";
+import { capture } from "@/lib/analytics";
 
-const DEFAULT_FILTERS: AreaListFilters = {
-  unitType: "all",
-  propertyType: "all",
-  minPrice: null,
-  maxPrice: null,
-  furnishedOnly: false,
-  maxLeaseMonths: null,
-  maxDepositMonths: null,
-  noAgencyFeeOnly: false,
-  utilities: "all",
-  sort: "newest",
-};
+const DEFAULT_FILTERS: AreaListFilters = createDefaultAreaListFilters("newest");
 
 const PER_PAGE = 9;
 
@@ -53,6 +44,12 @@ export function ApartmentsBrowse({ apartments, areas }: Props) {
     setPage(1);
   }
 
+  function resetFilters() {
+    setFilters(DEFAULT_FILTERS);
+    setPage(1);
+    capture("apartment_filters_reset", { source: "apartments_empty_state" });
+  }
+
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -75,6 +72,7 @@ export function ApartmentsBrowse({ apartments, areas }: Props) {
           <FilterBar
             filters={filters}
             onChange={onFiltersChange}
+            defaults={DEFAULT_FILTERS}
             currencyLabel="USD"
           />
         </div>
@@ -131,22 +129,31 @@ export function ApartmentsBrowse({ apartments, areas }: Props) {
           )}
         </>
       ) : apartments.length > 0 ? (
-        <div className="mt-12 border-y border-line py-14 text-center">
+        <div className="mt-12 rounded-2xl border border-line bg-foam/60 px-6 py-14 text-center">
           <p className="mx-auto max-w-lg text-lg text-muted">
             No apartments match your filters. Try adjusting them, or ask us to
             find something.
           </p>
-          <TrackedLink
-            href="/contact"
-            event="contact_cta_clicked"
-            eventProps={{ source: "apartments_filters_empty" }}
-            className="mt-8 inline-flex rounded-quieter bg-ocean px-6 py-3.5 text-base font-semibold text-white transition hover:bg-ocean-deep"
-          >
-            Get matched
-          </TrackedLink>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex rounded-quieter border border-line bg-white px-6 py-3.5 text-base font-semibold text-charcoal transition hover:bg-sand"
+            >
+              Reset filters
+            </button>
+            <TrackedLink
+              href="/contact"
+              event="contact_cta_clicked"
+              eventProps={{ source: "apartments_filters_empty" }}
+              className="inline-flex rounded-quieter bg-ocean px-6 py-3.5 text-base font-semibold text-white transition hover:bg-ocean-deep"
+            >
+              Get matched
+            </TrackedLink>
+          </div>
         </div>
       ) : (
-        <div className="mt-12 border-y border-line py-14 text-center">
+        <div className="mt-12 rounded-2xl border border-line bg-foam/60 px-6 py-14 text-center">
           <p className="mx-auto max-w-lg text-lg text-muted">
             No public listings yet. Tell us your budget and dates — we’ll send
             verified options within 24 hours.

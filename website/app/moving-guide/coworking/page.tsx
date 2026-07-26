@@ -43,11 +43,15 @@ export default async function CoworkingRegistryPage() {
           <CoworkingRegistry spaces={spaces} areaHrefById={areaHrefById} />
         ) : (
           <div className="mt-10 rounded-2xl border border-line bg-white px-6 py-10">
-            <p className="text-muted">
-              No coworking entries published yet. Run the Supabase migration{" "}
-              <code className="text-sm">11-coworking-activities.sql</code> or add rows in the{" "}
-              <code className="text-sm">coworking_spaces</code> table.
+            <p className="text-base leading-relaxed text-muted">
+              No coworking spots listed yet. Meanwhile, our remote-work guide covers café
+              circuits and how people actually work from Da Nang.
             </p>
+            <div className="mt-5">
+              <CtaButton href="/moving-guide/remote-work" variant="primary">
+                Remote work tips
+              </CtaButton>
+            </div>
           </div>
         )}
 

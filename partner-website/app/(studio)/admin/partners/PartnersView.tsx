@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   addPartnerInvite,
@@ -25,6 +25,94 @@ const addPartnerInitial: AddPartnerState = {};
 function absoluteInviteUrl(path: string): string {
   if (typeof window === "undefined") return path;
   return new URL(path, window.location.origin).toString();
+}
+
+function whatsappHref(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : null;
+}
+
+function pickContact(primary: string | null, fallback: string | null): string | null {
+  const a = primary?.trim();
+  if (a) return a;
+  const b = fallback?.trim();
+  return b || null;
+}
+
+function formatLastSignIn(iso: string | null, locale: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(locale === "vi" ? "vi-VN" : "en-GB", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function PartnerContactLine({ partner }: { partner: AdminPartnerRow }) {
+  const { t } = useLocale();
+  const phone = pickContact(partner.phone, partner.companyPhone);
+  const whatsapp = pickContact(partner.whatsapp, partner.companyWhatsapp);
+  const contactEmail = pickContact(partner.contactEmail, partner.companyEmail);
+  const wa = whatsapp ? whatsappHref(whatsapp) : null;
+
+  const items: { key: string; node: ReactNode }[] = [];
+  if (phone) {
+    items.push({
+      key: "phone",
+      node: (
+        <a href={`tel:${phone}`} className="text-ocean transition hover:text-ocean-deep">
+          {phone}
+        </a>
+      ),
+    });
+  }
+  if (whatsapp) {
+    items.push({
+      key: "wa",
+      node: wa ? (
+        <a
+          href={wa}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-ocean transition hover:text-ocean-deep"
+        >
+          {t("admin.contactWhatsApp", { number: whatsapp })}
+        </a>
+      ) : (
+        <span>{t("admin.contactWhatsApp", { number: whatsapp })}</span>
+      ),
+    });
+  }
+  if (contactEmail && contactEmail !== partner.email) {
+    items.push({
+      key: "ce",
+      node: (
+        <a
+          href={`mailto:${contactEmail}`}
+          className="text-ocean transition hover:text-ocean-deep"
+        >
+          {contactEmail}
+        </a>
+      ),
+    });
+  }
+
+  if (items.length === 0) {
+    return <p className="mt-1 text-xs text-muted">{t("admin.noContact")}</p>;
+  }
+
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+      {items.map((item, i) => (
+        <span key={item.key} className="inline-flex items-center gap-2">
+          {i > 0 ? <span aria-hidden className="text-line">·</span> : null}
+          {item.node}
+        </span>
+      ))}
+    </p>
+  );
 }
 
 function InviteLinkReady({
@@ -414,7 +502,7 @@ export function PartnersView({
   envOverride: boolean;
   languageFeedback: LanguageFeedbackRow[];
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [query, setQuery] = useState("");
   const [inviteCompanyId, setInviteCompanyId] = useState<string | null>(null);
 
@@ -426,9 +514,18 @@ export function PartnersView({
         p.profileId,
         p.displayName,
         p.email,
+        p.contactEmail,
+        p.phone,
+        p.whatsapp,
+        p.companyPhone,
+        p.companyWhatsapp,
+        p.companyEmail,
+        p.pendingInviteEmail,
         p.estateCompanyId,
         p.companyName,
         String(p.listingCount),
+        p.hasLoggedIn ? "logged-in" : "never-logged-in",
+        p.email ? "has-email" : "no-email",
       ]
         .filter(Boolean)
         .join(" ")
@@ -497,10 +594,11 @@ export function PartnersView({
                     p.estateCompanyId &&
                     inviteCompanyId === p.estateCompanyId,
                 );
+                const lastSignInLabel = formatLastSignIn(p.lastSignInAt, locale);
                 return (
                   <li key={p.profileId} className="px-4 py-3.5 sm:px-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="min-w-0">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-medium text-charcoal">{title}</p>
                           {p.companyOnly ? (
@@ -508,18 +606,44 @@ export function PartnersView({
                               {t("admin.companyOnly")}
                             </span>
                           ) : null}
+                          {p.email ? (
+                            <span className="rounded-quieter bg-palm/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-palm">
+                              {t("admin.hasLoginEmail")}
+                            </span>
+                          ) : (
+                            <span className="rounded-quieter bg-sand px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                              {t("admin.noLoginEmail")}
+                            </span>
+                          )}
+                          {p.companyOnly ? null : p.hasLoggedIn ? (
+                            <span className="rounded-quieter bg-ocean/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ocean-deep">
+                              {t("admin.hasLoggedIn")}
+                            </span>
+                          ) : (
+                            <span className="rounded-quieter bg-sand px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                              {t("admin.neverLoggedIn")}
+                            </span>
+                          )}
                           {p.estateCompanyId ? (
                             <CopyDeepLinkButton companyId={p.estateCompanyId} />
                           ) : null}
                         </div>
                         <p className="mt-0.5 truncate text-sm text-muted">
                           {p.companyOnly
-                            ? t("admin.noUserYet")
+                            ? p.pendingInviteEmail
+                              ? t("admin.pendingInvite", {
+                                  email: p.pendingInviteEmail,
+                                })
+                              : t("admin.noUserYet")
                             : p.email || t("admin.noEmail")}
                           {p.estateCompanyId
                             ? ` · ${t("admin.listingCount").replace("{count}", String(p.listingCount))}`
                             : ` · ${t("admin.noCompany")}`}
+                          {!p.companyOnly && lastSignInLabel
+                            ? ` · ${t("admin.lastSignIn", { date: lastSignInLabel })}`
+                            : null}
                         </p>
+                        <PartnerContactLine partner={p} />
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         {p.companyOnly && p.estateCompanyId && !inviting ? (

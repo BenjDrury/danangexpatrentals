@@ -363,7 +363,25 @@ export default function LoginPage() {
         </h1>
         <p className="mt-3 text-base leading-relaxed text-muted">{t("login.tagline")}</p>
 
-        <Suspense fallback={<div className="mt-8 h-48 animate-pulse rounded-soft bg-white/50" />}>
+        <noscript>
+          <div
+            className="mt-8 rounded-soft border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950"
+            role="alert"
+          >
+            JavaScript is required to sign in. Open this page in a normal browser tab
+            (not an embedded preview), or enable JavaScript, then reload.
+          </div>
+        </noscript>
+        <Suspense
+          fallback={
+            <div className="mt-8 space-y-5 rounded-soft border border-line/80 bg-white p-7 shadow-[0_18px_50px_rgba(42,42,40,0.06)]">
+              <div className="h-10 animate-pulse rounded-quieter bg-sand" />
+              <div className="h-10 animate-pulse rounded-quieter bg-sand" />
+              <div className="h-11 animate-pulse rounded-quieter bg-ocean/20" />
+              <p className="text-center text-sm text-muted">Loading sign-in…</p>
+            </div>
+          }
+        >
           <LoginForm />
         </Suspense>
 

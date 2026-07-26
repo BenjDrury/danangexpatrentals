@@ -6,22 +6,15 @@ import { useMemo, useState } from "react";
 import { Section } from "@/app/components/sections";
 import { CtaButton } from "@/app/components/CtaButton";
 import { ApartmentCard } from "./ApartmentCard";
-import { FilterBar, type AreaListFilters } from "./FilterBar";
+import {
+  FilterBar,
+  createDefaultAreaListFilters,
+  type AreaListFilters,
+} from "./FilterBar";
 import { useAreaApartments } from "@/app/hooks/useAreaApartments";
 import { capture } from "@/lib/analytics";
 
-const DEFAULT_FILTERS: AreaListFilters = {
-  unitType: "all",
-  propertyType: "all",
-  minPrice: null,
-  maxPrice: null,
-  furnishedOnly: false,
-  maxLeaseMonths: null,
-  maxDepositMonths: null,
-  noAgencyFeeOnly: false,
-  utilities: "all",
-  sort: "recommended",
-};
+const DEFAULT_FILTERS: AreaListFilters = createDefaultAreaListFilters("recommended");
 
 type AreaApartmentsSectionProps = {
   areaId: string;
@@ -55,6 +48,12 @@ export function AreaApartmentsSection({
 
   const hasAnyListings = apartments.length > 0;
   const noListingsAtAll = !hasAnyListings;
+  const filtersActive = hasAnyListings && filtered.length === 0;
+
+  function resetFilters() {
+    setFilters(DEFAULT_FILTERS);
+    capture("apartment_filters_reset", { source: "area_empty_state" });
+  }
 
   return (
     <Section id="listings" bg="bg-white" className="!py-12 sm:!py-16 scroll-mt-24">
@@ -83,7 +82,12 @@ export function AreaApartmentsSection({
 
       {hasAnyListings && (
         <div className="mt-6">
-          <FilterBar filters={filters} onChange={setFilters} currencyLabel="USD" />
+          <FilterBar
+            filters={filters}
+            onChange={setFilters}
+            defaults={DEFAULT_FILTERS}
+            currencyLabel="USD"
+          />
         </div>
       )}
 
@@ -99,13 +103,22 @@ export function AreaApartmentsSection({
           ))}
         </div>
       ) : (
-        <div className="mt-8 border-t border-line pt-8 text-center sm:text-left">
-          <p className="max-w-md text-sm leading-relaxed text-muted">
+        <div className="mt-8 rounded-2xl border border-line bg-foam/60 px-6 py-10 text-center sm:text-left">
+          <p className="max-w-md text-base leading-relaxed text-muted">
             {noListingsAtAll
               ? `No listings in ${areaName} right now. Tell us your budget and dates — we’ll find options in 24 hours.`
               : "No apartments match your filters. Try adjusting them, or ask us to find something."}
           </p>
-          <div className="mt-5 flex justify-center sm:justify-start">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+            {filtersActive ? (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="inline-flex rounded-quieter border border-line bg-white px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
+              >
+                Reset filters
+              </button>
+            ) : null}
             <CtaButton href={contactHrefBase} variant="primary">
               Get apartment matches
             </CtaButton>

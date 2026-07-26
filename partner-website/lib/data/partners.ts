@@ -11,7 +11,20 @@ export type AdminPartnerRow = {
   /** Profile id when a partner user exists; otherwise a synthetic key for company-only rows. */
   profileId: string;
   displayName: string | null;
+  /** Supabase Auth login email (null if no auth user / email). */
   email: string | null;
+  /** True when auth.users.last_sign_in_at is set. */
+  hasLoggedIn: boolean;
+  lastSignInAt: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  /** Profile contact email (may differ from login email). */
+  contactEmail: string | null;
+  companyPhone: string | null;
+  companyWhatsapp: string | null;
+  companyEmail: string | null;
+  /** Pending partner_invites.email when company has no user yet. */
+  pendingInviteEmail: string | null;
   estateCompanyId: string | null;
   companyName: string | null;
   listingCount: number;
@@ -58,7 +71,9 @@ export async function listPartnersForAdmin(): Promise<ListPartnersResult> {
 
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("id, display_name, estate_company_id")
+    .select(
+      "id, display_name, estate_company_id, phone, whatsapp, contact_email",
+    )
     .eq("role", "partner")
     .order("display_name", { ascending: true });
 
@@ -66,12 +81,23 @@ export async function listPartnersForAdmin(): Promise<ListPartnersResult> {
 
   const { data: companies } = await supabase
     .from("estate_companies")
-    .select("id, name")
+    .select("id, name, contact_phone, contact_whatsapp, contact_email")
     .order("name", { ascending: true });
 
-  const companyNameById = new Map<string, string>();
+  type CompanyMeta = {
+    name: string;
+    phone: string | null;
+    whatsapp: string | null;
+    email: string | null;
+  };
+  const companyById = new Map<string, CompanyMeta>();
   for (const c of companies ?? []) {
-    companyNameById.set(c.id as string, c.name as string);
+    companyById.set(c.id as string, {
+      name: c.name as string,
+      phone: (c.contact_phone as string | null) ?? null,
+      whatsapp: (c.contact_whatsapp as string | null) ?? null,
+      email: (c.contact_email as string | null) ?? null,
+    });
   }
 
   const linkedCompanyIds = new Set(
@@ -94,29 +120,59 @@ export async function listPartnersForAdmin(): Promise<ListPartnersResult> {
     }
   }
 
-  const emailById = new Map<string, string>();
+  const pendingInviteByCompany = new Map<string, string>();
+  if (allCompanyIds.length) {
+    const { data: invites } = await supabase
+      .from("partner_invites")
+      .select("estate_company_id, email, created_at")
+      .eq("status", "pending")
+      .in("estate_company_id", allCompanyIds)
+      .order("created_at", { ascending: false });
+    for (const inv of invites ?? []) {
+      const cid = inv.estate_company_id as string;
+      if (pendingInviteByCompany.has(cid)) continue;
+      pendingInviteByCompany.set(cid, inv.email as string);
+    }
+  }
+
+  type AuthMeta = { email: string | null; lastSignInAt: string | null };
+  const authById = new Map<string, AuthMeta>();
   try {
     const { data: listed } = await supabase.auth.admin.listUsers({
       page: 1,
       perPage: 1000,
     });
     for (const u of listed?.users ?? []) {
-      if (u.email) emailById.set(u.id, u.email);
+      authById.set(u.id, {
+        email: u.email ?? null,
+        lastSignInAt: u.last_sign_in_at ?? null,
+      });
     }
   } catch {
-    // Emails optional if admin API unavailable
+    // Auth metadata optional if admin API unavailable
   }
 
   const rows: AdminPartnerRow[] = (profiles ?? []).map((p) => {
     const estateCompanyId = (p.estate_company_id as string | null) ?? null;
+    const company = estateCompanyId ? companyById.get(estateCompanyId) : undefined;
+    const auth = authById.get(p.id as string);
     return {
       profileId: p.id as string,
       displayName: (p.display_name as string | null) ?? null,
-      email: emailById.get(p.id as string) ?? null,
-      estateCompanyId,
-      companyName: estateCompanyId
-        ? (companyNameById.get(estateCompanyId) ?? null)
+      email: auth?.email ?? null,
+      hasLoggedIn: Boolean(auth?.lastSignInAt),
+      lastSignInAt: auth?.lastSignInAt ?? null,
+      phone: (p.phone as string | null) ?? null,
+      whatsapp: (p.whatsapp as string | null) ?? null,
+      contactEmail: (p.contact_email as string | null) ?? null,
+      companyPhone: company?.phone ?? null,
+      companyWhatsapp: company?.whatsapp ?? null,
+      companyEmail: company?.email ?? null,
+      pendingInviteEmail: estateCompanyId
+        ? (pendingInviteByCompany.get(estateCompanyId) ?? null)
         : null,
+      estateCompanyId,
+      companyName: company?.name ?? null,
       listingCount: estateCompanyId
         ? (listingCountByCompany.get(estateCompanyId) ?? 0)
         : 0,
@@ -127,12 +183,22 @@ export async function listPartnersForAdmin(): Promise<ListPartnersResult> {
   for (const c of companies ?? []) {
     const id = c.id as string;
     if (linkedCompanyIds.has(id)) continue;
+    const company = companyById.get(id);
     rows.push({
       profileId: `company:${id}`,
       displayName: null,
       email: null,
+      hasLoggedIn: false,
+      lastSignInAt: null,
+      phone: null,
+      whatsapp: null,
+      contactEmail: null,
+      companyPhone: company?.phone ?? null,
+      companyWhatsapp: company?.whatsapp ?? null,
+      companyEmail: company?.email ?? null,
+      pendingInviteEmail: pendingInviteByCompany.get(id) ?? null,
       estateCompanyId: id,
-      companyName: (c.name as string) ?? null,
+      companyName: company?.name ?? null,
       listingCount: listingCountByCompany.get(id) ?? 0,
       companyOnly: true,
     });

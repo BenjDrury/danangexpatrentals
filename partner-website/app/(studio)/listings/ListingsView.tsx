@@ -256,8 +256,20 @@ export function ListingsView({
           </div>
 
           {filtered.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-line bg-white/50 px-5 py-8 text-center text-sm text-muted">
-              {t("listings.filter.empty")}
+            <div className="rounded-lg border border-dashed border-line bg-white/50 px-5 py-8 text-center">
+              <p className="text-sm text-muted">{t("listings.filter.empty")}</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setStatus("all");
+                  setAreaId("all");
+                  setAttention("all");
+                }}
+                className="mt-3 text-sm font-semibold text-ocean transition hover:text-ocean-deep"
+              >
+                {t("listings.filter.reset")}
+              </button>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-line/80 bg-white/70">

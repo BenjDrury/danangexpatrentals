@@ -70,6 +70,11 @@
     "file": "app/components/area/FilterBar.tsx"
   },
   {
+    "event_name": "apartment_filters_reset",
+    "event_description": "User reset apartment browse filters to defaults.",
+    "file": "app/components/area/FilterBar.tsx"
+  },
+  {
     "event_name": "nav_link_clicked",
     "event_description": "User clicked a primary navigation link.",
     "file": "app/components/Nav.tsx"

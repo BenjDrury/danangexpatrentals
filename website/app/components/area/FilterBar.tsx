@@ -23,6 +23,41 @@ export type AreaListFilters = {
   sort: SortOption;
 };
 
+export function createDefaultAreaListFilters(
+  sort: SortOption = "recommended",
+): AreaListFilters {
+  return {
+    unitType: "all",
+    propertyType: "all",
+    minPrice: null,
+    maxPrice: null,
+    furnishedOnly: false,
+    maxLeaseMonths: null,
+    maxDepositMonths: null,
+    noAgencyFeeOnly: false,
+    utilities: "all",
+    sort,
+  };
+}
+
+export function areaListFiltersAreActive(
+  filters: AreaListFilters,
+  defaults: AreaListFilters,
+): boolean {
+  return (
+    filters.unitType !== defaults.unitType ||
+    filters.propertyType !== defaults.propertyType ||
+    filters.minPrice !== defaults.minPrice ||
+    filters.maxPrice !== defaults.maxPrice ||
+    filters.furnishedOnly !== defaults.furnishedOnly ||
+    filters.maxLeaseMonths !== defaults.maxLeaseMonths ||
+    filters.maxDepositMonths !== defaults.maxDepositMonths ||
+    filters.noAgencyFeeOnly !== defaults.noAgencyFeeOnly ||
+    filters.utilities !== defaults.utilities ||
+    filters.sort !== defaults.sort
+  );
+}
+
 const UNIT_OPTIONS: { value: UnitFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "studio", label: "Studio" },
@@ -64,12 +99,15 @@ type FilterBarProps = {
   onChange: (f: AreaListFilters) => void;
   /** Currency for labels */
   currencyLabel?: string;
+  /** When provided, shows Reset filters when current filters differ. */
+  defaults?: AreaListFilters;
 };
 
 export function FilterBar({
   filters,
   onChange,
   currencyLabel = "USD",
+  defaults,
 }: FilterBarProps) {
   const update = (patch: Partial<AreaListFilters>) => {
     const next = { ...filters, ...patch };
@@ -89,8 +127,24 @@ export function FilterBar({
     });
   };
 
+  const showReset = Boolean(defaults && areaListFiltersAreActive(filters, defaults));
+
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-line bg-foam p-4 sm:p-5">
+      {showReset && defaults ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              onChange(defaults);
+              capture("apartment_filters_reset");
+            }}
+            className="text-sm font-medium text-muted transition hover:text-ocean"
+          >
+            Reset filters
+          </button>
+        </div>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <label className="mb-1.5 block text-sm font-medium text-muted">

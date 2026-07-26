@@ -97,7 +97,15 @@ export default async function Home() {
           primaryCta={{ href: "/apartments", label: "Browse all apartments" }}
           secondaryCta={{ href: "/contact", label: "Get help finding one" }}
         />
-      ) : null}
+      ) : (
+        <SectionApartmentCards
+          heading="Apartments worth a look"
+          description="New verified homes are added carefully. Tell us your budget and timing — we’ll shortlist options within 24 hours."
+          cards={[]}
+          primaryCta={{ href: "/apartments", label: "Browse apartments" }}
+          secondaryCta={{ href: "/contact", label: "Get matched" }}
+        />
+      )}
 
       <SectionNeighbourhoodGuides
         heading="Find your neighbourhood"

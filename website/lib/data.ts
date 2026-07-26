@@ -1,7 +1,11 @@
 import { cache } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Area, Apartment, ApartmentType, CoworkingSpace, Activity } from "types";
-import { slugify, apartmentIdPrefixFromParam } from "./area-utils";
+import {
+  apartmentDerivedSlug,
+  apartmentIdPrefixFromParam,
+  slugify,
+} from "./area-utils";
 import { validityPublicCutoffIso } from "./listing-validity";
 
 let anonClient: SupabaseClient | null | undefined;
@@ -279,13 +283,22 @@ export const getApartmentById = cache(async function getApartmentById(
     }
 
     // Derived SEO slug: {title-slug}-{uuid-prefix}
+    // UUID columns don't support LIKE — use an id range on the 8-char prefix.
     if ((!data || error) && id) {
       const prefix = apartmentIdPrefixFromParam(id);
       if (prefix) {
-        const byPrefix = await available().like("id", `${prefix}%`).limit(5);
-        const match = (byPrefix.data ?? []).find((row) =>
-          String(row.id).toLowerCase().startsWith(prefix)
-        );
+        const byPrefix = await available()
+          .gte("id", `${prefix}-0000-0000-0000-000000000000`)
+          .lte("id", `${prefix}-ffff-ffff-ffff-ffffffffffff`)
+          .limit(10);
+        const match = (byPrefix.data ?? []).find((row) => {
+          const rowId = String(row.id);
+          const derived = apartmentDerivedSlug(rowId, String(row.title ?? ""));
+          const stored = row.public_slug
+            ? String(row.public_slug).trim()
+            : "";
+          return derived === id || stored === id;
+        });
         if (match) {
           data = match;
           error = byPrefix.error;

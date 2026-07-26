@@ -259,12 +259,18 @@ export const getApartmentsPaginated = cache(async function getApartmentsPaginate
   }
 });
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const getApartmentById = cache(async function getApartmentById(
   id: string
 ): Promise<Apartment | null> {
   try {
     const supabase = getAnonClient();
     if (!supabase) return null;
+
+    const param = id.trim();
+    if (!param) return null;
 
     const cutoff = validityPublicCutoffIso();
     const available = () =>
@@ -274,40 +280,40 @@ export const getApartmentById = cache(async function getApartmentById(
         .or("status.is.null,status.eq.available")
         .gte("last_validity_check", cutoff);
 
-    let { data, error } = await available().eq("id", id).maybeSingle();
+    // Only query uuid column with real UUIDs — invalid values can throw and
+    // abort the whole lookup (swallowing slug / derived-slug fallbacks).
+    if (UUID_RE.test(param)) {
+      const byId = await available().eq("id", param).maybeSingle();
+      if (byId.data && !byId.error) {
+        return mapApartmentRow(byId.data as Record<string, unknown>);
+      }
+    }
 
-    if ((!data || error) && id) {
-      const bySlug = await available().eq("public_slug", id).maybeSingle();
-      data = bySlug.data;
-      error = bySlug.error;
+    const bySlug = await available().eq("public_slug", param).maybeSingle();
+    if (bySlug.data && !bySlug.error) {
+      return mapApartmentRow(bySlug.data as Record<string, unknown>);
     }
 
     // Derived SEO slug: {title-slug}-{uuid-prefix}
     // UUID columns don't support LIKE — use an id range on the 8-char prefix.
-    if ((!data || error) && id) {
-      const prefix = apartmentIdPrefixFromParam(id);
-      if (prefix) {
-        const byPrefix = await available()
-          .gte("id", `${prefix}-0000-0000-0000-000000000000`)
-          .lte("id", `${prefix}-ffff-ffff-ffff-ffffffffffff`)
-          .limit(10);
-        const match = (byPrefix.data ?? []).find((row) => {
-          const rowId = String(row.id);
-          const derived = apartmentDerivedSlug(rowId, String(row.title ?? ""));
-          const stored = row.public_slug
-            ? String(row.public_slug).trim()
-            : "";
-          return derived === id || stored === id;
-        });
-        if (match) {
-          data = match;
-          error = byPrefix.error;
-        }
+    const prefix = apartmentIdPrefixFromParam(param);
+    if (prefix) {
+      const byPrefix = await available()
+        .gte("id", `${prefix}-0000-0000-0000-000000000000`)
+        .lte("id", `${prefix}-ffff-ffff-ffff-ffffffffffff`)
+        .limit(10);
+      const match = (byPrefix.data ?? []).find((row) => {
+        const rowId = String(row.id);
+        const derived = apartmentDerivedSlug(rowId, String(row.title ?? ""));
+        const stored = row.public_slug ? String(row.public_slug).trim() : "";
+        return derived === param || stored === param;
+      });
+      if (match) {
+        return mapApartmentRow(match as Record<string, unknown>);
       }
     }
 
-    if (error || !data) return null;
-    return mapApartmentRow(data as Record<string, unknown>);
+    return null;
   } catch {
     return null;
   }

@@ -57,22 +57,59 @@ export function humanizeAreaLabel(raw: string): string {
   return name;
 }
 
+/** Collapse punctuation to a stable URL segment (e.g. "An Thuong & My An" → an-thuong-my-an). */
+export function compactSlug(s: string): string {
+  return slugify(s.replace(/[&/,]+/g, " "))
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Canonical public area slug from the human display name (not the internal zone label).
+ * e.g. "Beach-south / An Thuong (My An)" → "an-thuong-my-an"
+ */
+export function areaSlug(area: AreaPathFields): string {
+  return (
+    compactSlug(areaDisplayName(area)) ||
+    compactSlug(area.name) ||
+    (area.canonical_area_name ? compactSlug(area.canonical_area_name) : "") ||
+    area.id
+  );
+}
+
 /** True when the URL segment is already the canonical public slug (or sole id fallback). */
 export function isAreaCanonicalParam(
   slugOrId: string,
   area: AreaPathFields
 ): boolean {
-  const canonical = areaPath(area).replace(/^\/areas\//, "");
-  return slugOrId === canonical;
+  return slugOrId === areaSlug(area);
+}
+
+/**
+ * All URL segments that should resolve to this area (canonical + legacy machine slugs + id).
+ * Used for lookup and build-time 308 redirects.
+ */
+export function areaSlugAliases(area: AreaPathFields): string[] {
+  const aliases = new Set<string>();
+  const add = (value: string | null | undefined) => {
+    const v = value?.trim();
+    if (v) aliases.add(v);
+  };
+  add(areaSlug(area));
+  add(area.id);
+  add(compactSlug(area.name));
+  add(slugify(area.name)); // legacy: Beach-south / … → beach-south--an-thuong-my-an
+  if (area.canonical_area_name) {
+    add(compactSlug(area.canonical_area_name));
+    add(slugify(area.canonical_area_name));
+  }
+  add(compactSlug(areaDisplayName(area)));
+  return [...aliases];
 }
 
 /** Canonical public path for an area (`/areas/{slug}`). */
 export function areaPath(area: AreaPathFields): string {
-  const slug =
-    slugify(area.name) ||
-    (area.canonical_area_name ? slugify(area.canonical_area_name) : "") ||
-    area.id;
-  return `/areas/${slug}`;
+  return `/areas/${areaSlug(area)}`;
 }
 
 /** Canonical public path for a listing (`/apartments/{slug}`). */

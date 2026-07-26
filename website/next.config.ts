@@ -1,16 +1,14 @@
 import type { NextConfig } from "next";
 import { config as loadSecretEnv } from "dotenv";
+import {
+  apartmentPath,
+  areaPath,
+  areaSlug,
+  areaSlugAliases,
+} from "./lib/area-utils";
 
 // Load secrets from .secret.local (gitignored)
 loadSecretEnv({ path: ".secret.local" });
-
-function slugify(s: string): string {
-  return s
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-}
 
 async function seoRedirects(): Promise<
   { source: string; destination: string; permanent: boolean }[]
@@ -26,19 +24,31 @@ async function seoRedirects(): Promise<
     const supabase = createClient(url, key);
     const redirects: { source: string; destination: string; permanent: boolean }[] =
       [];
+    const seen = new Set<string>();
+
+    const pushRedirect = (source: string, destination: string) => {
+      if (!source || source === destination || seen.has(source)) return;
+      seen.add(source);
+      redirects.push({ source, destination, permanent: true });
+    };
 
     const { data: areas } = await supabase
       .from("areas")
-      .select("id, name")
+      .select("id, name, canonical_area_name")
       .order("id");
     for (const area of areas ?? []) {
-      const slug = slugify(String(area.name)) || String(area.id);
-      if (slug && slug !== area.id) {
-        redirects.push({
-          source: `/areas/${area.id}`,
-          destination: `/areas/${slug}`,
-          permanent: true,
-        });
+      const fields = {
+        id: String(area.id),
+        name: String(area.name ?? ""),
+        canonical_area_name: area.canonical_area_name
+          ? String(area.canonical_area_name)
+          : null,
+      };
+      const destination = areaPath(fields);
+      const canonical = areaSlug(fields);
+      for (const alias of areaSlugAliases(fields)) {
+        if (alias === canonical) continue;
+        pushRedirect(`/areas/${alias}`, destination);
       }
     }
 
@@ -46,23 +56,12 @@ async function seoRedirects(): Promise<
       .from("apartments")
       .select("id, title, public_slug");
     for (const apt of apartments ?? []) {
-      const id = String(apt.id);
-      const stored = apt.public_slug ? String(apt.public_slug).trim() : "";
-      const derivedBase =
-        slugify(String(apt.title ?? ""))
-          .replace(/-+/g, "-")
-          .replace(/^-|-$/g, "")
-          .slice(0, 48) || "apartment";
-      const destination = stored
-        ? `/apartments/${stored}`
-        : `/apartments/${derivedBase}-${id.slice(0, 8)}`;
-      if (destination !== `/apartments/${id}`) {
-        redirects.push({
-          source: `/apartments/${id}`,
-          destination,
-          permanent: true,
-        });
-      }
+      const destination = apartmentPath({
+        id: String(apt.id),
+        title: apt.title ? String(apt.title) : null,
+        public_slug: apt.public_slug ? String(apt.public_slug) : null,
+      });
+      pushRedirect(`/apartments/${String(apt.id)}`, destination);
     }
 
     return redirects;

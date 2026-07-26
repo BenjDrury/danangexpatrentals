@@ -4,7 +4,7 @@ import type { Area, Apartment, ApartmentType, CoworkingSpace, Activity } from "t
 import {
   apartmentDerivedSlug,
   apartmentIdPrefixFromParam,
-  slugify,
+  areaSlugAliases,
 } from "./area-utils";
 import { validityPublicCutoffIso } from "./listing-validity";
 
@@ -29,12 +29,14 @@ const AREAS_SELECT =
 
 /** Card/list fields only — skip long description and gallery arrays. */
 const APARTMENT_LIST_SELECT =
-  "id, area_id, title, price, price_display, price_amount, price_currency, price_usd, price_vnd, main_image, bedrooms, bathrooms, size_sqm, features, available_from, sort_order, created_at, public_slug";
+  "id, area_id, title, price, price_display, price_amount, price_currency, price_usd, price_vnd, main_image, bedrooms, bathrooms, size_sqm, features, available_from, min_lease_months, property_type, deposit_months, agency_fee_months, utilities_included, sort_order, created_at, public_slug";
 
 const APARTMENT_DETAIL_SELECT =
-  "id, area_id, title, description, price, price_display, price_amount, price_currency, price_usd, price_vnd, main_image, images, bedrooms, bathrooms, size_sqm, features, available_from, min_lease_months, sort_order, created_at, updated_at, status, public_slug, last_validity_check";
+  "id, area_id, title, description, price, price_display, price_amount, price_currency, price_usd, price_vnd, main_image, images, bedrooms, bathrooms, size_sqm, features, available_from, min_lease_months, property_type, deposit_months, agency_fee_months, utilities_included, sort_order, created_at, updated_at, status, public_slug, last_validity_check";
 
 function mapApartmentRow(row: Record<string, unknown>): Apartment {
+  const propertyType = row.property_type;
+  const utilitiesIncluded = row.utilities_included;
   return {
     id: String(row.id),
     area_id: row.area_id as string,
@@ -57,6 +59,22 @@ function mapApartmentRow(row: Record<string, unknown>): Apartment {
     features: Array.isArray(row.features) ? (row.features as Apartment["features"]) : [],
     available_from: (row.available_from as string | null) ?? null,
     min_lease_months: row.min_lease_months != null ? Number(row.min_lease_months) : null,
+    property_type:
+      propertyType === "apartment" ||
+      propertyType === "house" ||
+      propertyType === "villa" ||
+      propertyType === "serviced"
+        ? propertyType
+        : null,
+    deposit_months: row.deposit_months != null ? Number(row.deposit_months) : null,
+    agency_fee_months:
+      row.agency_fee_months != null ? Number(row.agency_fee_months) : null,
+    utilities_included:
+      utilitiesIncluded === "not_included" ||
+      utilitiesIncluded === "partial" ||
+      utilitiesIncluded === "included"
+        ? utilitiesIncluded
+        : null,
     sort_order: Number(row.sort_order ?? 0),
     status: (row.status as Apartment["status"]) ?? undefined,
     public_slug: (row.public_slug as string | null) ?? null,
@@ -125,10 +143,8 @@ export const getAreaBySlugOrId = cache(async function getAreaBySlugOrId(
     if (error || !data || data.length === 0) return null;
 
     const normalized = String(slugOrId).trim().toLowerCase().replace(/\s+/g, "-");
-    const match = data.find(
-      (a) =>
-        slugify(a.name) === normalized ||
-        (a.canonical_area_name != null && slugify(a.canonical_area_name) === normalized)
+    const match = data.find((a) =>
+      areaSlugAliases(a).some((alias) => alias.toLowerCase() === normalized)
     );
     if (!match) return null;
     return getAreaByIdFull(match.id);

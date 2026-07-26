@@ -13,12 +13,16 @@ type ConciergeFormProps = {
   initialPreferredArea?: string;
   initialAreaId?: string;
   initialApartmentId?: string;
+  listingTitle?: string;
+  listingPriceLabel?: string;
 };
 
 export function ConciergeForm({
   initialPreferredArea = "",
   initialAreaId,
   initialApartmentId,
+  listingTitle,
+  listingPriceLabel,
 }: ConciergeFormProps = {}) {
   const [state, formAction, isPending] = useActionState(
     async (_: LeadState, formData: FormData) => {
@@ -32,12 +36,12 @@ export function ConciergeForm({
           has_email: !!formData.get("email"),
           has_apartment_id: !!formData.get("apartment_id"),
           has_area_id: !!formData.get("area_id"),
-          source: "concierge_form",
+          source: initialApartmentId ? "concierge_form_listing" : "concierge_form",
         });
       } else {
         capture("lead_submit_failed", {
           error: result.error,
-          source: "concierge_form",
+          source: initialApartmentId ? "concierge_form_listing" : "concierge_form",
         });
       }
       return result;
@@ -51,30 +55,50 @@ export function ConciergeForm({
         <p className="font-display text-xl font-semibold text-charcoal">
           Thanks — we’ll be in touch within 24 hours.
         </p>
-        <p className="mt-2 text-muted">Watch for a WhatsApp message from us.</p>
+        <p className="mt-2 text-muted">
+          {listingTitle
+            ? "Watch for a WhatsApp message about this apartment."
+            : "Watch for a WhatsApp message from us."}
+        </p>
       </div>
     );
   }
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
+      {listingTitle ? (
+        <div className="rounded-quieter border border-ocean/20 bg-ocean/5 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-ocean">
+            Requesting this home
+          </p>
+          <p className="mt-1 font-medium text-charcoal">{listingTitle}</p>
+          {listingPriceLabel || initialPreferredArea ? (
+            <p className="mt-0.5 text-sm text-muted">
+              {[initialPreferredArea, listingPriceLabel].filter(Boolean).join(" · ")}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {state.ok === false && state.error && (
         <p className="rounded-quieter bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
           {state.error}
         </p>
       )}
-      <div>
-        <label htmlFor="budget_range" className="mb-1.5 block text-sm font-medium text-charcoal">
-          Budget range
-        </label>
-        <input
-          type="text"
-          id="budget_range"
-          name="budget_range"
-          placeholder="e.g. $300–500/month"
-          className={inputClass}
-        />
-      </div>
+      {!listingTitle ? (
+        <div>
+          <label htmlFor="budget_range" className="mb-1.5 block text-sm font-medium text-charcoal">
+            Budget range
+          </label>
+          <input
+            type="text"
+            id="budget_range"
+            name="budget_range"
+            placeholder="e.g. $300–500/month"
+            className={inputClass}
+          />
+        </div>
+      ) : null}
       <div>
         <label htmlFor="move_date" className="mb-1.5 block text-sm font-medium text-charcoal">
           When do you need it?
@@ -99,19 +123,23 @@ export function ConciergeForm({
           className={inputClass}
         />
       </div>
-      <div>
-        <label htmlFor="preferred_area" className="mb-1.5 block text-sm font-medium text-charcoal">
-          Preferred neighbourhood <span className="text-muted">(optional)</span>
-        </label>
-        <input
-          type="text"
-          id="preferred_area"
-          name="preferred_area"
-          defaultValue={initialPreferredArea}
-          placeholder="e.g. An Thuong, My Khe"
-          className={inputClass}
-        />
-      </div>
+      {!listingTitle ? (
+        <div>
+          <label htmlFor="preferred_area" className="mb-1.5 block text-sm font-medium text-charcoal">
+            Preferred neighbourhood <span className="text-muted">(optional)</span>
+          </label>
+          <input
+            type="text"
+            id="preferred_area"
+            name="preferred_area"
+            defaultValue={initialPreferredArea}
+            placeholder="e.g. An Thuong, My Khe"
+            className={inputClass}
+          />
+        </div>
+      ) : (
+        <input type="hidden" name="preferred_area" value={initialPreferredArea} />
+      )}
       {initialAreaId && <input type="hidden" name="area_id" value={initialAreaId} />}
       {initialApartmentId && (
         <input type="hidden" name="apartment_id" value={initialApartmentId} />
@@ -146,7 +174,11 @@ export function ConciergeForm({
         disabled={isPending}
         className="mt-2 rounded-quieter bg-ocean px-6 py-3.5 text-base font-semibold text-white transition hover:bg-ocean-deep disabled:opacity-60"
       >
-        {isPending ? "Sending…" : "Send me apartment options"}
+        {isPending
+          ? "Sending…"
+          : listingTitle
+            ? "Send request"
+            : "Send me apartment options"}
       </button>
       <p className="text-center text-sm text-muted">
         We reply within 24h. No spam. No obligation.

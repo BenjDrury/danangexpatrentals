@@ -31,12 +31,12 @@
   },
   {
     "event_name": "apartment_inquiry_clicked",
-    "event_description": "User clicked Inquire about this apartment on a listing detail page.",
-    "file": "app/components/area/ApartmentInquiryLink.tsx"
+    "event_description": "User opened the listing inquiry overlay on an apartment detail page.",
+    "file": "app/components/area/ApartmentInquiryButton.tsx"
   },
   {
     "event_name": "apartment_request_clicked",
-    "event_description": "User clicked Request this apartment on a listing card.",
+    "event_description": "User clicked Request this apartment on a listing card (goes to contact with listing context).",
     "file": "app/components/area/ApartmentCard.tsx"
   },
   {

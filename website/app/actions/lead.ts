@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
 import { captureServer } from "@/lib/analytics-server";
 import { WHATSAPP_URL } from "@/app/lib/contact-links";
+import { apartmentPath } from "@/lib/area-utils";
+import { absoluteUrl } from "@/lib/seo";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -27,6 +29,22 @@ function optionalAreaId(value: FormDataEntryValue | null): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 && trimmed.length <= 64 ? trimmed : null;
+}
+
+async function listingSummary(apartmentId: string | null): Promise<string | null> {
+  if (!apartmentId) return null;
+  const { data, error } = await supabase
+    .from("apartments")
+    .select("id, title, public_slug")
+    .eq("id", apartmentId)
+    .maybeSingle();
+  if (error || !data) return apartmentId;
+  const path = apartmentPath({
+    id: String(data.id),
+    title: String(data.title ?? ""),
+    public_slug: (data.public_slug as string | null) ?? null,
+  });
+  return `${data.title}\n${absoluteUrl(path)}\nID: ${apartmentId}`;
 }
 
 export async function submitLead(formData: FormData): Promise<LeadState> {
@@ -73,13 +91,17 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     }
   }
 
+  const listingLine = await listingSummary(apartmentId);
+
   if (resend && LEAD_NOTIFY_EMAIL && process.env.RESEND_API_KEY) {
     try {
       await resend.emails.send({
         from: RESEND_FROM_EMAIL,
         replyTo: RESEND_REPLY_TO_EMAIL,
         to: LEAD_NOTIFY_EMAIL,
-        subject: `New lead: ${whatsapp} – ${budgetRange || "no budget"} – ${moveDate || "no date"}`,
+        subject: apartmentId
+          ? `Listing inquiry: ${whatsapp}`
+          : `New lead: ${whatsapp} – ${budgetRange || "no budget"} – ${moveDate || "no date"}`,
         text: [
           `WhatsApp: ${whatsapp}`,
           email ? `Email: ${email}` : null,
@@ -87,8 +109,8 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
           `Move date: ${moveDate || "—"}`,
           `Length of stay: ${lengthOfStay || "—"}`,
           preferredArea ? `Area: ${preferredArea}` : null,
-          apartmentId ? `Listing: ${apartmentId}` : null,
-          areaId ? `Area id: ${areaId}` : null,
+          listingLine ? `Listing:\n${listingLine}` : null,
+          !listingLine && areaId ? `Area id: ${areaId}` : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -106,7 +128,7 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     has_email: !!email,
     has_apartment_id: !!apartmentId,
     has_area_id: !!areaId,
-    source: "website",
+    source: apartmentId ? "listing_inquiry" : "website",
   });
 
   return { ok: true };

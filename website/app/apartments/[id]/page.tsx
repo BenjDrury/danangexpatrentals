@@ -10,7 +10,7 @@ import {
 } from "types";
 import { TrackListingView } from "@/app/components/TrackListingView";
 import { ApartmentGallery } from "@/app/components/area/ApartmentGallery";
-import { ApartmentInquiryLink } from "@/app/components/area/ApartmentInquiryLink";
+import { ApartmentInquiryButton } from "@/app/components/area/ApartmentInquiryButton";
 import { ListingGuides } from "@/app/components/area/ListingGuides";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
@@ -241,10 +241,12 @@ export default async function ApartmentPage({ params }: Props) {
               </div>
             )}
 
-            <ApartmentInquiryLink
-              href="/contact"
+            <ApartmentInquiryButton
               apartmentId={apartment.id}
+              apartmentTitle={apartment.title}
+              priceLabel={priceLabel}
               areaId={area?.id}
+              areaName={area ? areaName : undefined}
               className="mt-8 inline-flex w-full justify-center rounded-quieter bg-ocean px-6 py-4 text-base font-semibold text-white transition hover:bg-ocean-deep"
             />
           </div>

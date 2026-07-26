@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { listingPriceLabel } from "types";
 import { ConciergeForm } from "../components/ConciergeForm";
 import { TrackedLink } from "../components/TrackedLink";
 import { Section, SectionHero } from "../components/sections";
 import { WHATSAPP_URL } from "../lib/contact-links";
+import { areaDisplayName } from "@/lib/area-utils";
+import { getApartmentById, getAreaById } from "@/lib/data";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -16,17 +19,33 @@ type Props = { searchParams: Promise<{ [key: string]: string | string[] | undefi
 
 export default async function ContactPage({ searchParams }: Props) {
   const params = await searchParams;
-  const preferredArea = typeof params.preferred_area === "string" ? params.preferred_area : "";
+  const preferredArea =
+    typeof params.preferred_area === "string" ? params.preferred_area : "";
   const areaId = typeof params.areaId === "string" ? params.areaId : undefined;
-  const apartmentId = typeof params.apartmentId === "string" ? params.apartmentId : undefined;
+  const apartmentId =
+    typeof params.apartmentId === "string" ? params.apartmentId : undefined;
+
+  const apartment = apartmentId ? await getApartmentById(apartmentId) : null;
+  const listingArea = apartment
+    ? await getAreaById(apartment.area_id)
+    : areaId
+      ? await getAreaById(areaId)
+      : null;
+  const listingAreaName = listingArea
+    ? areaDisplayName(listingArea)
+    : preferredArea || undefined;
+
+  const isListingRequest = Boolean(apartment);
+  const heroTitle = isListingRequest
+    ? "Request this apartment"
+    : "Tell us what you need";
+  const heroSubtitle = isListingRequest
+    ? "We’ll check availability and get back within 24 hours — free, calm, and no obligation."
+    : "Share a few details and we’ll send thoughtful apartment options within 24 hours — free, calm, and no obligation. Short stays and longer leases welcome.";
 
   return (
     <div className="min-h-screen bg-foam">
-      <SectionHero
-        variant="page"
-        title="Tell us what you need"
-        subtitle="Share a few details and we’ll send thoughtful apartment options within 24 hours — free, calm, and no obligation. Short stays and longer leases welcome."
-      />
+      <SectionHero variant="page" title={heroTitle} subtitle={heroSubtitle} />
 
       <Section bg="bg-foam">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
@@ -36,9 +55,13 @@ export default async function ContactPage({ searchParams }: Props) {
             </h2>
             <ul className="mt-8 space-y-8">
               <li>
-                <h3 className="font-display text-lg font-semibold text-charcoal">Concierge form</h3>
+                <h3 className="font-display text-lg font-semibold text-charcoal">
+                  {isListingRequest ? "This request" : "Concierge form"}
+                </h3>
                 <p className="mt-2 text-muted leading-relaxed">
-                  Best when you want to share budget, dates, and neighbourhood preferences in one place.
+                  {isListingRequest
+                    ? "You’re asking about a specific verified listing. We’ll confirm availability and next steps."
+                    : "Best when you want to share budget, dates, and neighbourhood preferences in one place."}
                 </p>
               </li>
               {WHATSAPP_URL && (
@@ -60,7 +83,9 @@ export default async function ContactPage({ searchParams }: Props) {
               <li>
                 <h3 className="font-display text-lg font-semibold text-charcoal">After you write</h3>
                 <p className="mt-2 text-muted leading-relaxed">
-                  We reply within 24 hours with a shortlist of verified options — never a flood of random listings.
+                  {isListingRequest
+                    ? "We reply within 24 hours about this home — and can suggest alternatives if it’s taken."
+                    : "We reply within 24 hours with a shortlist of verified options — never a flood of random listings."}
                 </p>
               </li>
             </ul>
@@ -80,14 +105,16 @@ export default async function ContactPage({ searchParams }: Props) {
 
           <div className="rounded-soft border border-line bg-white p-8 sm:p-10">
             <h2 className="font-display text-2xl font-semibold tracking-tight text-charcoal">
-              Get matched
+              {isListingRequest ? "Request this home" : "Get matched"}
             </h2>
             <p className="mt-3 text-muted">Free. No spam. No obligation.</p>
             <div className="mt-8">
               <ConciergeForm
-                initialPreferredArea={preferredArea}
-                initialAreaId={areaId}
-                initialApartmentId={apartmentId}
+                initialPreferredArea={listingAreaName || preferredArea}
+                initialAreaId={apartment?.area_id ?? areaId}
+                initialApartmentId={apartment?.id ?? apartmentId}
+                listingTitle={apartment?.title}
+                listingPriceLabel={apartment ? listingPriceLabel(apartment) : undefined}
               />
             </div>
           </div>

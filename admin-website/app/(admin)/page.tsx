@@ -1,9 +1,14 @@
 import Link from "next/link";
-import { getApartmentsCount, getLeadsCount } from "@/lib/data";
+import {
+  getApartmentsCount,
+  getLeadsCount,
+  getPartnerApplicationsCount,
+} from "@/lib/data";
 
 export default async function AdminDashboardPage() {
-  const [leadsCount, apartmentsCount] = await Promise.all([
+  const [leadsCount, partnerAppsCount, apartmentsCount] = await Promise.all([
     getLeadsCount(),
+    getPartnerApplicationsCount(),
     getApartmentsCount(),
   ]);
 
@@ -14,7 +19,7 @@ export default async function AdminDashboardPage() {
         Overview. Manage areas and apartment types from the subpages.
       </p>
 
-      <dl className="mt-10 grid gap-8 sm:grid-cols-2">
+      <dl className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         <div className="border-t border-line/80 pt-5">
           <dt className="text-sm font-medium text-muted">Leads</dt>
           <dd className="mt-1 font-display text-4xl font-semibold text-ocean">
@@ -29,6 +34,19 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
         <div className="border-t border-line/80 pt-5">
+          <dt className="text-sm font-medium text-muted">Partner applications</dt>
+          <dd className="mt-1 font-display text-4xl font-semibold text-ocean">
+            {partnerAppsCount}
+          </dd>
+          <p className="mt-1 text-sm text-muted">Agents & owners applying</p>
+          <Link
+            href="/partner-applications"
+            className="mt-3 inline-block text-sm font-medium text-ocean underline-offset-2 hover:underline"
+          >
+            View applications
+          </Link>
+        </div>
+        <div className="border-t border-line/80 pt-5">
           <dt className="text-sm font-medium text-muted">Apartments</dt>
           <dd className="mt-1 font-display text-4xl font-semibold text-ocean">
             {apartmentsCount}
@@ -40,6 +58,9 @@ export default async function AdminDashboardPage() {
       <div className="mt-10 flex flex-wrap gap-3">
         <Link href="/leads" className="btn-primary">
           View leads
+        </Link>
+        <Link href="/partner-applications" className="btn-secondary">
+          Partner applications
         </Link>
         <Link href="/apartments" className="btn-secondary">
           View apartments

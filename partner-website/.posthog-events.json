@@ -55,11 +55,6 @@
     "file": "app/(studio)/listings/actions.ts"
   },
   {
-    "event_name": "listing_bumped",
-    "event_description": "Partner bumps a listing to refresh its sort position.",
-    "file": "app/(studio)/listings/[id]/PostComposer.tsx"
-  },
-  {
     "event_name": "listing_validity_confirmed",
     "event_description": "Partner confirms whether a listing is still available, reserved, or rented.",
     "file": "app/(studio)/HomeView.tsx"

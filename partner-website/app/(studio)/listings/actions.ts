@@ -627,29 +627,6 @@ export async function confirmListingValidity(
   return { ok: true };
 }
 
-export async function bumpListing(id: string): Promise<ListingFormState> {
-  const session = await requirePartner();
-  if (!session) return { error: "Unauthorized." };
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("apartments")
-    .update({
-      last_bumped_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("estate_company_id", session.estateCompanyId);
-
-  if (error) return { error: error.message };
-
-  await captureServer("listing_bumped", { listing_id: id }, session);
-
-  revalidatePath("/");
-  revalidatePath(`/listings/${id}`);
-  return { ok: true };
-}
-
 /** Extract storage object paths from public apartments-bucket URLs for this company. */
 function apartmentStoragePaths(urls: string[], estateCompanyId: string): string[] {
   const marker = "/storage/v1/object/public/apartments/";

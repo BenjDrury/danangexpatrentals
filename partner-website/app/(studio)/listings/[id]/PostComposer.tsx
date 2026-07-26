@@ -10,7 +10,6 @@ import type { ListingFacebookBatchSummary } from "@/lib/data/facebook-posts";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { capture } from "@/lib/analytics";
 import {
-  bumpListing,
   clearListingFacebookHistory,
   savePostDraft,
 } from "../actions";
@@ -235,21 +234,6 @@ export function PostComposer({
           >
             {t("composer.saveDraft")}
           </Button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => {
-              startTransition(async () => {
-                const result = await bumpListing(listingId);
-                setMessage(result.error ?? t("composer.markedBumped"));
-                setError(result.error ?? null);
-                if (!result.error) capture("listing_bumped", { listing_id: listingId });
-              });
-            }}
-            className="rounded-md bg-palm px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-          >
-            {t("composer.markBumped")}
-          </button>
         </div>
         {(error || message) && (
           <p

@@ -289,6 +289,16 @@ export function ListingWorkspace({
                     <dd className="font-medium text-charcoal">{validityLabel}</dd>
                   </div>
                   <div>
+                    <dt className="text-xs text-muted">{t("workspace.views")}</dt>
+                    <dd className="font-medium text-charcoal">{listing.view_count ?? 0}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">{t("workspace.uniqueViews")}</dt>
+                    <dd className="font-medium text-charcoal">
+                      {listing.unique_view_count ?? 0}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="text-xs text-muted">{t("workspace.photoCount")}</dt>
                     <dd className="font-medium text-charcoal">{photoCount}</dd>
                   </div>

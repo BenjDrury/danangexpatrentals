@@ -1,4 +1,6 @@
+import { listingPriceLabel } from "types";
 import { WHATSAPP_URL } from "./lib/contact-links";
+import { getApartments, getAreas } from "@/lib/data";
 import {
   SectionApartmentCards,
   SectionCta,
@@ -8,35 +10,9 @@ import {
   SectionTrustTeaser,
 } from "./components/sections";
 
-const CURATED_APARTMENTS = [
-  {
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=900&q=80",
-    title: "Bright 1BR near the beach",
-    price: "$480/mo",
-    location: "My Khe",
-    type: "1 bedroom · Furnished",
-    features: ["5 min walk to beach", "Natural light", "Flexible lease"],
-    href: "/apartments",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=900&q=80",
-    title: "Studio in the café strip",
-    price: "$320/mo",
-    location: "An Thuong",
-    type: "Studio",
-    features: ["Balcony", "Near coworking", "Utilities separate"],
-    href: "/apartments",
-  },
-  {
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=900&q=80",
-    title: "Serviced 2BR, ready to stay",
-    price: "$720/mo",
-    location: "My An",
-    type: "2 bedroom · Serviced",
-    features: ["Cleaning included", "Quiet street", "Short or long stays"],
-    href: "/apartments",
-  },
-];
+export const revalidate = 60;
+
+const HOME_LISTING_COUNT = 3;
 
 const NEIGHBOURHOODS = [
   {
@@ -69,7 +45,28 @@ const NEIGHBOURHOODS = [
   },
 ];
 
-export default function Home() {
+function bedroomLabel(bedrooms: number): string {
+  if (bedrooms === 0) return "Studio";
+  return `${bedrooms} bedroom${bedrooms !== 1 ? "s" : ""}`;
+}
+
+export default async function Home() {
+  const [apartments, areas] = await Promise.all([getApartments(), getAreas()]);
+  const areaById = new Map(areas.map((a) => [a.id, a.name]));
+
+  const cards = apartments
+    .filter((apt) => Boolean(apt.main_image))
+    .slice(0, HOME_LISTING_COUNT)
+    .map((apt) => ({
+      image: apt.main_image,
+      title: apt.title,
+      price: listingPriceLabel(apt),
+      location: areaById.get(apt.area_id) ?? "Da Nang",
+      type: bedroomLabel(apt.bedrooms),
+      features: (apt.features ?? []).slice(0, 3).map(String),
+      href: `/apartments/${apt.id}`,
+    }));
+
   return (
     <div className="bg-foam">
       <SectionHero
@@ -80,13 +77,15 @@ export default function Home() {
         secondaryCta={{ href: "/areas", label: "See neighbourhoods" }}
       />
 
-      <SectionApartmentCards
-        heading="Apartments worth a look"
-        description="A few verified places to start with — real photos, clear prices, short and longer stays."
-        cards={CURATED_APARTMENTS}
-        primaryCta={{ href: "/apartments", label: "Browse all apartments" }}
-        secondaryCta={{ href: "/contact", label: "Get help finding one" }}
-      />
+      {cards.length > 0 ? (
+        <SectionApartmentCards
+          heading="Apartments worth a look"
+          description="A few verified places to start with — real photos, clear prices, short and longer stays."
+          cards={cards}
+          primaryCta={{ href: "/apartments", label: "Browse all apartments" }}
+          secondaryCta={{ href: "/contact", label: "Get help finding one" }}
+        />
+      ) : null}
 
       <SectionNeighbourhoodGuides
         heading="Find your neighbourhood"

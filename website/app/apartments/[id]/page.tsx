@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { listingPriceLabel } from "types";
+import { TrackListingView } from "@/app/components/TrackListingView";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
 
@@ -35,6 +36,7 @@ export default async function ApartmentPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-foam">
+      <TrackListingView apartmentId={apartment.id} />
       <section className={`w-full ${SECTION_PADDING} bg-white pt-28 sm:pt-36`}>
         <div className={CONTENT_CONTAINER}>
         <Link

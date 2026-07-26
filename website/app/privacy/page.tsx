@@ -151,9 +151,12 @@ export default function PrivacyPage() {
 
       <LegalSection title="7. Cookies and analytics">
         <p>
-          Essential cookies or storage may be used for basic site function. If we
-          add analytics or marketing cookies later, we will update this notice and,
-          where required, seek consent.
+          We use a first-party anonymous visitor cookie to count listing page
+          views and unique visitors on our website. This helps partners see how
+          their listings perform. The cookie does not identify you by name and is
+          not used for advertising. We do not use third-party marketing analytics
+          cookies. If that changes, we will update this notice and, where
+          required, seek consent.
         </p>
       </LegalSection>
 

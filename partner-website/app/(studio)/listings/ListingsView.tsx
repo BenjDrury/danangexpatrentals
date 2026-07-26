@@ -259,13 +259,14 @@ export function ListingsView({
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-line/80 bg-white/70">
-              <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
+              <table className="w-full min-w-[62rem] border-collapse text-left text-sm">
                 <thead>
                   <tr className="border-b border-line/80 bg-foam/70 text-[0.65rem] font-semibold uppercase tracking-[0.06em] text-muted">
                     <th className="whitespace-nowrap px-3 py-2.5 font-semibold">{t("listings.col.listing")}</th>
                     <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.status")}</th>
                     <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.price")}</th>
                     <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.details")}</th>
+                    <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.views")}</th>
                     <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.commission")}</th>
                     <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.contact")}</th>
                     <th className="whitespace-nowrap px-2 py-2.5 font-semibold">{t("listings.col.updated")}</th>
@@ -349,6 +350,14 @@ export function ListingsView({
                             {areaName ? (
                               <span className="mt-0.5 block truncate text-xs">{areaName}</span>
                             ) : null}
+                          </Link>
+                        </td>
+                        <td className="px-2 py-2 align-middle whitespace-nowrap text-muted">
+                          <Link href={`/listings/${apt.id}`} className="hover:text-ocean">
+                            {t("listings.viewsSummary", {
+                              views: apt.view_count ?? 0,
+                              unique: apt.unique_view_count ?? 0,
+                            })}
                           </Link>
                         </td>
                         <td className="max-w-[9rem] px-2 py-2 align-middle">

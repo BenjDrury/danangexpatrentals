@@ -60,6 +60,10 @@ export interface Apartment {
   /** Optional admin note when rejecting a go-live request. */
   live_rejection_note?: string | null;
   public_slug?: string | null;
+  /** Total public listing detail pageviews. */
+  view_count?: number;
+  /** All-time unique visitors (cookie-based) on the public listing page. */
+  unique_view_count?: number;
   created_at?: string;
   updated_at?: string;
 }

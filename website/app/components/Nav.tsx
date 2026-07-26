@@ -8,7 +8,7 @@ import { capture } from "@/lib/analytics";
 const NAV_LINKS = [
   { label: "Apartments", href: "/apartments" },
   { label: "Neighbourhoods", href: "/areas" },
-  { label: "Living here", href: "/moving-guide" },
+  { label: "Living Guides", href: "/moving-guide" },
 ];
 
 function HamburgerIcon({ open }: { open: boolean }) {

@@ -112,6 +112,15 @@ const en = {
   "feed.validity.openListing": "Open →",
   "feed.validity.moreActions": "More…",
 
+  "feed.facebook.badge": "Facebook bump",
+  "feed.facebook.neverPosted": "Not posted yet",
+  "feed.facebook.daysAgo": "{days}d since last Facebook post",
+  "feed.facebook.prompt":
+    "Still available? Post again to your Page and groups — about every 3 weeks works well.",
+  "feed.facebook.lastDestinations": "Last posted to: {places}",
+  "feed.facebook.repostCta": "Post on Facebook",
+  "feed.facebook.historyLink": "View history →",
+
   "listings.title": "Listings",
   "listings.subtitle": "Inventory at a glance — status, price, commission, and contacts.",
   "listings.empty": "No listings yet.",
@@ -287,6 +296,13 @@ const en = {
   "composer.errorCaption": "Add a caption before posting.",
   "composer.posted": "Posted to Facebook.",
   "composer.fb.title": "Post to Facebook",
+  "composer.fb.promoteSubtitle":
+    "Open the publisher to pick photos, caption, your Page, and Facebook groups.",
+  "composer.fb.publishCta": "Publish on Facebook",
+  "composer.fb.promotePageOptional":
+    "Page connect is optional for group posting — groups open one-by-one with caption ready to paste.",
+  "composer.fb.promoteConnected":
+    "Posts to {page} automatically; {count} major groups are pre-selected.",
   "composer.fb.subtitle":
     "Preview photos and caption, then confirm to publish on {page}.",
   "composer.fb.subtitleDisconnected":
@@ -304,11 +320,50 @@ const en = {
   "composer.fb.captionLabel": "Caption",
   "composer.fb.continue": "Review & confirm",
   "composer.fb.confirmTitle": "Post to {page}?",
-  "composer.fb.confirmPhotos": "{count} photos will be uploaded with this caption.",
+  "composer.fb.confirmPhotos": "{count} photos will be included with this caption.",
   "composer.fb.postNow": "Post now",
   "composer.fb.posting": "Posting…",
   "composer.fb.back": "Back",
-  "composer.fb.viewPost": "View post",
+  "composer.fb.viewPost": "View Page post",
+  "composer.fb.overlay.title": "Publish on Facebook",
+  "composer.fb.overlay.subtitle":
+    "Choose photos, edit the caption, and pick where to send this listing.",
+  "composer.fb.overlay.close": "Close",
+  "composer.fb.overlay.destinations": "Where to post",
+  "composer.fb.overlay.pageLabel": "Facebook Page · {page}",
+  "composer.fb.overlay.pageHint": "Published automatically via your connected Page.",
+  "composer.fb.overlay.pageDisconnected":
+    "Connect a Page in Settings to enable automatic Page posts.",
+  "composer.fb.overlay.groupDefault": "Suggested",
+  "composer.fb.overlay.groupYours": "Your group",
+  "composer.fb.overlay.groupsApiNote":
+    "Meta no longer lets apps post into groups automatically. We’ll open each selected group with the caption copied so you can paste and attach photos in a few taps.",
+  "composer.fb.overlay.addGroup": "Add another group URL",
+  "composer.fb.overlay.needDestination": "Select your Page and/or at least one group.",
+  "composer.fb.overlay.needPage": "Connect Facebook in Settings, or turn off Page posting.",
+  "composer.fb.overlay.confirmTitle": "Ready to publish?",
+  "composer.fb.overlay.confirmPage": "Page: auto-post to {page}",
+  "composer.fb.overlay.confirmGroups": "Groups: {count} (guided paste)",
+  "composer.fb.overlay.blastProgress": "Group {current} of {total}",
+  "composer.fb.overlay.blastHint":
+    "Caption is on your clipboard. Open the group, start a post, paste, and attach the photos below.",
+  "composer.fb.overlay.blastPhotos": "Attach these photos",
+  "composer.fb.overlay.blastCopied": "Caption copied — paste into the Facebook composer.",
+  "composer.fb.overlay.openGroup": "Open group",
+  "composer.fb.overlay.markPosted": "Marked as posted · next",
+  "composer.fb.overlay.skipGroup": "Skip",
+  "composer.fb.overlay.doneTitle": "Publish flow finished.",
+  "composer.fb.overlay.doneGroups": "Guided through {count} groups.",
+  "composer.fb.overlay.doneClose": "Done",
+  "composer.fb.history.title": "Facebook post history",
+  "composer.fb.history.subtitle":
+    "Where this listing was posted, and when. Clear old entries anytime.",
+  "composer.fb.history.empty": "No Facebook posts recorded for this listing yet.",
+  "composer.fb.history.photos": "{count} photos",
+  "composer.fb.history.clearOld": "Clear posts older than 3 weeks",
+  "composer.fb.history.clearAll": "Clear all history",
+  "composer.fb.history.clearedOld": "Cleared {count} older post(s).",
+  "composer.fb.history.clearedAll": "Cleared {count} post(s).",
 
   "contacts.title": "Contacts",
   "contacts.subtitle":
@@ -422,7 +477,7 @@ const en = {
   "settings.fb.description":
     "Connect a Facebook Page so you can post listings from the studio later.",
   "settings.fb.comingSoon":
-    "Post listings from the Promote tab. Group blast may follow later.",
+    "Post from Promote — Page auto-posts; groups use a guided paste flow.",
   "settings.fb.status.connected": "Connected",
   "settings.fb.status.disconnected": "Not connected",
   "settings.fb.connectedAs": "Connected as {name}",
@@ -636,6 +691,15 @@ const vi: Record<MessageKey, string> = {
   "feed.validity.openListing": "Mở →",
   "feed.validity.moreActions": "Thêm…",
 
+  "feed.facebook.badge": "Đăng Facebook",
+  "feed.facebook.neverPosted": "Chưa đăng",
+  "feed.facebook.daysAgo": "{days} ngày từ lần đăng Facebook",
+  "feed.facebook.prompt":
+    "Vẫn còn trống? Đăng lại lên Trang và nhóm — khoảng mỗi 3 tuần là hợp lý.",
+  "feed.facebook.lastDestinations": "Lần trước đăng: {places}",
+  "feed.facebook.repostCta": "Đăng Facebook",
+  "feed.facebook.historyLink": "Xem lịch sử →",
+
   "listings.title": "Tin đăng",
   "listings.subtitle": "Kho tin nhanh — trạng thái, giá, hoa hồng và liên hệ.",
   "listings.empty": "Chưa có tin đăng.",
@@ -811,6 +875,13 @@ const vi: Record<MessageKey, string> = {
   "composer.errorCaption": "Thêm caption trước khi đăng.",
   "composer.posted": "Đã đăng lên Facebook.",
   "composer.fb.title": "Đăng Facebook",
+  "composer.fb.promoteSubtitle":
+    "Mở trình đăng để chọn ảnh, caption, Trang và các nhóm Facebook.",
+  "composer.fb.publishCta": "Đăng trên Facebook",
+  "composer.fb.promotePageOptional":
+    "Kết nối Trang không bắt buộc để đăng nhóm — mỗi nhóm mở lần lượt với caption sẵn để dán.",
+  "composer.fb.promoteConnected":
+    "Đăng tự động lên {page}; {count} nhóm lớn được chọn sẵn.",
   "composer.fb.subtitle":
     "Xem trước ảnh và caption, rồi xác nhận để đăng lên {page}.",
   "composer.fb.subtitleDisconnected":
@@ -828,11 +899,50 @@ const vi: Record<MessageKey, string> = {
   "composer.fb.captionLabel": "Caption",
   "composer.fb.continue": "Xem lại & xác nhận",
   "composer.fb.confirmTitle": "Đăng lên {page}?",
-  "composer.fb.confirmPhotos": "{count} ảnh sẽ được tải kèm caption này.",
+  "composer.fb.confirmPhotos": "{count} ảnh sẽ kèm caption này.",
   "composer.fb.postNow": "Đăng ngay",
   "composer.fb.posting": "Đang đăng…",
   "composer.fb.back": "Quay lại",
-  "composer.fb.viewPost": "Xem bài",
+  "composer.fb.viewPost": "Xem bài trên Trang",
+  "composer.fb.overlay.title": "Đăng trên Facebook",
+  "composer.fb.overlay.subtitle":
+    "Chọn ảnh, sửa caption, và chọn nơi gửi tin đăng này.",
+  "composer.fb.overlay.close": "Đóng",
+  "composer.fb.overlay.destinations": "Đăng ở đâu",
+  "composer.fb.overlay.pageLabel": "Trang Facebook · {page}",
+  "composer.fb.overlay.pageHint": "Đăng tự động qua Trang đã kết nối.",
+  "composer.fb.overlay.pageDisconnected":
+    "Kết nối Trang trong Cài đặt để đăng Trang tự động.",
+  "composer.fb.overlay.groupDefault": "Gợi ý",
+  "composer.fb.overlay.groupYours": "Nhóm của bạn",
+  "composer.fb.overlay.groupsApiNote":
+    "Meta không còn cho app đăng vào nhóm tự động. Chúng tôi mở từng nhóm đã chọn với caption đã copy để bạn dán và đính ảnh nhanh.",
+  "composer.fb.overlay.addGroup": "Thêm URL nhóm khác",
+  "composer.fb.overlay.needDestination": "Chọn Trang và/hoặc ít nhất một nhóm.",
+  "composer.fb.overlay.needPage": "Kết nối Facebook trong Cài đặt, hoặc tắt đăng Trang.",
+  "composer.fb.overlay.confirmTitle": "Sẵn sàng đăng?",
+  "composer.fb.overlay.confirmPage": "Trang: tự đăng lên {page}",
+  "composer.fb.overlay.confirmGroups": "Nhóm: {count} (hướng dẫn dán)",
+  "composer.fb.overlay.blastProgress": "Nhóm {current}/{total}",
+  "composer.fb.overlay.blastHint":
+    "Caption đã copy. Mở nhóm, tạo bài, dán caption và đính các ảnh bên dưới.",
+  "composer.fb.overlay.blastPhotos": "Đính các ảnh này",
+  "composer.fb.overlay.blastCopied": "Đã copy caption — dán vào khung soạn Facebook.",
+  "composer.fb.overlay.openGroup": "Mở nhóm",
+  "composer.fb.overlay.markPosted": "Đã đăng · tiếp",
+  "composer.fb.overlay.skipGroup": "Bỏ qua",
+  "composer.fb.overlay.doneTitle": "Hoàn tất luồng đăng.",
+  "composer.fb.overlay.doneGroups": "Đã hướng dẫn {count} nhóm.",
+  "composer.fb.overlay.doneClose": "Xong",
+  "composer.fb.history.title": "Lịch sử đăng Facebook",
+  "composer.fb.history.subtitle":
+    "Đã đăng tin này ở đâu và khi nào. Có thể xoá các mục cũ.",
+  "composer.fb.history.empty": "Chưa có bài Facebook nào được ghi cho tin này.",
+  "composer.fb.history.photos": "{count} ảnh",
+  "composer.fb.history.clearOld": "Xoá bài cũ hơn 3 tuần",
+  "composer.fb.history.clearAll": "Xoá toàn bộ lịch sử",
+  "composer.fb.history.clearedOld": "Đã xoá {count} bài cũ.",
+  "composer.fb.history.clearedAll": "Đã xoá {count} bài.",
 
   "contacts.title": "Liên hệ",
   "contacts.subtitle":
@@ -946,7 +1056,7 @@ const vi: Record<MessageKey, string> = {
   "settings.fb.description":
     "Kết nối Trang Facebook để sau này đăng tin từ studio.",
   "settings.fb.comingSoon":
-    "Đăng tin từ tab Đăng tin. Đăng nhiều nhóm có thể đến sau.",
+    "Đăng tin từ tab Đăng tin — Trang tự động, nhóm có hướng dẫn dán.",
   "settings.fb.status.connected": "Đã kết nối",
   "settings.fb.status.disconnected": "Chưa kết nối",
   "settings.fb.connectedAs": "Đã kết nối với {name}",

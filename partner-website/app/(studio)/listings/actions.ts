@@ -17,6 +17,11 @@ import { parseCommissionFormData } from "@/lib/deal-commission";
 import { captureServer } from "@/lib/analytics-server";
 import { getFacebookPageCredentials } from "@/lib/data/integrations";
 import {
+  clearListingFacebookPosts,
+  recordListingFacebookGroupPost,
+  recordListingFacebookPagePost,
+} from "@/lib/data/facebook-posts";
+import {
   FACEBOOK_POST_MAX_PHOTOS,
   publishPagePost,
 } from "@/lib/facebook-publish";
@@ -30,6 +35,7 @@ export type PublishFacebookState = {
   ok?: boolean;
   postId?: string;
   permalink?: string | null;
+  batchId?: string;
 };
 
 function slugify(title: string): string {
@@ -763,12 +769,15 @@ export async function publishListingToFacebook(params: {
   listingId: string;
   caption: string;
   imageUrls: string[];
+  batchId?: string;
 }): Promise<PublishFacebookState> {
   const session = await requirePartner();
   if (!session) return { error: "Unauthorized." };
 
   const caption = params.caption.trim();
   if (!caption) return { error: "Caption is required." };
+
+  const batchId = params.batchId?.trim() || crypto.randomUUID();
 
   const supabase = await createClient();
   const { data: listing, error: listingError } = await supabase
@@ -806,14 +815,19 @@ export async function publishListingToFacebook(params: {
       imageUrls,
     });
 
-    await supabase
-      .from("apartments")
-      .update({
-        last_bumped_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", params.listingId)
-      .eq("estate_company_id", session.estateCompanyId);
+    const recorded = await recordListingFacebookPagePost({
+      apartmentId: params.listingId,
+      estateCompanyId: session.estateCompanyId,
+      batchId,
+      facebookPostId: published.postId,
+      permalink: published.permalink,
+      photoCount: imageUrls.length,
+      caption,
+      postedBy: session.user.id,
+    });
+    if (recorded.error) {
+      console.error("recordListingFacebookPagePost", recorded.error);
+    }
 
     await captureServer(
       "facebook_listing_posted",
@@ -831,12 +845,82 @@ export async function publishListingToFacebook(params: {
       ok: true,
       postId: published.postId,
       permalink: published.permalink,
+      batchId,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Facebook publish failed.";
     console.error("publishListingToFacebook", message);
     return { error: message };
   }
+}
+
+export async function recordFacebookGroupPosted(params: {
+  listingId: string;
+  batchId: string;
+  groupId: string | null;
+  groupName: string;
+  groupUrl: string;
+  photoCount: number;
+  caption: string;
+}): Promise<ListingFormState & { batchId?: string }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
+  const batchId = params.batchId.trim() || crypto.randomUUID();
+  const result = await recordListingFacebookGroupPost({
+    apartmentId: params.listingId,
+    estateCompanyId: session.estateCompanyId,
+    batchId,
+    facebookGroupId: params.groupId,
+    groupName: params.groupName,
+    groupUrl: params.groupUrl,
+    photoCount: params.photoCount,
+    caption: params.caption,
+    postedBy: session.user.id,
+  });
+  if (result.error) return { error: result.error };
+
+  await captureServer(
+    "facebook_group_post_recorded",
+    {
+      listing_id: params.listingId,
+      has_group_id: Boolean(params.groupId),
+    },
+    session,
+  );
+
+  revalidatePath("/");
+  revalidatePath(`/listings/${params.listingId}`);
+  return { ok: true, batchId };
+}
+
+export async function clearListingFacebookHistory(
+  listingId: string,
+  olderThanDays?: number,
+): Promise<ListingFormState & { cleared?: number }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
+  const result = await clearListingFacebookPosts(
+    session.estateCompanyId,
+    listingId,
+    olderThanDays != null ? { olderThanDays } : undefined,
+  );
+  if (result.error) return { error: result.error };
+
+  await captureServer(
+    "facebook_post_history_cleared",
+    {
+      listing_id: listingId,
+      cleared: result.cleared ?? 0,
+      older_than_days: olderThanDays ?? null,
+    },
+    session,
+  );
+
+  revalidatePath("/");
+  revalidatePath(`/listings/${listingId}`);
+  return { ok: true, cleared: result.cleared };
 }
 
 export async function getGeneratedCaption(apartmentId: string): Promise<string | null> {

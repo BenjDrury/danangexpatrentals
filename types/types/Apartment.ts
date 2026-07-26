@@ -53,6 +53,8 @@ export interface Apartment {
   video_urls?: string[];
   partner_notes?: string | null;
   last_bumped_at?: string | null;
+  /** When a partner last published this listing to Facebook (Page and/or groups). */
+  last_facebook_posted_at?: string | null;
   /** When a partner last confirmed the listing is still valid. Null = never checked. */
   last_validity_check?: string | null;
   /** When partner last requested admin approval to go live. */

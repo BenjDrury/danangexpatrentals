@@ -71,8 +71,38 @@
   },
   {
     "event_name": "facebook_listing_posted",
-    "event_description": "A partner publishes a listing caption and selected photos to their connected Facebook Page from Promote (server + client). Properties: listing_id, photo_count.",
+    "event_description": "A partner publishes a listing caption and selected photos to their connected Facebook Page from Promote (server + client). Properties: listing_id, photo_count, group_count.",
     "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "facebook_publish_overlay_opened",
+    "event_description": "Partner opens the Publish on Facebook overlay from a listing Promote tab.",
+    "file": "app/(studio)/listings/[id]/PostComposer.tsx"
+  },
+  {
+    "event_name": "facebook_group_blast_started",
+    "event_description": "Partner starts the guided group posting flow after optional Page publish. Properties: listing_id, group_count, posted_to_page.",
+    "file": "app/(studio)/listings/[id]/FacebookPublishOverlay.tsx"
+  },
+  {
+    "event_name": "facebook_group_blast_marked",
+    "event_description": "Partner marks a Facebook group as posted during the guided blast. Properties: listing_id, group_id.",
+    "file": "app/(studio)/listings/[id]/FacebookPublishOverlay.tsx"
+  },
+  {
+    "event_name": "facebook_group_post_recorded",
+    "event_description": "Server records a guided group post against listing history. Properties: listing_id, has_group_id.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "facebook_post_history_cleared",
+    "event_description": "Partner clears Facebook post history for a listing (all or older than N days). Properties: listing_id, cleared, older_than_days.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "facebook_group_added",
+    "event_description": "Partner adds a Facebook group URL (Settings or Promote overlay). Optional property: source=promote_overlay.",
+    "file": "app/(studio)/settings/actions.ts"
   },
   {
     "event_name": "user_signed_in",

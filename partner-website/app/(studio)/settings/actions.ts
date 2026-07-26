@@ -6,6 +6,7 @@ import { captureServer } from "@/lib/analytics-server";
 import {
   addCompanyFacebookGroupUrl,
   removeCompanyFacebookGroup,
+  type FacebookGroupOption,
 } from "@/lib/data/facebook-groups";
 import { disconnectCompanyIntegration } from "@/lib/data/integrations";
 import { updateEstateCompany } from "@/lib/data/company";
@@ -62,7 +63,7 @@ export async function disconnectFacebook(): Promise<{ error?: string; ok?: boole
 
 export async function addFacebookGroup(
   url: string,
-): Promise<{ error?: string; ok?: boolean }> {
+): Promise<{ error?: string; ok?: boolean; group?: FacebookGroupOption }> {
   const session = await requirePartner();
   if (!session) return { error: "Unauthorized." };
 
@@ -72,7 +73,8 @@ export async function addFacebookGroup(
   await captureServer("facebook_group_added", {}, session);
 
   revalidatePath("/settings");
-  return { ok: true };
+  revalidatePath("/listings", "layout");
+  return { ok: true, group: result.group };
 }
 
 export async function removeFacebookGroup(

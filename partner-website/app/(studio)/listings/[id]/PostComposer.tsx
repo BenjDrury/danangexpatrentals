@@ -1,26 +1,29 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CopyButton } from "@/components/CopyButton";
-import { Button, Section, inputClass } from "@/components/ui";
-import {
-  bumpListing,
-  publishListingToFacebook,
-  savePostDraft,
-} from "../actions";
+import { Button, Section } from "@/components/ui";
+import type { FacebookGroupOption } from "@/lib/data/facebook-groups";
+import type { ListingFacebookBatchSummary } from "@/lib/data/facebook-posts";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { capture } from "@/lib/analytics";
-import { FACEBOOK_POST_MAX_PHOTOS } from "@/lib/facebook-publish";
+import {
+  bumpListing,
+  clearListingFacebookHistory,
+  savePostDraft,
+} from "../actions";
+import { FacebookPublishOverlay } from "./FacebookPublishOverlay";
 
-function listingImageUrls(mainImage: string | null | undefined, images: string[] | null | undefined) {
-  return [
-    ...new Set(
-      [mainImage, ...(images ?? [])]
-        .map((u) => (typeof u === "string" ? u.trim() : ""))
-        .filter(Boolean),
-    ),
-  ].slice(0, FACEBOOK_POST_MAX_PHOTOS);
+function formatPostedAt(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(locale === "vi" ? "vi-VN" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export function PostComposer({
@@ -30,6 +33,8 @@ export function PostComposer({
   images,
   facebookConnected,
   facebookPageName,
+  facebookGroups,
+  facebookHistory,
 }: {
   listingId: string;
   initialCaption: string;
@@ -37,233 +42,178 @@ export function PostComposer({
   images?: string[] | null;
   facebookConnected: boolean;
   facebookPageName: string | null;
+  facebookGroups: FacebookGroupOption[];
+  facebookHistory: ListingFacebookBatchSummary[];
 }) {
-  const allImages = useMemo(
-    () => listingImageUrls(mainImage, images),
-    [mainImage, images],
-  );
-  const [caption, setCaption] = useState(initialCaption);
-  const [selected, setSelected] = useState<string[]>(allImages);
-  const [step, setStep] = useState<"edit" | "confirm">("edit");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [permalink, setPermalink] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
-  function removeImage(url: string) {
-    setSelected((prev) => prev.filter((u) => u !== url));
-    setStep("edit");
-    setError(null);
-  }
-
-  function restoreImages() {
-    setSelected(allImages);
-    setError(null);
-  }
-
-  function goConfirm() {
-    setError(null);
-    setMessage(null);
-    if (!caption.trim()) {
-      setError(t("composer.errorCaption"));
-      return;
+  useEffect(() => {
+    if (searchParams.get("publish") === "1") {
+      setOpen(true);
     }
-    setStep("confirm");
-  }
+  }, [searchParams]);
 
-  function postNow() {
-    setError(null);
-    setMessage(null);
-    startTransition(async () => {
-      const result = await publishListingToFacebook({
-        listingId,
-        caption,
-        imageUrls: selected,
-      });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setPermalink(result.permalink ?? null);
-      setMessage(t("composer.posted"));
-      setStep("edit");
-      capture("facebook_listing_posted", {
-        listing_id: listingId,
-        photo_count: selected.length,
-      });
-    });
+  function closeOverlay() {
+    setOpen(false);
+    if (searchParams.get("publish") === "1") {
+      router.replace(`/listings/${listingId}?tab=promote`);
+    }
+    router.refresh();
   }
 
   return (
     <div className="space-y-6">
       <Section
         title={t("composer.fb.title")}
-        description={
-          facebookConnected
-            ? t("composer.fb.subtitle", {
-                page: facebookPageName?.trim() || t("composer.fb.pageFallback"),
-              })
-            : t("composer.fb.subtitleDisconnected")
-        }
+        description={t("composer.fb.promoteSubtitle")}
       >
-        {!facebookConnected ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted">{t("composer.fb.connectHint")}</p>
-            <Button href="/settings" variant="primary" size="sm">
-              {t("composer.fb.goSettings")}
-            </Button>
-          </div>
-        ) : step === "edit" ? (
-          <div className="space-y-4">
-            <div>
-              <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            onClick={() => {
+              setOpen(true);
+              capture("facebook_publish_overlay_opened", { listing_id: listingId });
+            }}
+          >
+            {t("composer.fb.publishCta")}
+          </Button>
+          {!facebookConnected ? (
+            <p className="text-sm text-muted">
+              <Link href="/settings" className="text-ocean underline-offset-2 hover:underline">
+                {t("composer.fb.goSettings")}
+              </Link>
+              {" · "}
+              {t("composer.fb.promotePageOptional")}
+            </p>
+          ) : (
+            <p className="text-sm text-muted">
+              {t("composer.fb.promoteConnected", {
+                page: facebookPageName?.trim() || t("composer.fb.pageFallback"),
+                count: String(
+                  facebookGroups.filter((g) => g.kind === "default").length || 3,
+                ),
+              })}
+            </p>
+          )}
+        </div>
+      </Section>
+
+      <Section
+        title={t("composer.fb.history.title")}
+        description={t("composer.fb.history.subtitle")}
+      >
+        {facebookHistory.length === 0 ? (
+          <p className="text-sm text-muted">{t("composer.fb.history.empty")}</p>
+        ) : (
+          <ul className="space-y-3">
+            {facebookHistory.map((batch) => (
+              <li
+                key={batch.batchId}
+                className="rounded-quieter border border-line/70 bg-white/70 px-3 py-2.5"
+              >
                 <p className="text-sm font-medium text-charcoal">
-                  {t("composer.fb.photos", { count: String(selected.length) })}
+                  {formatPostedAt(batch.postedAt, locale)}
+                  <span className="ml-2 text-xs font-normal text-muted">
+                    {t("composer.fb.history.photos", {
+                      count: String(batch.photoCount),
+                    })}
+                  </span>
                 </p>
-                {selected.length < allImages.length ? (
-                  <button
-                    type="button"
-                    onClick={restoreImages}
-                    className="text-xs font-medium text-ocean underline-offset-2 hover:underline"
-                  >
-                    {t("composer.fb.restorePhotos")}
-                  </button>
-                ) : null}
-              </div>
-              {selected.length === 0 ? (
-                <p className="rounded-quieter bg-sand px-3 py-2 text-sm text-muted">
-                  {t("composer.fb.noPhotos")}
-                </p>
-              ) : (
-                <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {selected.map((url) => (
-                    <li key={url} className="group relative aspect-square overflow-hidden rounded-quieter bg-sand">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={url}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(url)}
-                        className="absolute right-1 top-1 rounded-md bg-charcoal/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white opacity-100 transition hover:bg-coral sm:opacity-0 sm:group-hover:opacity-100"
-                        aria-label={t("composer.fb.removePhoto")}
-                      >
-                        {t("composer.fb.removePhoto")}
-                      </button>
+                <ul className="mt-1.5 space-y-0.5 text-sm text-muted">
+                  {batch.destinations.map((d, i) => (
+                    <li key={`${batch.batchId}-${i}`}>
+                      {d.destination === "page" ? (
+                        d.permalink ? (
+                          <a
+                            href={d.permalink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-ocean underline-offset-2 hover:underline"
+                          >
+                            {d.label}
+                          </a>
+                        ) : (
+                          d.label
+                        )
+                      ) : d.groupUrl ? (
+                        <a
+                          href={d.groupUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline-offset-2 hover:underline"
+                        >
+                          {d.label}
+                        </a>
+                      ) : (
+                        d.label
+                      )}
                     </li>
                   ))}
                 </ul>
-              )}
-              <p className="mt-2 text-xs text-muted">{t("composer.fb.photosHint")}</p>
-            </div>
-
-            <div>
-              <label htmlFor="fb-caption" className="mb-1.5 block text-sm font-medium text-charcoal">
-                {t("composer.fb.captionLabel")}
-              </label>
-              <textarea
-                id="fb-caption"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                rows={10}
-                className={`${inputClass} font-sans leading-relaxed`}
-              />
-            </div>
-
+              </li>
+            ))}
+          </ul>
+        )}
+        {facebookHistory.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
             <Button
               type="button"
-              variant="primary"
-              size="md"
+              variant="secondary"
+              size="sm"
               disabled={pending}
-              onClick={goConfirm}
+              onClick={() => {
+                startTransition(async () => {
+                  const result = await clearListingFacebookHistory(listingId, 21);
+                  setMessage(
+                    result.error ??
+                      t("composer.fb.history.clearedOld", {
+                        count: String(result.cleared ?? 0),
+                      }),
+                  );
+                  setError(result.error ?? null);
+                  if (!result.error) router.refresh();
+                });
+              }}
             >
-              {t("composer.fb.continue")}
+              {t("composer.fb.history.clearOld")}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={pending}
+              onClick={() => {
+                startTransition(async () => {
+                  const result = await clearListingFacebookHistory(listingId);
+                  setMessage(
+                    result.error ??
+                      t("composer.fb.history.clearedAll", {
+                        count: String(result.cleared ?? 0),
+                      }),
+                  );
+                  setError(result.error ?? null);
+                  if (!result.error) router.refresh();
+                });
+              }}
+            >
+              {t("composer.fb.history.clearAll")}
             </Button>
           </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-quieter border border-sand bg-foam px-4 py-3">
-              <p className="text-sm font-semibold text-charcoal">
-                {t("composer.fb.confirmTitle", {
-                  page: facebookPageName?.trim() || t("composer.fb.pageFallback"),
-                })}
-              </p>
-              <p className="mt-1 text-sm text-muted">
-                {t("composer.fb.confirmPhotos", { count: String(selected.length) })}
-              </p>
-            </div>
-
-            {selected.length > 0 ? (
-              <ul className="flex gap-2 overflow-x-auto pb-1">
-                {selected.map((url) => (
-                  <li
-                    key={url}
-                    className="h-16 w-16 shrink-0 overflow-hidden rounded-quieter bg-sand"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="h-full w-full object-cover" />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-quieter bg-sand px-3 py-2 text-xs leading-relaxed text-charcoal">
-              {caption}
-            </pre>
-
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="primary"
-                size="md"
-                disabled={pending}
-                onClick={postNow}
-              >
-                {pending ? t("composer.fb.posting") : t("composer.fb.postNow")}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                disabled={pending}
-                onClick={() => setStep("edit")}
-              >
-                {t("composer.fb.back")}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {(error || message) && (
-          <p
-            className={`mt-3 text-sm ${error ? "text-coral-deep" : "text-palm"}`}
-            role="status"
-          >
-            {error ?? message}
-            {permalink && !error ? (
-              <>
-                {" "}
-                <a
-                  href={permalink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium underline underline-offset-2"
-                >
-                  {t("composer.fb.viewPost")}
-                </a>
-              </>
-            ) : null}
-          </p>
-        )}
+        ) : null}
       </Section>
 
       <Section title={t("composer.title")} description={t("composer.subtitle")}>
         <div className="flex flex-wrap gap-2">
           <CopyButton
-            text={caption}
+            text={initialCaption}
             label={t("composer.copyCaption")}
             copiedLabel={t("composer.copied")}
             event="post_caption_copied"
@@ -276,9 +226,9 @@ export function PostComposer({
             disabled={pending}
             onClick={() => {
               startTransition(async () => {
-                const result = await savePostDraft(listingId, caption);
+                const result = await savePostDraft(listingId, initialCaption);
                 setMessage(result.error ?? t("composer.draftSaved"));
-                setError(result.error ? result.error : null);
+                setError(result.error ?? null);
                 if (!result.error) capture("post_draft_saved", { listing_id: listingId });
               });
             }}
@@ -292,7 +242,7 @@ export function PostComposer({
               startTransition(async () => {
                 const result = await bumpListing(listingId);
                 setMessage(result.error ?? t("composer.markedBumped"));
-                setError(result.error ? result.error : null);
+                setError(result.error ?? null);
                 if (!result.error) capture("listing_bumped", { listing_id: listingId });
               });
             }}
@@ -301,14 +251,27 @@ export function PostComposer({
             {t("composer.markBumped")}
           </button>
         </div>
-        {!facebookConnected ? (
-          <p className="mt-2 text-xs text-muted">
-            <Link href="/settings" className="text-ocean underline-offset-2 hover:underline">
-              {t("composer.fb.goSettings")}
-            </Link>
+        {(error || message) && (
+          <p
+            className={`mt-2 text-sm ${error ? "text-coral-deep" : "text-palm"}`}
+            role="status"
+          >
+            {error ?? message}
           </p>
-        ) : null}
+        )}
       </Section>
+
+      <FacebookPublishOverlay
+        open={open}
+        onClose={closeOverlay}
+        listingId={listingId}
+        initialCaption={initialCaption}
+        mainImage={mainImage}
+        images={images}
+        facebookConnected={facebookConnected}
+        facebookPageName={facebookPageName}
+        groups={facebookGroups}
+      />
     </div>
   );
 }

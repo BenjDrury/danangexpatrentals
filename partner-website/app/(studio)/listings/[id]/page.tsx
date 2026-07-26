@@ -9,6 +9,8 @@ import {
   getPartnerListing,
 } from "@/lib/data/listings";
 import { getCompanyIntegration } from "@/lib/data/integrations";
+import { listPublishFacebookGroups } from "@/lib/data/facebook-groups";
+import { listListingFacebookBatches } from "@/lib/data/facebook-posts";
 import { getUsdVndRate } from "@/lib/fx";
 import { createClient } from "@/lib/supabase/server";
 import { isValidityStale } from "@/lib/listing-validity";
@@ -27,14 +29,17 @@ export default async function ListingDetailPage({
 
   const { id } = await params;
   const { tab } = await searchParams;
-  const [listing, deals, contacts, areas, usdVndRate, facebook] = await Promise.all([
-    getPartnerListing(session.estateCompanyId, id),
-    getListingDeals(session.estateCompanyId, id),
-    getPartnerContacts(session.estateCompanyId),
-    getAreasForSelect(),
-    getUsdVndRate(),
-    getCompanyIntegration(session.estateCompanyId, "facebook"),
-  ]);
+  const [listing, deals, contacts, areas, usdVndRate, facebook, facebookGroups, facebookHistory] =
+    await Promise.all([
+      getPartnerListing(session.estateCompanyId, id),
+      getListingDeals(session.estateCompanyId, id),
+      getPartnerContacts(session.estateCompanyId),
+      getAreasForSelect(),
+      getUsdVndRate(),
+      getCompanyIntegration(session.estateCompanyId, "facebook"),
+      listPublishFacebookGroups(session.estateCompanyId),
+      listListingFacebookBatches(session.estateCompanyId, id, { limit: 12 }),
+    ]);
   if (!listing) notFound();
 
   const supabase = await createClient();
@@ -80,6 +85,8 @@ export default async function ListingDetailPage({
         initialTab={tab}
         facebookConnected={facebook?.status === "connected"}
         facebookPageName={facebook?.external_account_name ?? null}
+        facebookGroups={facebookGroups}
+        facebookHistory={facebookHistory}
       />
     </Suspense>
   );

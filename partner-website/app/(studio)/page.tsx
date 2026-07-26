@@ -1,4 +1,5 @@
 import { requireStudioCompany } from "@/lib/auth";
+import { getLatestFacebookPublishByListingIds } from "@/lib/data/facebook-posts";
 import { getCompanyName, getPartnerListings } from "@/lib/data/listings";
 import { buildHomeFeed } from "@/lib/listing-validity";
 import { HomeView } from "./HomeView";
@@ -11,9 +12,17 @@ export default async function HomePage() {
     getPartnerListings(session.estateCompanyId),
   ]);
 
+  const availableIds = listings
+    .filter((l) => !l.status || l.status === "available")
+    .map((l) => l.id);
+  const latestFacebook = await getLatestFacebookPublishByListingIds(
+    session.estateCompanyId,
+    availableIds,
+  );
+
   const display =
     session.profile.display_name?.trim() || companyName || null;
-  const feed = buildHomeFeed(listings);
+  const feed = buildHomeFeed(listings, latestFacebook);
 
   return (
     <HomeView

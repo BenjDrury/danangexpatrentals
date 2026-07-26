@@ -9,6 +9,8 @@ import { Button, PageHeader, Section, Tabs } from "@/components/ui";
 import { isListingLiveStatus } from "@/lib/listing-status";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { ListingDealRow, PartnerContact } from "@/lib/data/listings";
+import type { FacebookGroupOption } from "@/lib/data/facebook-groups";
+import type { ListingFacebookBatchSummary } from "@/lib/data/facebook-posts";
 import { confirmListingValidity } from "../actions";
 import { ListingForm } from "../ListingForm";
 import { ListingGallery } from "./ListingGallery";
@@ -46,6 +48,8 @@ type Props = {
   initialTab?: string | null;
   facebookConnected: boolean;
   facebookPageName: string | null;
+  facebookGroups: FacebookGroupOption[];
+  facebookHistory: ListingFacebookBatchSummary[];
 };
 
 function formatValidityDate(iso: string | null | undefined, locale: string): string | null {
@@ -87,6 +91,8 @@ export function ListingWorkspace({
   initialTab,
   facebookConnected,
   facebookPageName,
+  facebookGroups,
+  facebookHistory,
 }: Props) {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -375,6 +381,8 @@ export function ListingWorkspace({
               images={listing.images}
               facebookConnected={facebookConnected}
               facebookPageName={facebookPageName}
+              facebookGroups={facebookGroups}
+              facebookHistory={facebookHistory}
             />
           </div>
         ) : null}

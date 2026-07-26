@@ -132,6 +132,79 @@ function ValidityCard({ item }: { item: Extract<HomeFeedItem, { type: "validity"
   );
 }
 
+function FacebookRepostCard({
+  item,
+}: {
+  item: Extract<HomeFeedItem, { type: "facebook_repost" }>;
+}) {
+  const { t } = useLocale();
+  const { listing, daysSincePost, lastSummary } = item;
+
+  const daysLabel =
+    daysSincePost == null
+      ? t("feed.facebook.neverPosted")
+      : t("feed.facebook.daysAgo", { days: daysSincePost });
+
+  const destinations =
+    lastSummary?.destinations.map((d) => d.label).join(" · ") || null;
+
+  return (
+    <article className="flex gap-3 overflow-hidden rounded-lg border border-ocean/25 bg-white/80 transition">
+      <div className="relative hidden h-auto w-20 shrink-0 bg-sand sm:block">
+        {listing.main_image ? (
+          <ListingImage
+            src={listing.main_image}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        ) : null}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-3 py-3 sm:pr-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded bg-ocean/10 px-1.5 py-0.5 text-[0.65rem] font-semibold text-ocean">
+            {t("feed.facebook.badge")}
+          </span>
+          <span className="text-xs text-muted">{daysLabel}</span>
+        </div>
+        <div>
+          <h3 className="font-display text-base font-semibold text-charcoal">
+            <Link href={`/listings/${listing.id}?tab=promote`} className="hover:text-ocean">
+              {listing.title}
+            </Link>
+          </h3>
+          <p className="mt-0.5 text-sm text-muted">
+            {listingPriceLabel(listing)}
+            {listing.bedrooms != null ? ` · ${listing.bedrooms} BR` : ""}
+          </p>
+          <p className="mt-1.5 text-sm text-charcoal/90">{t("feed.facebook.prompt")}</p>
+          {destinations ? (
+            <p className="mt-1 text-xs text-muted">
+              {t("feed.facebook.lastDestinations", { places: destinations })}
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            href={`/listings/${listing.id}?tab=promote&publish=1`}
+            size="sm"
+            variant="primary"
+          >
+            {t("feed.facebook.repostCta")}
+          </Button>
+          <Link
+            href={`/listings/${listing.id}?tab=promote`}
+            className="px-2 py-1.5 text-xs font-medium text-muted transition hover:text-ocean"
+          >
+            {t("feed.facebook.historyLink")}
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function HomeView({ displayName, feed, listingsEmpty }: Props) {
   const { t } = useLocale();
   const name = displayName?.trim() || t("home.thereFallback");
@@ -192,6 +265,13 @@ export function HomeView({ displayName, feed, listingsEmpty }: Props) {
                 return (
                   <li key={`validity-${item.listing.id}`}>
                     <ValidityCard item={item} />
+                  </li>
+                );
+              }
+              if (item.type === "facebook_repost") {
+                return (
+                  <li key={`fb-${item.listing.id}`}>
+                    <FacebookRepostCard item={item} />
                   </li>
                 );
               }

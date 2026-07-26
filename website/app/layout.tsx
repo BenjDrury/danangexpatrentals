@@ -70,9 +70,6 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
     images: [defaultOgImage],
   },
-  icons: {
-    icon: "/favicon.ico",
-  },
   robots: {
     index: true,
     follow: true,

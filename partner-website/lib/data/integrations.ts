@@ -142,3 +142,56 @@ export async function upsertFacebookConnection(params: {
 
   return {};
 }
+
+/** Page id + access token for publishing (service role). */
+export async function getFacebookPageCredentials(
+  estateCompanyId: string,
+): Promise<
+  | { pageId: string; pageName: string | null; accessToken: string }
+  | { error: string }
+> {
+  const service = getServiceRoleClient();
+  if (!service) {
+    return {
+      error:
+        "Server missing SUPABASE_SERVICE_ROLE_KEY — cannot read Facebook tokens.",
+    };
+  }
+
+  const { data: integration, error } = await service
+    .from("estate_company_integrations")
+    .select("id, status, external_account_id, external_account_name")
+    .eq("estate_company_id", estateCompanyId)
+    .eq("provider", "facebook")
+    .maybeSingle();
+
+  if (error) {
+    return { error: error.message };
+  }
+  if (
+    !integration ||
+    integration.status !== "connected" ||
+    !integration.external_account_id
+  ) {
+    return { error: "Facebook Page is not connected. Connect it in Settings." };
+  }
+
+  const { data: secret, error: secretError } = await service
+    .from("estate_company_integration_secrets")
+    .select("access_token")
+    .eq("integration_id", integration.id)
+    .maybeSingle();
+
+  if (secretError) {
+    return { error: secretError.message };
+  }
+  if (!secret?.access_token) {
+    return { error: "Facebook token missing. Disconnect and reconnect in Settings." };
+  }
+
+  return {
+    pageId: integration.external_account_id as string,
+    pageName: (integration.external_account_name as string | null) ?? null,
+    accessToken: secret.access_token as string,
+  };
+}

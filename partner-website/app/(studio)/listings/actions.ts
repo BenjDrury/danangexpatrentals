@@ -15,10 +15,22 @@ import { apartmentPublicUrl } from "@/lib/public-url";
 import { filterListingFeatures } from "@/lib/listing-features";
 import { parseCommissionFormData } from "@/lib/deal-commission";
 import { captureServer } from "@/lib/analytics-server";
+import { getFacebookPageCredentials } from "@/lib/data/integrations";
+import {
+  FACEBOOK_POST_MAX_PHOTOS,
+  publishPagePost,
+} from "@/lib/facebook-publish";
 
 export type ListingDealActionState = { error?: string; ok?: boolean };
 
 export type ListingFormState = { error?: string; ok?: boolean };
+
+export type PublishFacebookState = {
+  error?: string;
+  ok?: boolean;
+  postId?: string;
+  permalink?: string | null;
+};
 
 function slugify(title: string): string {
   return title
@@ -741,6 +753,90 @@ export async function savePostDraft(
 
   revalidatePath(`/listings/${apartmentId}`);
   return { ok: true };
+}
+
+/**
+ * Publish listing caption + selected public image URLs to the connected Facebook Page.
+ * Image list is for this post only — does not change listing photos.
+ */
+export async function publishListingToFacebook(params: {
+  listingId: string;
+  caption: string;
+  imageUrls: string[];
+}): Promise<PublishFacebookState> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
+  const caption = params.caption.trim();
+  if (!caption) return { error: "Caption is required." };
+
+  const supabase = await createClient();
+  const { data: listing, error: listingError } = await supabase
+    .from("apartments")
+    .select("id, main_image, images")
+    .eq("id", params.listingId)
+    .eq("estate_company_id", session.estateCompanyId)
+    .maybeSingle();
+
+  if (listingError) return { error: listingError.message };
+  if (!listing) return { error: "Listing not found." };
+
+  const allowed = new Set(
+    [listing.main_image, ...((listing.images as string[] | null) ?? [])]
+      .map((u) => (typeof u === "string" ? u.trim() : ""))
+      .filter(Boolean),
+  );
+
+  const imageUrls = [
+    ...new Set(
+      params.imageUrls
+        .map((u) => u.trim())
+        .filter((u) => u && allowed.has(u)),
+    ),
+  ].slice(0, FACEBOOK_POST_MAX_PHOTOS);
+
+  const creds = await getFacebookPageCredentials(session.estateCompanyId);
+  if ("error" in creds) return { error: creds.error };
+
+  try {
+    const published = await publishPagePost({
+      pageId: creds.pageId,
+      accessToken: creds.accessToken,
+      message: caption,
+      imageUrls,
+    });
+
+    await supabase
+      .from("apartments")
+      .update({
+        last_bumped_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", params.listingId)
+      .eq("estate_company_id", session.estateCompanyId);
+
+    await captureServer(
+      "facebook_listing_posted",
+      {
+        listing_id: params.listingId,
+        photo_count: imageUrls.length,
+        has_permalink: Boolean(published.permalink),
+      },
+      session,
+    );
+
+    revalidatePath("/");
+    revalidatePath(`/listings/${params.listingId}`);
+    return {
+      ok: true,
+      postId: published.postId,
+      permalink: published.permalink,
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Facebook publish failed.";
+    console.error("publishListingToFacebook", message);
+    return { error: message };
+  }
 }
 
 export async function getGeneratedCaption(apartmentId: string): Promise<string | null> {

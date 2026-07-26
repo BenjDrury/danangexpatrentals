@@ -8,6 +8,7 @@ import {
   getPartnerContacts,
   getPartnerListing,
 } from "@/lib/data/listings";
+import { getCompanyIntegration } from "@/lib/data/integrations";
 import { getUsdVndRate } from "@/lib/fx";
 import { createClient } from "@/lib/supabase/server";
 import { isValidityStale } from "@/lib/listing-validity";
@@ -26,12 +27,13 @@ export default async function ListingDetailPage({
 
   const { id } = await params;
   const { tab } = await searchParams;
-  const [listing, deals, contacts, areas, usdVndRate] = await Promise.all([
+  const [listing, deals, contacts, areas, usdVndRate, facebook] = await Promise.all([
     getPartnerListing(session.estateCompanyId, id),
     getListingDeals(session.estateCompanyId, id),
     getPartnerContacts(session.estateCompanyId),
     getAreasForSelect(),
     getUsdVndRate(),
+    getCompanyIntegration(session.estateCompanyId, "facebook"),
   ]);
   if (!listing) notFound();
 
@@ -76,6 +78,8 @@ export default async function ListingDetailPage({
         estateCompanyId={session.estateCompanyId}
         usdVndRate={usdVndRate}
         initialTab={tab}
+        facebookConnected={facebook?.status === "connected"}
+        facebookPageName={facebook?.external_account_name ?? null}
       />
     </Suspense>
   );

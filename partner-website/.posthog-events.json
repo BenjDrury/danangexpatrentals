@@ -70,6 +70,11 @@
     "file": "app/(studio)/settings/SettingsView.tsx"
   },
   {
+    "event_name": "facebook_listing_posted",
+    "event_description": "A partner publishes a listing caption and selected photos to their connected Facebook Page from Promote (server + client). Properties: listing_id, photo_count.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
     "event_name": "user_signed_in",
     "event_description": "A user signs into Partner Studio via password or magic link (client-side). Property: method (password | magic_link).",
     "file": "app/login/page.tsx"

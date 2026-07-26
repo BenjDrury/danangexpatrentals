@@ -275,15 +275,40 @@ const en = {
   "form.saveChanges": "Save changes",
   "form.createListing": "Create listing",
 
-  "composer.title": "Post composer",
+  "composer.title": "Manual tools",
   "composer.subtitle":
-    "Ready-to-copy caption for Facebook or WhatsApp. Tweak it, copy, then mark a bump.",
+    "Copy the caption, save a draft, or mark a bump without posting from here.",
   "composer.copyCaption": "Copy caption",
   "composer.copied": "Copied!",
   "composer.saveDraft": "Save draft",
   "composer.markBumped": "Mark bumped",
   "composer.draftSaved": "Draft saved.",
   "composer.markedBumped": "Marked as bumped.",
+  "composer.errorCaption": "Add a caption before posting.",
+  "composer.posted": "Posted to Facebook.",
+  "composer.fb.title": "Post to Facebook",
+  "composer.fb.subtitle":
+    "Preview photos and caption, then confirm to publish on {page}.",
+  "composer.fb.subtitleDisconnected":
+    "Connect a Facebook Page in Settings to post listings in one click.",
+  "composer.fb.connectHint":
+    "Page connect stores a token so Partner Studio can publish for you.",
+  "composer.fb.goSettings": "Open Settings",
+  "composer.fb.pageFallback": "your Page",
+  "composer.fb.photos": "{count} photos in this post",
+  "composer.fb.photosHint":
+    "Removing a photo here only excludes it from this post — listing photos stay unchanged.",
+  "composer.fb.removePhoto": "Remove",
+  "composer.fb.restorePhotos": "Restore all photos",
+  "composer.fb.noPhotos": "No photos selected — caption-only post.",
+  "composer.fb.captionLabel": "Caption",
+  "composer.fb.continue": "Review & confirm",
+  "composer.fb.confirmTitle": "Post to {page}?",
+  "composer.fb.confirmPhotos": "{count} photos will be uploaded with this caption.",
+  "composer.fb.postNow": "Post now",
+  "composer.fb.posting": "Posting…",
+  "composer.fb.back": "Back",
+  "composer.fb.viewPost": "View post",
 
   "contacts.title": "Contacts",
   "contacts.subtitle":
@@ -397,7 +422,7 @@ const en = {
   "settings.fb.description":
     "Connect a Facebook Page so you can post listings from the studio later.",
   "settings.fb.comingSoon":
-    "Automatic posting is coming soon. Multi-group blast may follow — Page connect is the first step.",
+    "Post listings from the Promote tab. Group blast may follow later.",
   "settings.fb.status.connected": "Connected",
   "settings.fb.status.disconnected": "Not connected",
   "settings.fb.connectedAs": "Connected as {name}",
@@ -774,15 +799,40 @@ const vi: Record<MessageKey, string> = {
   "form.saveChanges": "Lưu thay đổi",
   "form.createListing": "Tạo tin đăng",
 
-  "composer.title": "Soạn bài đăng",
+  "composer.title": "Công cụ thủ công",
   "composer.subtitle":
-    "Caption sẵn sao chép cho Facebook hoặc WhatsApp. Chỉnh, copy, rồi đánh dấu đã đăng lại.",
+    "Sao chép caption, lưu nháp, hoặc đánh dấu bump mà không đăng từ đây.",
   "composer.copyCaption": "Sao chép caption",
   "composer.copied": "Đã copy!",
   "composer.saveDraft": "Lưu nháp",
   "composer.markBumped": "Đánh dấu đã đăng lại",
   "composer.draftSaved": "Đã lưu nháp.",
   "composer.markedBumped": "Đã đánh dấu đăng lại.",
+  "composer.errorCaption": "Thêm caption trước khi đăng.",
+  "composer.posted": "Đã đăng lên Facebook.",
+  "composer.fb.title": "Đăng Facebook",
+  "composer.fb.subtitle":
+    "Xem trước ảnh và caption, rồi xác nhận để đăng lên {page}.",
+  "composer.fb.subtitleDisconnected":
+    "Kết nối Trang Facebook trong Cài đặt để đăng tin một chạm.",
+  "composer.fb.connectHint":
+    "Kết nối Trang lưu token để Partner Studio đăng giúp bạn.",
+  "composer.fb.goSettings": "Mở Cài đặt",
+  "composer.fb.pageFallback": "Trang của bạn",
+  "composer.fb.photos": "{count} ảnh trong bài này",
+  "composer.fb.photosHint":
+    "Gỡ ảnh ở đây chỉ bỏ khỏi bài sắp đăng — ảnh tin đăng không đổi.",
+  "composer.fb.removePhoto": "Gỡ",
+  "composer.fb.restorePhotos": "Khôi phục tất cả ảnh",
+  "composer.fb.noPhotos": "Chưa chọn ảnh — đăng chỉ caption.",
+  "composer.fb.captionLabel": "Caption",
+  "composer.fb.continue": "Xem lại & xác nhận",
+  "composer.fb.confirmTitle": "Đăng lên {page}?",
+  "composer.fb.confirmPhotos": "{count} ảnh sẽ được tải kèm caption này.",
+  "composer.fb.postNow": "Đăng ngay",
+  "composer.fb.posting": "Đang đăng…",
+  "composer.fb.back": "Quay lại",
+  "composer.fb.viewPost": "Xem bài",
 
   "contacts.title": "Liên hệ",
   "contacts.subtitle":
@@ -896,7 +946,7 @@ const vi: Record<MessageKey, string> = {
   "settings.fb.description":
     "Kết nối Trang Facebook để sau này đăng tin từ studio.",
   "settings.fb.comingSoon":
-    "Tự động đăng bài sắp có. Đăng nhiều nhóm có thể đến sau — kết nối Trang là bước đầu.",
+    "Đăng tin từ tab Đăng tin. Đăng nhiều nhóm có thể đến sau.",
   "settings.fb.status.connected": "Đã kết nối",
   "settings.fb.status.disconnected": "Chưa kết nối",
   "settings.fb.connectedAs": "Đã kết nối với {name}",

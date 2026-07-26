@@ -44,6 +44,8 @@ type Props = {
   estateCompanyId: string;
   usdVndRate: number;
   initialTab?: string | null;
+  facebookConnected: boolean;
+  facebookPageName: string | null;
 };
 
 function formatValidityDate(iso: string | null | undefined, locale: string): string | null {
@@ -83,6 +85,8 @@ export function ListingWorkspace({
   estateCompanyId,
   usdVndRate,
   initialTab,
+  facebookConnected,
+  facebookPageName,
 }: Props) {
   const { t, locale } = useLocale();
   const router = useRouter();
@@ -364,7 +368,14 @@ export function ListingWorkspace({
 
         {tab === "promote" ? (
           <div className="max-w-2xl">
-            <PostComposer listingId={listing.id} initialCaption={caption} />
+            <PostComposer
+              listingId={listing.id}
+              initialCaption={caption}
+              mainImage={listing.main_image}
+              images={listing.images}
+              facebookConnected={facebookConnected}
+              facebookPageName={facebookPageName}
+            />
           </div>
         ) : null}
       </div>

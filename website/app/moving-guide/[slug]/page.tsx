@@ -6,7 +6,12 @@ import {
   getGuideArticle,
 } from "@/app/lib/living-guide";
 import { getAreas } from "@/lib/data";
-import { buildPageMetadata } from "@/lib/seo";
+import { areaDisplayName, areaPath } from "@/lib/area-utils";
+import {
+  articleJsonLd,
+  breadcrumbJsonLd,
+  buildPageMetadata,
+} from "@/lib/seo";
 import { GuideArticleContent } from "../GuideArticleContent";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -43,17 +48,48 @@ export default async function LivingGuideArticlePage({ params }: Props) {
   if (!article) notFound();
 
   const related = GUIDE_ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 4);
+  const figure = article.blocks.find(
+    (b): b is Extract<(typeof article.blocks)[number], { type: "figure" }> =>
+      b.type === "figure"
+  );
+  const tourImage = article.blocks.find(
+    (b): b is Extract<(typeof article.blocks)[number], { type: "tour" }> =>
+      b.type === "tour"
+  )?.image.src;
+  const articlePath = `/moving-guide/${article.slug}`;
+  const jsonLd = [
+    articleJsonLd({
+      title: article.title,
+      description: article.description,
+      path: articlePath,
+      image: figure?.src ?? tourImage ?? null,
+    }),
+    breadcrumbJsonLd([
+      { name: "Home", path: "/" },
+      { name: "Living in Da Nang", path: "/moving-guide" },
+      { name: article.title, path: articlePath },
+    ]),
+  ];
+
   const platformAreas =
     slug === "neighbourhoods"
       ? (await getAreas()).map((a) => ({
           id: a.id,
-          name: a.name,
+          name: areaDisplayName(a),
           vibe: a.vibe,
+          href: areaPath(a),
         }))
       : undefined;
 
   return (
     <div className="min-h-screen bg-foam">
+      {jsonLd.map((ld, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ld) }}
+        />
+      ))}
       <GuideArticleContent
         article={article}
         related={related}

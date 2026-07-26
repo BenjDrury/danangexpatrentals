@@ -15,7 +15,13 @@ function categoryLabel(category: string): string {
     .join(" ");
 }
 
-export function CoworkingCard({ spot }: { spot: CoworkingSpace }) {
+export function CoworkingCard({
+  spot,
+  areaHref,
+}: {
+  spot: CoworkingSpace;
+  areaHref?: string | null;
+}) {
   const priceBits = [
     spot.day_pass_usd != null ? `Day ~${formatUsd(spot.day_pass_usd)}` : null,
     spot.monthly_usd != null ? `Monthly ~${formatUsd(spot.monthly_usd)}` : null,
@@ -49,7 +55,7 @@ export function CoworkingCard({ spot }: { spot: CoworkingSpace }) {
       <div className="mt-4 flex flex-wrap gap-4 text-sm">
         {spot.area_id && (
           <Link
-            href={`/areas/${spot.area_id}`}
+            href={areaHref ?? `/areas/${spot.area_id}`}
             onClick={() =>
               capture("registry_area_guide_clicked", {
                 registry: "coworking",
@@ -100,7 +106,13 @@ export function CoworkingCard({ spot }: { spot: CoworkingSpace }) {
   );
 }
 
-export function ActivityCard({ activity }: { activity: Activity }) {
+export function ActivityCard({
+  activity,
+  areaHref,
+}: {
+  activity: Activity;
+  areaHref?: string | null;
+}) {
   return (
     <article className="rounded-2xl border border-line bg-white p-6 shadow-[0_6px_24px_rgba(42,42,40,0.03)]">
       <p className="text-xs font-medium uppercase tracking-wider text-ocean">
@@ -126,7 +138,7 @@ export function ActivityCard({ activity }: { activity: Activity }) {
       <div className="mt-4 flex flex-wrap gap-4 text-sm">
         {activity.area_id && (
           <Link
-            href={`/areas/${activity.area_id}`}
+            href={areaHref ?? `/areas/${activity.area_id}`}
             onClick={() =>
               capture("registry_area_guide_clicked", {
                 registry: "activities",

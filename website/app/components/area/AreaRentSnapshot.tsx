@@ -1,6 +1,6 @@
 import type { Area } from "types";
 import { Section } from "@/app/components/sections";
-import { formatAreaPriceDisplay, formatRentRange, RENT_UNIT_TYPES } from "@/lib/area-utils";
+import { areaDisplayName, formatAreaPriceDisplay, formatRentRange, RENT_UNIT_TYPES } from "@/lib/area-utils";
 import { RangeBar } from "./RangeBar";
 
 type AreaRentSnapshotProps = { area: Area };
@@ -26,7 +26,7 @@ export function AreaRentSnapshot({ area }: AreaRentSnapshotProps) {
       <div className="max-w-2xl">
         <p className="text-sm font-medium text-ocean">Rent snapshot</p>
         <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
-          What rent looks like in {area.name}
+          What rent looks like in {areaDisplayName(area)}
         </h2>
         {budgetLine && (
           <p className="mt-4 text-lg leading-relaxed text-muted">

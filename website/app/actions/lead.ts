@@ -10,6 +10,21 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export type LeadState = { ok: true } | { ok: false; error: string };
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function optionalUuid(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return UUID_RE.test(trimmed) ? trimmed : null;
+}
+
+function optionalAreaId(value: FormDataEntryValue | null): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 && trimmed.length <= 64 ? trimmed : null;
+}
+
 export async function submitLead(formData: FormData): Promise<LeadState> {
   const budgetRange = formData.get("budget_range") as string;
   const moveDate = formData.get("move_date") as string;
@@ -17,6 +32,8 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
   const preferredArea = (formData.get("preferred_area") as string) || null;
   const whatsapp = (formData.get("whatsapp") as string)?.trim();
   const email = (formData.get("email") as string)?.trim() || null;
+  const apartmentId = optionalUuid(formData.get("apartment_id"));
+  const areaId = optionalAreaId(formData.get("area_id"));
 
   if (!whatsapp) {
     return { ok: false, error: "WhatsApp number is required." };
@@ -29,11 +46,18 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     preferred_area: preferredArea,
     whatsapp,
     email,
+    apartment_id: apartmentId,
+    area_id: areaId,
     source: "website",
   };
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    const { error } = await supabase.from("leads").insert(lead);
+    let { error } = await supabase.from("leads").insert(lead);
+    if (error && (apartmentId || areaId)) {
+      const { apartment_id: _a, area_id: _b, ...legacyLead } = lead;
+      const retry = await supabase.from("leads").insert(legacyLead);
+      error = retry.error;
+    }
     if (error) {
       console.error("Supabase lead insert error:", error);
       return {
@@ -58,6 +82,8 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
           `Move date: ${moveDate || "—"}`,
           `Length of stay: ${lengthOfStay || "—"}`,
           preferredArea ? `Area: ${preferredArea}` : null,
+          apartmentId ? `Listing: ${apartmentId}` : null,
+          areaId ? `Area id: ${areaId}` : null,
         ]
           .filter(Boolean)
           .join("\n"),
@@ -73,6 +99,8 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     preferred_area: preferredArea,
     has_move_date: !!moveDate,
     has_email: !!email,
+    has_apartment_id: !!apartmentId,
+    has_area_id: !!areaId,
     source: "website",
   });
 

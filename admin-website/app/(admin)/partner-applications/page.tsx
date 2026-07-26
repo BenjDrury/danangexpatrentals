@@ -9,6 +9,7 @@ export default async function AdminPartnerApplicationsPage() {
       <h1 className="page-title">Partner applications</h1>
       <p className="page-lead">
         Applications from agents and owners via the public partner apply form.
+        Use WhatsApp or email to reply with a prefilled message.
       </p>
 
       <PartnerApplicationsList applications={applications} />

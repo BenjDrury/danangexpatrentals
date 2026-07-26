@@ -41,10 +41,12 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
     area_name: areaName,
   };
 
+  const listingHref = `/apartments/${apartment.public_slug || apartment.id}`;
+
   return (
     <article className="group flex flex-col">
       <Link
-        href={`/apartments/${apartment.id}`}
+        href={listingHref}
         onClick={() =>
           capture("listing_card_clicked", { ...listingProps, target: "image" })
         }
@@ -67,7 +69,7 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
           </p>
         </div>
         <Link
-          href={`/apartments/${apartment.id}`}
+          href={listingHref}
           onClick={() =>
             capture("listing_card_clicked", { ...listingProps, target: "title" })
           }
@@ -98,7 +100,7 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
             Request this home
           </Link>
           <Link
-            href={`/apartments/${apartment.id}`}
+            href={listingHref}
             onClick={() =>
               capture("listing_card_clicked", { ...listingProps, target: "details" })
             }

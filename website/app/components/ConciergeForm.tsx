@@ -30,6 +30,8 @@ export function ConciergeForm({
           preferred_area: String(formData.get("preferred_area") || "") || null,
           has_move_date: !!formData.get("move_date"),
           has_email: !!formData.get("email"),
+          has_apartment_id: !!formData.get("apartment_id"),
+          has_area_id: !!formData.get("area_id"),
           source: "concierge_form",
         });
       } else {

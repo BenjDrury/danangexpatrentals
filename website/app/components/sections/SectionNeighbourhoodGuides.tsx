@@ -8,6 +8,8 @@ export type NeighbourhoodGuide = {
   tagline: string;
   description: string;
   image: string;
+  /** Canonical area path; falls back to `/areas/{id}`. */
+  href?: string;
 };
 
 type SectionNeighbourhoodGuidesProps = {
@@ -35,7 +37,7 @@ export function SectionNeighbourhoodGuides({
         {guides.map((guide) => (
           <Link
             key={guide.id}
-            href={`/areas/${guide.id}`}
+            href={guide.href ?? `/areas/${guide.id}`}
             className="group overflow-hidden rounded-2xl border border-line/80 bg-white shadow-[0_8px_30px_rgba(42,42,40,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(42,42,40,0.08)]"
           >
             <div className="relative aspect-[16/10] overflow-hidden bg-sand">

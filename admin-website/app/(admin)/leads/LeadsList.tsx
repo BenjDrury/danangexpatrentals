@@ -1,6 +1,12 @@
 "use client";
 
 import type { Lead } from "@/lib/data/leads";
+import {
+  buildLeadOutreach,
+  type OutreachApartment,
+  type OutreachArea,
+} from "@/lib/lead-outreach";
+import { ContactActions } from "../ContactActions";
 
 function formatWhen(iso: string): string {
   const d = new Date(iso);
@@ -16,13 +22,15 @@ function dash(value: string | null | undefined): string {
   return s ? s : "—";
 }
 
-function whatsappHref(whatsapp: string): string | null {
-  const digits = whatsapp.replace(/\D/g, "");
-  if (digits.length < 8) return null;
-  return `https://wa.me/${digits}`;
-}
-
-export function LeadsList({ leads }: { leads: Lead[] }) {
+export function LeadsList({
+  leads,
+  apartments,
+  areas,
+}: {
+  leads: Lead[];
+  apartments: OutreachApartment[];
+  areas: OutreachArea[];
+}) {
   if (leads.length === 0) {
     return (
       <p className="mt-8 text-muted">
@@ -31,66 +39,96 @@ export function LeadsList({ leads }: { leads: Lead[] }) {
     );
   }
 
+  const areasById = new Map(areas.map((a) => [a.id, a.name]));
+
   return (
-    <div className="mt-8 overflow-x-auto">
-      <table className="w-full min-w-[52rem] border-y border-line/80 text-left text-sm">
-        <thead>
-          <tr className="border-b border-line/80 text-xs font-semibold uppercase tracking-wide text-muted">
-            <th className="py-3 pr-4 font-semibold">Submitted</th>
-            <th className="py-3 pr-4 font-semibold">WhatsApp</th>
-            <th className="py-3 pr-4 font-semibold">Email</th>
-            <th className="py-3 pr-4 font-semibold">Budget</th>
-            <th className="py-3 pr-4 font-semibold">Move date</th>
-            <th className="py-3 pr-4 font-semibold">Stay</th>
-            <th className="py-3 pr-4 font-semibold">Area</th>
-            <th className="py-3 font-semibold">Source</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-line/60">
-          {leads.map((lead) => {
-            const wa = whatsappHref(lead.whatsapp);
-            return (
-              <tr key={lead.id} className="align-top">
-                <td className="py-3.5 pr-4 whitespace-nowrap text-muted">
+    <div className="mt-8 space-y-6">
+      {leads.map((lead) => {
+        const outreach = buildLeadOutreach(lead, apartments, areas);
+        const listing = lead.apartment_id
+          ? apartments.find((a) => a.id === lead.apartment_id)
+          : null;
+        const areaLabel =
+          lead.preferred_area?.trim() ||
+          (lead.area_id ? areasById.get(lead.area_id) : null) ||
+          null;
+
+        return (
+          <article
+            key={lead.id}
+            className="rounded-soft border border-line/80 bg-white px-5 py-5 sm:px-6"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-display text-lg font-semibold text-charcoal">
+                  {lead.whatsapp}
+                </h2>
+                <time className="mt-0.5 block text-sm text-muted" dateTime={lead.created_at}>
                   {formatWhen(lead.created_at)}
-                </td>
-                <td className="py-3.5 pr-4 font-medium text-charcoal">
-                  {wa ? (
-                    <a
-                      href={wa}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-ocean underline-offset-2 hover:underline"
-                    >
-                      {lead.whatsapp}
-                    </a>
-                  ) : (
-                    dash(lead.whatsapp)
-                  )}
-                </td>
-                <td className="py-3.5 pr-4 text-charcoal">
-                  {lead.email ? (
-                    <a
-                      href={`mailto:${lead.email}`}
-                      className="text-ocean underline-offset-2 hover:underline"
-                    >
-                      {lead.email}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td className="py-3.5 pr-4 text-charcoal">{dash(lead.budget_range)}</td>
-                <td className="py-3.5 pr-4 text-charcoal">{dash(lead.move_date)}</td>
-                <td className="py-3.5 pr-4 text-charcoal">{dash(lead.length_of_stay)}</td>
-                <td className="py-3.5 pr-4 text-charcoal">{dash(lead.preferred_area)}</td>
-                <td className="py-3.5 text-muted">{dash(lead.source)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-      <p className="mt-3 text-xs text-muted">
+                </time>
+              </div>
+              <ContactActions
+                whatsapp={lead.whatsapp}
+                email={lead.email}
+                message={outreach.body}
+                emailSubject={outreach.subject}
+              />
+            </div>
+
+            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Email
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{dash(lead.email)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Budget
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{dash(lead.budget_range)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Move date
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{dash(lead.move_date)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Stay
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{dash(lead.length_of_stay)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Area
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{dash(areaLabel)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Inquiry
+                </dt>
+                <dd className="mt-0.5 text-charcoal">
+                  {listing
+                    ? `Listing: ${listing.title}`
+                    : lead.apartment_id
+                      ? "Specific listing"
+                      : "General search"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Source
+                </dt>
+                <dd className="mt-0.5 text-muted">{dash(lead.source)}</dd>
+              </div>
+            </dl>
+          </article>
+        );
+      })}
+      <p className="text-xs text-muted">
         {leads.length} lead{leads.length === 1 ? "" : "s"}
       </p>
     </div>

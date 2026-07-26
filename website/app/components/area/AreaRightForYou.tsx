@@ -6,7 +6,7 @@ import {
   parseIntensity,
   titleCasePhrase,
 } from "@/lib/area-display";
-import { getWhoTags, isEmpty } from "@/lib/area-utils";
+import { areaDisplayName, getWhoTags, isEmpty } from "@/lib/area-utils";
 import { InsightCard, LevelMeter, MeterCard, TagChip } from "./AreaMeters";
 
 type AreaRightForYouProps = { area: Area };
@@ -61,7 +61,7 @@ export function AreaRightForYou({ area }: AreaRightForYouProps) {
       <div className="max-w-2xl">
         <p className="text-sm font-medium text-ocean">A good fit?</p>
         <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
-          Who {area.name} suits — and what to know
+          Who {areaDisplayName(area)} suits — and what to know
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-muted">
           A quick read on lifestyle fit, plus the practical things to keep in mind.

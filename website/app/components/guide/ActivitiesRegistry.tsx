@@ -21,7 +21,13 @@ import { capture } from "@/lib/analytics";
 const selectClass =
   "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-charcoal focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15";
 
-export function ActivitiesRegistry({ activities }: { activities: Activity[] }) {
+export function ActivitiesRegistry({
+  activities,
+  areaHrefById = {},
+}: {
+  activities: Activity[];
+  areaHrefById?: Record<string, string>;
+}) {
   const [filters, setFilters] = useState<ActivityFilters>(DEFAULT_ACTIVITY_FILTERS);
 
   const areaOptions = useMemo(() => collectAreaOptions(activities), [activities]);
@@ -187,7 +193,11 @@ export function ActivitiesRegistry({ activities }: { activities: Activity[] }) {
               </h2>
               <div className="mt-5 grid gap-5 lg:grid-cols-2">
                 {byCategory.groups[cat].map((activity) => (
-                  <ActivityCard key={activity.id} activity={activity} />
+                  <ActivityCard
+                    key={activity.id}
+                    activity={activity}
+                    areaHref={activity.area_id ? areaHrefById[activity.area_id] : null}
+                  />
                 ))}
               </div>
             </div>

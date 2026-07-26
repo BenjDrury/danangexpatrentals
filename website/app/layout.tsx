@@ -5,7 +5,9 @@ import { Nav } from "./components/Nav";
 import { WHATSAPP_URL } from "./lib/contact-links";
 import {
   DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE_HEIGHT,
   DEFAULT_OG_IMAGE_PATH,
+  DEFAULT_OG_IMAGE_WIDTH,
   SITE_NAME,
   SITE_TAGLINE,
   absoluteUrl,
@@ -58,8 +60,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: defaultOgImage,
-        width: 1200,
-        height: 630,
+        width: DEFAULT_OG_IMAGE_WIDTH,
+        height: DEFAULT_OG_IMAGE_HEIGHT,
         alt: "Da Nang coastline — Da Nang Expat Rentals",
       },
     ],

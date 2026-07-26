@@ -20,7 +20,13 @@ import { capture } from "@/lib/analytics";
 const selectClass =
   "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-charcoal focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15";
 
-export function CoworkingRegistry({ spaces }: { spaces: CoworkingSpace[] }) {
+export function CoworkingRegistry({
+  spaces,
+  areaHrefById = {},
+}: {
+  spaces: CoworkingSpace[];
+  areaHrefById?: Record<string, string>;
+}) {
   const [filters, setFilters] = useState<CoworkingFilters>(DEFAULT_COWORKING_FILTERS);
 
   const areaOptions = useMemo(() => collectAreaOptions(spaces), [spaces]);
@@ -170,7 +176,11 @@ export function CoworkingRegistry({ spaces }: { spaces: CoworkingSpace[] }) {
       {filtered.length > 0 ? (
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
           {filtered.map((spot) => (
-            <CoworkingCard key={spot.id} spot={spot} />
+            <CoworkingCard
+              key={spot.id}
+              spot={spot}
+              areaHref={spot.area_id ? areaHrefById[spot.area_id] : null}
+            />
           ))}
         </div>
       ) : (

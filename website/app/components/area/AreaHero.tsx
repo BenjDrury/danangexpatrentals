@@ -10,7 +10,7 @@ import {
   parseIntensity,
   titleCasePhrase,
 } from "@/lib/area-display";
-import { formatAliases, getWhoTags } from "@/lib/area-utils";
+import { areaDisplayName, formatAliases, getWhoTags } from "@/lib/area-utils";
 import {
   LeaseMeter,
   LevelMeter,
@@ -24,7 +24,7 @@ type AreaHeroProps = {
 };
 
 export function AreaHero({ area }: AreaHeroProps) {
-  const contactWithArea = `/contact?areaId=${encodeURIComponent(area.id)}&preferred_area=${encodeURIComponent(area.name)}`;
+  const contactWithArea = `/contact?areaId=${encodeURIComponent(area.id)}&preferred_area=${encodeURIComponent(areaDisplayName(area))}`;
   const score10 = expatScoreOutOfTen(area.expat_suitability_score);
   const scoreDisplay = formatScoreOutOfTen(area.expat_suitability_score);
   const nightlife = parseIntensity(area.nightlife_intensity);
@@ -54,7 +54,7 @@ export function AreaHero({ area }: AreaHeroProps) {
         {image ? (
           <Image
             src={image}
-            alt=""
+            alt={`${areaDisplayName(area)}, Da Nang`}
             fill
             className="object-cover object-center animate-soft-zoom"
             sizes="100vw"
@@ -78,7 +78,7 @@ export function AreaHero({ area }: AreaHeroProps) {
           Neighbourhood guide
         </p>
         <h1 className="animate-fade-up-delay mt-3 font-display text-4xl font-semibold tracking-tight text-balance hero-copy sm:text-5xl lg:text-[3.5rem]">
-          {area.name}
+          {areaDisplayName(area)}
         </h1>
         {(aliases || vibe) && (
           <p className="animate-fade-up-delay mt-3 max-w-xl text-lg hero-copy-muted sm:text-xl">

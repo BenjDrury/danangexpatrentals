@@ -18,6 +18,51 @@ export function slugify(s: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
+type AreaPathFields = {
+  id: string;
+  name: string;
+  canonical_area_name?: string | null;
+};
+
+/**
+ * Human neighbourhood label for H1/titles (strips internal zone prefixes).
+ * e.g. "Beach-south / An Thuong (My An)" → "An Thuong & My An"
+ */
+export function areaDisplayName(area: {
+  name: string;
+  canonical_area_name?: string | null;
+}): string {
+  const canonical = area.canonical_area_name?.trim();
+  if (canonical) return canonical;
+
+  const name = area.name.trim();
+  const slash = name.indexOf("/");
+  if (slash >= 0) {
+    const after = name.slice(slash + 1).trim();
+    const paren = after.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+    if (paren) return `${paren[1].trim()} & ${paren[2].trim()}`;
+    if (after) return after;
+  }
+  return name;
+}
+
+/** Canonical public path for an area (`/areas/{slug}`). */
+export function areaPath(area: AreaPathFields): string {
+  const slug =
+    slugify(area.name) ||
+    (area.canonical_area_name ? slugify(area.canonical_area_name) : "") ||
+    area.id;
+  return `/areas/${slug}`;
+}
+
+/** Canonical public path for a listing (`/apartments/{slug|id}`). */
+export function apartmentPath(apartment: {
+  id: string;
+  public_slug?: string | null;
+}): string {
+  return `/apartments/${apartment.public_slug || apartment.id}`;
+}
+
 /** Clamp number to [min, max]. */
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

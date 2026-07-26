@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Section, SectionHero } from "../components/sections";
 import { CtaButton } from "../components/CtaButton";
-import { buildPageMetadata } from "@/lib/seo";
+import { SITE_FAQS } from "../lib/faqs";
+import { buildPageMetadata, faqPageJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "How It Works",
@@ -17,16 +18,17 @@ const STEPS = [
   { step: 4, title: "We help you contact / reserve / negotiate", body: "We introduce you to the agent, help with viewings, and can advise on pricing." },
 ];
 
-const FAQ_ITEMS = [
-  { q: "Do I pay anything?", a: "Our matching service is free. You only pay rent and any fees to the landlord or agent when you sign a lease." },
-  { q: "Do you help with short stays and long stays?", a: "Yes. We help with a few months, six months, a year, and longer — whatever fits how you’re living in Da Nang." },
-  { q: "Can I book before arriving?", a: "Yes. We help many people secure a place remotely. We verify availability and can arrange viewings by video or in person once you're in Da Nang." },
-  { q: "What if I don't like the options?", a: "No obligation. Tell us what's missing and we can look for more, or you can walk away. No pressure." },
-];
+const FAQ_ITEMS = SITE_FAQS.slice(0, 4);
 
 export default function HowItWorksPage() {
+  const faqLd = faqPageJsonLd(FAQ_ITEMS);
+
   return (
     <div className="min-h-screen bg-foam">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
       <SectionHero
         variant="page"
         title="How finding your apartment with us works"
@@ -55,7 +57,7 @@ export default function HowItWorksPage() {
         <ul className="mt-8 space-y-4 text-charcoal/80">
           <li className="flex gap-3">
             <span className="text-ocean">✓</span>
-            You'll get a WhatsApp message (or email) to confirm we received your request.
+            You&apos;ll get a WhatsApp message (or email) to confirm we received your request.
           </li>
           <li className="flex gap-3">
             <span className="text-ocean">✓</span>
@@ -67,7 +69,7 @@ export default function HowItWorksPage() {
           </li>
           <li className="flex gap-3">
             <span className="text-ocean">✓</span>
-            No obligation. If nothing fits, you're not locked in.
+            No obligation. If nothing fits, you&apos;re not locked in.
           </li>
         </ul>
       </Section>
@@ -76,12 +78,17 @@ export default function HowItWorksPage() {
         <h2 className="text-2xl font-semibold text-charcoal sm:text-3xl">FAQ</h2>
         <dl className="mt-10 space-y-8">
           {FAQ_ITEMS.map((faq) => (
-            <div key={faq.q}>
-              <dt className="text-lg font-semibold text-charcoal">{faq.q}</dt>
-              <dd className="mt-2 text-muted">{faq.a}</dd>
+            <div key={faq.question}>
+              <dt className="text-lg font-semibold text-charcoal">{faq.question}</dt>
+              <dd className="mt-2 text-muted">{faq.answer}</dd>
             </div>
           ))}
         </dl>
+        <p className="mt-8">
+          <CtaButton href="/faq" variant="secondary">
+            See all FAQs
+          </CtaButton>
+        </p>
       </Section>
 
       <Section bg="bg-white" className="text-center">

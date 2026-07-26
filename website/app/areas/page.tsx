@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Section, SectionHero } from "../components/sections";
 import { TrackedLink } from "../components/TrackedLink";
 import { getAreas } from "@/lib/data";
-import { formatAliases } from "@/lib/area-utils";
+import { areaDisplayName, areaPath, formatAliases } from "@/lib/area-utils";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -32,13 +32,15 @@ export default async function AreasPage() {
           {areas.map((area, index) => {
             const imageUrl = area.images?.[0];
             const imageLeft = index % 2 === 1;
+            const href = areaPath(area);
+            const label = areaDisplayName(area);
             return (
               <article
                 key={area.id}
                 className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
               >
                 <Link
-                  href={`/areas/${area.id}`}
+                  href={href}
                   className={`relative block aspect-[5/4] overflow-hidden rounded-2xl bg-sand ${
                     imageLeft ? "lg:order-1" : "lg:order-2"
                   }`}
@@ -46,7 +48,7 @@ export default async function AreasPage() {
                   {imageUrl ? (
                     <Image
                       src={imageUrl}
-                      alt={area.name}
+                      alt={`${label}, Da Nang`}
                       fill
                       className="object-cover transition duration-700 ease-soft hover:scale-[1.03]"
                       sizes="(max-width: 1024px) 100vw, 50vw"
@@ -63,10 +65,10 @@ export default async function AreasPage() {
                     </p>
                   )}
                   <Link
-                    href={`/areas/${area.id}`}
+                    href={href}
                     className="mt-2 block font-display text-3xl font-semibold tracking-tight text-charcoal transition hover:text-ocean"
                   >
-                    {area.name}
+                    {label}
                   </Link>
                   {formatAliases(area.aliases) && (
                     <p className="mt-2 text-sm text-muted">{formatAliases(area.aliases)}</p>
@@ -78,17 +80,17 @@ export default async function AreasPage() {
                   )}
                   <div className="mt-8 flex flex-wrap gap-3">
                     <TrackedLink
-                      href={`/areas/${area.id}`}
+                      href={href}
                       event="area_guide_clicked"
-                      eventProps={{ area_id: area.id, area_name: area.name, source: "areas_index" }}
+                      eventProps={{ area_id: area.id, area_name: label, source: "areas_index" }}
                       className="inline-flex rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
                     >
                       Read the guide
                     </TrackedLink>
                     <TrackedLink
-                      href={`/areas/${area.id}#listings`}
+                      href={`${href}#listings`}
                       event="area_find_home_clicked"
-                      eventProps={{ area_id: area.id, area_name: area.name }}
+                      eventProps={{ area_id: area.id, area_name: label }}
                       className="inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
                     >
                       Find a home here

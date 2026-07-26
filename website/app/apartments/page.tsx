@@ -3,15 +3,9 @@ import { Section, SectionHero } from "../components/sections";
 import { TrackedLink } from "../components/TrackedLink";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../lib/constants";
 import { getAreas, getApartmentTypes, getApartmentsPaginated } from "@/lib/data";
+import { areaDisplayName } from "@/lib/area-utils";
 import { buildPageMetadata } from "@/lib/seo";
 import { ApartmentCard } from "../components/area/ApartmentCard";
-
-export const metadata: Metadata = buildPageMetadata({
-  title: "Apartments in Da Nang — Verified homes for expats",
-  description:
-    "Curated, verified apartments in Da Nang for expats and remote workers. Transparent prices, real photos, honest neighbourhood guidance.",
-  path: "/apartments",
-});
 
 /** Revalidate listing pages so soft nav can hit a warm cache. */
 export const revalidate = 60;
@@ -19,6 +13,18 @@ export const revalidate = 60;
 const PER_PAGE = 9;
 
 type Props = { searchParams: Promise<{ page?: string }> };
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const params = await searchParams;
+  const page = Math.max(1, parseInt(String(params?.page ?? "1"), 10) || 1);
+  return buildPageMetadata({
+    title: "Apartments in Da Nang — Verified homes for expats",
+    description:
+      "Curated, verified apartments in Da Nang for expats and remote workers. Transparent prices, real photos, honest neighbourhood guidance.",
+    path: "/apartments",
+    noIndexFollow: page > 1,
+  });
+}
 
 export default async function ApartmentsPage({ searchParams }: Props) {
   const params = await searchParams;
@@ -62,7 +68,7 @@ export default async function ApartmentsPage({ searchParams }: Props) {
               <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
                 {paginated.apartments.map((apt) => {
                   const area = areaById.get(apt.area_id);
-                  const areaName = area?.name ?? "Da Nang";
+                  const areaName = area ? areaDisplayName(area) : "Da Nang";
                   const contactHref = `/contact?${new URLSearchParams({
                     areaId: apt.area_id,
                     preferred_area: areaName,

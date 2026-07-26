@@ -69,7 +69,7 @@ export const getAreas = cache(async function getAreas(): Promise<Area[]> {
     const { data, error } = await supabase
       .from("areas")
       .select(
-        "id, name, images, vibe, price_range, who, aliases, typical_rent_1br_usd, typical_rent_2br_usd"
+        "id, name, images, vibe, price_range, who, aliases, typical_rent_1br_usd, typical_rent_2br_usd, canonical_area_name"
       )
       .order("id");
 
@@ -143,7 +143,7 @@ export const getAreaById = cache(async function getAreaById(
     const { data, error } = await supabase
       .from("areas")
       .select(
-        "id, name, images, vibe, price_range, who, aliases, typical_rent_1br_usd, typical_rent_2br_usd"
+        "id, name, images, vibe, price_range, who, aliases, typical_rent_1br_usd, typical_rent_2br_usd, canonical_area_name"
       )
       .eq("id", id)
       .maybeSingle();

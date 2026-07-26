@@ -1,14 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { permanentRedirect, notFound } from "next/navigation";
 import { listingPriceLabel } from "types";
 import { TrackListingView } from "@/app/components/TrackListingView";
 import { ApartmentInquiryLink } from "@/app/components/area/ApartmentInquiryLink";
 import { ListingGuides } from "@/app/components/area/ListingGuides";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
-import { absoluteUrl, buildPageMetadata } from "@/lib/seo";
+import {
+  apartmentPath,
+  areaDisplayName,
+  areaPath,
+} from "@/lib/area-utils";
+import { absoluteUrl, breadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -19,20 +24,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const apartment = await getApartmentById(id);
   if (!apartment) return { title: "Apartment not found" };
   const area = await getAreaById(apartment.area_id);
-  const areaName = area?.name ?? "Da Nang";
+  const areaName = area ? areaDisplayName(area) : "Da Nang";
   const priceLabel = listingPriceLabel(apartment);
-  const bedLabel = `${apartment.bedrooms} bedroom${apartment.bedrooms !== 1 ? "s" : ""}`;
+  const bedLabel =
+    apartment.bedrooms === 0
+      ? "Studio"
+      : `${apartment.bedrooms} bed${apartment.bedrooms !== 1 ? "s" : ""}`;
   const description =
     apartment.description?.trim() ||
     `${apartment.title} in ${areaName}. ${priceLabel}. ${bedLabel}. Verified listing for expats in Da Nang.`;
-  const path = `/apartments/${apartment.public_slug || apartment.id}`;
+  const path = apartmentPath(apartment);
   const image =
     apartment.main_image?.trim() ||
     apartment.images?.find((url) => Boolean(url?.trim())) ||
     null;
 
   return buildPageMetadata({
-    title: `${apartment.title} — ${areaName}`,
+    title: `${apartment.title} in ${areaName}`,
     description,
     path,
     image,
@@ -45,11 +53,17 @@ export default async function ApartmentPage({ params }: Props) {
   const apartment = await getApartmentById(id);
   if (!apartment) notFound();
 
+  const canonicalKey = apartment.public_slug || apartment.id;
+  if (id !== canonicalKey) {
+    permanentRedirect(apartmentPath(apartment));
+  }
+
   const area = await getAreaById(apartment.area_id);
   const allImages = [apartment.main_image, ...apartment.images].filter(Boolean);
-  const areaName = area?.name ?? "Da Nang";
+  const areaName = area ? areaDisplayName(area) : "Da Nang";
+  const areaHref = area ? areaPath(area) : "/apartments";
   const priceLabel = listingPriceLabel(apartment);
-  const listingPath = `/apartments/${apartment.public_slug || apartment.id}`;
+  const listingPath = apartmentPath(apartment);
   const listingJsonLd = {
     "@context": "https://schema.org",
     "@type": "Apartment",
@@ -85,6 +99,14 @@ export default async function ApartmentPage({ params }: Props) {
       url: absoluteUrl(listingPath),
     },
   };
+  const crumbs = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Apartments", path: "/apartments" },
+    ...(area
+      ? [{ name: areaName, path: areaHref }]
+      : []),
+    { name: apartment.title, path: listingPath },
+  ]);
 
   return (
     <div className="min-h-screen bg-foam">
@@ -92,14 +114,18 @@ export default async function ApartmentPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
+      />
       <TrackListingView apartmentId={apartment.id} areaId={apartment.area_id} />
       <section className={`w-full ${SECTION_PADDING} bg-white pt-28 sm:pt-36`}>
         <div className={CONTENT_CONTAINER}>
         <Link
-          href={area ? `/areas/${area.id}` : "/apartments"}
+          href={area ? areaHref : "/apartments"}
           className="text-sm font-medium text-ocean hover:text-ocean"
         >
-          ← {area ? `Back to ${area.name}` : "All apartments"}
+          ← {area ? `Back to ${areaName}` : "All apartments"}
         </Link>
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-12">
@@ -124,7 +150,7 @@ export default async function ApartmentPage({ params }: Props) {
                   >
                     <Image
                       src={url}
-                      alt=""
+                      alt={`${apartment.title} — photo ${i + 2}`}
                       fill
                       className="object-cover"
                       sizes="(max-width: 640px) 50vw, 20vw"
@@ -142,10 +168,10 @@ export default async function ApartmentPage({ params }: Props) {
             </h1>
             {area && (
               <Link
-                href={`/areas/${area.id}`}
+                href={areaHref}
                 className="mt-2 inline-block text-ocean hover:text-ocean font-medium"
               >
-                {area.name}
+                {areaName}
               </Link>
             )}
             <p className="mt-4 text-2xl font-semibold text-ocean">
@@ -222,7 +248,8 @@ export default async function ApartmentPage({ params }: Props) {
       <ListingGuides
         apartmentId={apartment.id}
         areaId={area?.id}
-        areaName={area?.name}
+        areaName={area ? areaName : undefined}
+        areaHref={area ? areaHref : undefined}
       />
     </div>
   );

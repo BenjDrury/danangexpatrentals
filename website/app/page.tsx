@@ -1,6 +1,7 @@
 import { listingPriceLabel } from "types";
 import { WHATSAPP_URL } from "./lib/contact-links";
 import { getApartments, getAreas } from "@/lib/data";
+import { apartmentPath, areaDisplayName, areaPath } from "@/lib/area-utils";
 import {
   SectionApartmentCards,
   SectionCta,
@@ -52,20 +53,31 @@ function bedroomLabel(bedrooms: number): string {
 
 export default async function Home() {
   const [apartments, areas] = await Promise.all([getApartments(), getAreas()]);
-  const areaById = new Map(areas.map((a) => [a.id, a.name]));
+  const areaById = new Map(areas.map((a) => [a.id, a]));
 
   const cards = apartments
     .filter((apt) => Boolean(apt.main_image))
     .slice(0, HOME_LISTING_COUNT)
-    .map((apt) => ({
-      image: apt.main_image,
-      title: apt.title,
-      price: listingPriceLabel(apt),
-      location: areaById.get(apt.area_id) ?? "Da Nang",
-      type: bedroomLabel(apt.bedrooms),
-      features: (apt.features ?? []).slice(0, 3).map(String),
-      href: `/apartments/${apt.id}`,
-    }));
+    .map((apt) => {
+      const area = areaById.get(apt.area_id);
+      return {
+        image: apt.main_image,
+        title: apt.title,
+        price: listingPriceLabel(apt),
+        location: area ? areaDisplayName(area) : "Da Nang",
+        type: bedroomLabel(apt.bedrooms),
+        features: (apt.features ?? []).slice(0, 3).map(String),
+        href: apartmentPath(apt),
+      };
+    });
+
+  const guides = NEIGHBOURHOODS.map((guide) => {
+    const area = areaById.get(guide.id);
+    return {
+      ...guide,
+      href: area ? areaPath(area) : `/areas/${guide.id}`,
+    };
+  });
 
   return (
     <div className="bg-foam">
@@ -90,7 +102,7 @@ export default async function Home() {
       <SectionNeighbourhoodGuides
         heading="Find your neighbourhood"
         description="Beach, cafés, city energy, or somewhere quieter — here’s a feel for the main areas."
-        guides={NEIGHBOURHOODS}
+        guides={guides}
       />
 
       <SectionTrustTeaser

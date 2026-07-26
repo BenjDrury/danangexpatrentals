@@ -10,9 +10,10 @@ type ListingGuidesProps = {
   apartmentId: string;
   areaId?: string;
   areaName?: string;
+  areaHref?: string;
 };
 
-function buildLinks(areaId?: string, areaName?: string): GuideLink[] {
+function buildLinks(areaId?: string, areaName?: string, areaHref?: string): GuideLink[] {
   const links: GuideLink[] = [
     {
       href: "/moving-guide/cost-of-living",
@@ -23,7 +24,7 @@ function buildLinks(areaId?: string, areaName?: string): GuideLink[] {
 
   if (areaId && areaName) {
     links.push({
-      href: `/areas/${areaId}`,
+      href: areaHref ?? `/areas/${areaId}`,
       title: `${areaName} guide`,
       body: "Rent snapshot, vibe, and what’s nearby in this neighbourhood.",
     });
@@ -57,8 +58,13 @@ function buildLinks(areaId?: string, areaName?: string): GuideLink[] {
 }
 
 /** Informational guide links below an apartment listing. */
-export function ListingGuides({ apartmentId, areaId, areaName }: ListingGuidesProps) {
-  const links = buildLinks(areaId, areaName);
+export function ListingGuides({
+  apartmentId,
+  areaId,
+  areaName,
+  areaHref,
+}: ListingGuidesProps) {
+  const links = buildLinks(areaId, areaName, areaHref);
 
   return (
     <section className="w-full border-t border-line bg-sand/40 py-14 sm:py-16">

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { CoworkingRegistry } from "@/app/components/guide/CoworkingRegistry";
 import { CtaButton } from "@/app/components/CtaButton";
 import { Section, SectionHero } from "@/app/components/sections";
-import { getCoworkingSpaces } from "@/lib/data";
+import { getAreas, getCoworkingSpaces } from "@/lib/data";
+import { areaPath } from "@/lib/area-utils";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -14,7 +15,8 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function CoworkingRegistryPage() {
-  const spaces = await getCoworkingSpaces();
+  const [spaces, areas] = await Promise.all([getCoworkingSpaces(), getAreas()]);
+  const areaHrefById = Object.fromEntries(areas.map((a) => [a.id, areaPath(a)]));
 
   return (
     <div className="min-h-screen bg-foam">
@@ -38,7 +40,7 @@ export default async function CoworkingRegistryPage() {
         </p>
 
         {spaces.length > 0 ? (
-          <CoworkingRegistry spaces={spaces} />
+          <CoworkingRegistry spaces={spaces} areaHrefById={areaHrefById} />
         ) : (
           <div className="mt-10 rounded-2xl border border-line bg-white px-6 py-10">
             <p className="text-muted">

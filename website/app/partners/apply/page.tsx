@@ -11,6 +11,7 @@ export const metadata: Metadata = buildPageMetadata({
   description:
     "Apply to work with Da Nang Expat Rentals. We introduce international renters to agents and owners with available apartments.",
   path: "/partners/apply",
+  noIndex: true,
 });
 
 export const revalidate = 300;

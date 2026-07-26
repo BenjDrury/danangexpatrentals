@@ -3,7 +3,8 @@ import Link from "next/link";
 import { ActivitiesRegistry } from "@/app/components/guide/ActivitiesRegistry";
 import { CtaButton } from "@/app/components/CtaButton";
 import { Section, SectionHero } from "@/app/components/sections";
-import { getActivities } from "@/lib/data";
+import { getActivities, getAreas } from "@/lib/data";
+import { areaPath } from "@/lib/area-utils";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -14,7 +15,8 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function ActivitiesRegistryPage() {
-  const activities = await getActivities();
+  const [activities, areas] = await Promise.all([getActivities(), getAreas()]);
+  const areaHrefById = Object.fromEntries(areas.map((a) => [a.id, areaPath(a)]));
 
   return (
     <div className="min-h-screen bg-foam">
@@ -38,7 +40,7 @@ export default async function ActivitiesRegistryPage() {
         </p>
 
         {activities.length > 0 ? (
-          <ActivitiesRegistry activities={activities} />
+          <ActivitiesRegistry activities={activities} areaHrefById={areaHrefById} />
         ) : (
           <div className="mt-10 rounded-2xl border border-line bg-white px-6 py-10">
             <p className="text-muted">

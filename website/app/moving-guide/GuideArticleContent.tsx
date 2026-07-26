@@ -235,7 +235,7 @@ export function GuideArticleContent({
 }: {
   article: GuideArticle;
   related: GuideArticle[];
-  platformAreas?: { id: string; name: string; vibe?: string | null }[];
+  platformAreas?: { id: string; name: string; vibe?: string | null; href?: string }[];
 }) {
   return (
     <>
@@ -272,7 +272,7 @@ export function GuideArticleContent({
                 {platformAreas.map((area) => (
                   <li key={area.id}>
                     <Link
-                      href={`/areas/${area.id}`}
+                      href={area.href ?? `/areas/${area.id}`}
                       className="group flex items-center justify-between gap-4 py-4 transition"
                     >
                       <div>

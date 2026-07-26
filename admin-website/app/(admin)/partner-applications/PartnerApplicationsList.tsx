@@ -1,6 +1,8 @@
 "use client";
 
 import type { PartnerApplication } from "@/lib/data/partner-applications";
+import { buildPartnerApplicationOutreach } from "@/lib/lead-outreach";
+import { ContactActions } from "../ContactActions";
 
 function formatWhen(iso: string): string {
   const d = new Date(iso);
@@ -14,12 +16,6 @@ function formatWhen(iso: string): string {
 function dash(value: string | null | undefined): string {
   const s = value?.trim();
   return s ? s : "—";
-}
-
-function whatsappHref(whatsapp: string): string | null {
-  const digits = whatsapp.replace(/\D/g, "");
-  if (digits.length < 8) return null;
-  return `https://wa.me/${digits}`;
 }
 
 function roleLabel(role: string | null): string {
@@ -58,18 +54,26 @@ export function PartnerApplicationsList({
   return (
     <div className="mt-8 space-y-6">
       {applications.map((app) => {
-        const wa = whatsappHref(app.whatsapp);
+        const outreach = buildPartnerApplicationOutreach(app);
         const fb = app.facebook_page ? facebookHref(app.facebook_page) : null;
         return (
           <article
             key={app.id}
             className="rounded-soft border border-line/80 bg-white px-5 py-5 sm:px-6"
           >
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="font-display text-lg font-semibold text-charcoal">{app.name}</h2>
-              <time className="text-sm text-muted" dateTime={app.created_at}>
-                {formatWhen(app.created_at)}
-              </time>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-display text-lg font-semibold text-charcoal">{app.name}</h2>
+                <time className="mt-0.5 block text-sm text-muted" dateTime={app.created_at}>
+                  {formatWhen(app.created_at)}
+                </time>
+              </div>
+              <ContactActions
+                whatsapp={app.whatsapp}
+                email={app.email}
+                message={outreach.body}
+                emailSubject={outreach.subject}
+              />
             </div>
 
             <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -77,31 +81,11 @@ export function PartnerApplicationsList({
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
                   WhatsApp
                 </dt>
-                <dd className="mt-0.5 font-medium text-charcoal">
-                  {wa ? (
-                    <a
-                      href={wa}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-ocean underline-offset-2 hover:underline"
-                    >
-                      {app.whatsapp}
-                    </a>
-                  ) : (
-                    dash(app.whatsapp)
-                  )}
-                </dd>
+                <dd className="mt-0.5 font-medium text-charcoal">{dash(app.whatsapp)}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Email</dt>
-                <dd className="mt-0.5">
-                  <a
-                    href={`mailto:${app.email}`}
-                    className="text-ocean underline-offset-2 hover:underline"
-                  >
-                    {app.email}
-                  </a>
-                </dd>
+                <dd className="mt-0.5 text-charcoal">{dash(app.email)}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted">

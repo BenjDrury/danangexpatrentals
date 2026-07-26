@@ -14,6 +14,7 @@ import {
   removeFacebookGroup,
   revokeTeamInvite,
 } from "./actions";
+import posthog from "posthog-js";
 
 export type FacebookIntegrationView = {
   status: "connected" | "disconnected";
@@ -166,6 +167,7 @@ export function SettingsView({
                   setLastInviteUrl(absoluteInviteUrl(path));
                   setMessage(t("settings.team.inviteCreated"));
                   setInviteEmail("");
+                  posthog.capture("team_member_invited");
                 }
                 router.refresh();
               });

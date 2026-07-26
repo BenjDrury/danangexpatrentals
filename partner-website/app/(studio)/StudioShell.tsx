@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { CopyDeepLinkButton } from "@/components/CopyDeepLinkButton";
+import { LanguageFeedbackLayer } from "@/components/LanguageFeedbackLayer";
 import { SignOutButton } from "@/components/SignOutButton";
 import { StudioNav } from "@/components/StudioNav";
 import { LangToggle } from "@/components/LangToggle";
@@ -65,6 +66,7 @@ export function StudioShell({
         </div>
       </header>
       <main className="relative mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+      {isAdmin ? <LanguageFeedbackLayer /> : null}
     </div>
   );
 }

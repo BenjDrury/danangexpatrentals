@@ -50,6 +50,28 @@ const en = {
   "admin.fxError": "Could not save rate.",
   "admin.fxEnvOverride": "FX_USD_VND is set — that env value is used instead of this setting.",
 
+  "langFeedback.title": "Language feedback",
+  "langFeedback.hint":
+    "Turn this on, switch to Vietnamese (or English), then highlight any weird copy across the studio. Add a short note and save — we’ll use it to fix translations.",
+  "langFeedback.toggle": "Enable language feedback mode",
+  "langFeedback.enabledNote":
+    "Mode is on for this browser. Highlight text on any studio page to leave feedback.",
+  "langFeedback.disabledNote":
+    "Mode is off. Enable it before asking someone to mark awkward phrasing.",
+  "langFeedback.recentTitle": "Recent feedback",
+  "langFeedback.recentEmpty": "No language feedback yet.",
+  "langFeedback.delete": "Delete",
+  "langFeedback.activeHint": "Language feedback on — select text to comment",
+  "langFeedback.turnOff": "Turn off",
+  "langFeedback.dialogLabel": "Language feedback",
+  "langFeedback.marked": "Marked text",
+  "langFeedback.meta": "{page} · {lang}",
+  "langFeedback.comment": "What’s wrong / how should it read?",
+  "langFeedback.commentPlaceholder": "e.g. Sounds unnatural — better: …",
+  "langFeedback.cancel": "Cancel",
+  "langFeedback.save": "Save feedback",
+  "langFeedback.saving": "Saving…",
+
   "approvals.title": "Listing approvals",
   "approvals.subtitle":
     "Partners requested these listings go live. Approve to publish, or reject with a note (shown as Rejected in their list).",
@@ -627,6 +649,28 @@ const vi: Record<MessageKey, string> = {
   "admin.fxSaved": "Đã lưu tỷ giá.",
   "admin.fxError": "Không lưu được tỷ giá.",
   "admin.fxEnvOverride": "FX_USD_VND đang được đặt — giá trị env được dùng thay cho cài đặt này.",
+
+  "langFeedback.title": "Góp ý ngôn ngữ",
+  "langFeedback.hint":
+    "Bật chế độ này, chuyển sang Tiếng Việt (hoặc English), rồi bôi đen đoạn chữ kỳ/lạ trong studio. Thêm ghi chú ngắn rồi lưu — chúng tôi dùng để sửa bản dịch.",
+  "langFeedback.toggle": "Bật chế độ góp ý ngôn ngữ",
+  "langFeedback.enabledNote":
+    "Đã bật trên trình duyệt này. Bôi đen chữ ở bất kỳ trang studio nào để gửi góp ý.",
+  "langFeedback.disabledNote":
+    "Đang tắt. Hãy bật trước khi nhờ ai đánh dấu câu chữ gượng.",
+  "langFeedback.recentTitle": "Góp ý gần đây",
+  "langFeedback.recentEmpty": "Chưa có góp ý ngôn ngữ.",
+  "langFeedback.delete": "Xóa",
+  "langFeedback.activeHint": "Góp ý ngôn ngữ đang bật — bôi đen chữ để nhận xét",
+  "langFeedback.turnOff": "Tắt",
+  "langFeedback.dialogLabel": "Góp ý ngôn ngữ",
+  "langFeedback.marked": "Đoạn đã chọn",
+  "langFeedback.meta": "{page} · {lang}",
+  "langFeedback.comment": "Chỗ nào sai / nên viết thế nào?",
+  "langFeedback.commentPlaceholder": "vd. Nghe không tự nhiên — nên là: …",
+  "langFeedback.cancel": "Hủy",
+  "langFeedback.save": "Lưu góp ý",
+  "langFeedback.saving": "Đang lưu…",
 
   "approvals.title": "Duyệt tin đăng",
   "approvals.subtitle":

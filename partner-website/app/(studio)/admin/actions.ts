@@ -9,6 +9,8 @@ import { createClient, getServiceRoleClient } from "@/lib/supabase/server";
 
 export type FxRateState = { error?: string; ok?: boolean };
 
+export type LanguageFeedbackState = { error?: string; ok?: boolean };
+
 export async function updateUsdVndRate(
   _prev: FxRateState,
   formData: FormData
@@ -30,6 +32,66 @@ export async function updateUsdVndRate(
       updated_at: new Date().toISOString(),
     })
     .eq("id", "default");
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/partners");
+  return { ok: true };
+}
+
+export async function submitLanguageFeedback(input: {
+  selectedText: string;
+  pagePath: string;
+  locale: string;
+  comment: string;
+}): Promise<LanguageFeedbackState> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized." };
+
+  const selectedText = input.selectedText.trim();
+  const pagePath = input.pagePath.trim().slice(0, 500);
+  const locale = input.locale.trim();
+  const comment = input.comment.trim().slice(0, 4000);
+
+  if (!selectedText || selectedText.length > 4000) {
+    return { error: "Select some text to send feedback." };
+  }
+  if (!pagePath) {
+    return { error: "Missing page path." };
+  }
+  if (locale !== "en" && locale !== "vi") {
+    return { error: "Invalid locale." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("language_feedback").insert({
+    selected_text: selectedText,
+    page_path: pagePath,
+    locale,
+    comment,
+    created_by: admin.user.id,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/partners");
+  return { ok: true };
+}
+
+export async function deleteLanguageFeedback(
+  id: string,
+): Promise<LanguageFeedbackState> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized." };
+
+  const feedbackId = id?.trim();
+  if (!feedbackId) return { error: "Missing feedback id." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("language_feedback")
+    .delete()
+    .eq("id", feedbackId);
 
   if (error) return { error: error.message };
 

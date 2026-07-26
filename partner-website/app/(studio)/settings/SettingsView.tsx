@@ -16,7 +16,6 @@ import {
 } from "./actions";
 import { capture } from "@/lib/analytics";
 import { CompanySection, type CompanyView } from "./CompanySection";
-import { ProfileSection, type ProfileView } from "./ProfileSection";
 
 export type FacebookIntegrationView = {
   status: "connected" | "disconnected";
@@ -34,7 +33,6 @@ const FB_FLASH: Record<string, MessageKey> = {
 
 export function SettingsView({
   company,
-  profile,
   facebook,
   oauthConfigured,
   flash,
@@ -44,7 +42,6 @@ export function SettingsView({
   facebookGroups,
 }: {
   company: CompanyView;
-  profile: ProfileView;
   facebook: FacebookIntegrationView | null;
   oauthConfigured: boolean;
   flash: string | null;
@@ -475,8 +472,6 @@ export function SettingsView({
           </li>
         </ul>
       </section>
-
-      <ProfileSection profile={profile} />
 
       <section className="space-y-5">
         <div>

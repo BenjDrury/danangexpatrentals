@@ -402,7 +402,7 @@ export async function approveListingLive(id: string): Promise<ListingFormState> 
   return { ok: true };
 }
 
-/** Admin: pending_review → draft with optional note. */
+/** Admin: pending_review → draft with optional note (list shows Rejected when note is set). */
 export async function rejectListingLive(
   id: string,
   note?: string
@@ -413,7 +413,7 @@ export async function rejectListingLive(
   const service = getServiceRoleClient();
   const supabase = service ?? (await createClient());
   const now = new Date().toISOString();
-  const rejectionNote = note?.trim() || null;
+  const rejectionNote = note?.trim() || "Rejected";
 
   const { data, error } = await supabase
     .from("apartments")
@@ -431,7 +431,10 @@ export async function rejectListingLive(
   if (error) return { error: error.message };
   if (!data) return { error: "Listing is not pending review." };
 
-  await captureServer("listing_rejected", { listing_id: id });
+  await captureServer("listing_rejected", {
+    listing_id: id,
+    has_custom_note: Boolean(note?.trim()),
+  });
 
   revalidateListingPaths(id);
   return { ok: true };

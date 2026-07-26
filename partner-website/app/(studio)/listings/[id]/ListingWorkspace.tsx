@@ -18,7 +18,6 @@ import { PostComposer } from "./PostComposer";
 import { DeleteListingButton } from "./DeleteListingButton";
 import { ListingDealsPanel } from "./ListingDealsPanel";
 import { ListingShareLinks } from "./ListingShareLinks";
-import { ListingContactsCard } from "./ListingContactsCard";
 
 export type ListingTab = "overview" | "details" | "photos" | "contacts" | "promote";
 
@@ -148,7 +147,10 @@ export function ListingWorkspace({
         title={
           <span className="inline-flex flex-wrap items-center gap-2">
             <span>{listing.title}</span>
-            <StatusChip status={listing.status} />
+            <StatusChip
+              status={listing.status}
+              rejectionNote={listing.live_rejection_note}
+            />
             {stale ? (
               <span className="rounded bg-coral-soft px-1.5 py-0.5 text-xs font-semibold text-coral">
                 {t("listings.stale")}
@@ -322,12 +324,6 @@ export function ListingWorkspace({
                   </Button>
                 </div>
               </Section>
-
-              <ListingContactsCard
-                listingId={listing.id}
-                deals={deals}
-                availableContacts={availableContacts}
-              />
             </aside>
           </div>
         ) : null}

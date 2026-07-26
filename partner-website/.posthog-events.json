@@ -70,21 +70,6 @@
     "file": "app/(studio)/settings/SettingsView.tsx"
   },
   {
-    "event_name": "partner_profile_updated",
-    "event_description": "A partner saves their personal profile (name, photo, phone, WhatsApp, email, bio) in Settings (server + client).",
-    "file": "app/(studio)/settings/actions.ts"
-  },
-  {
-    "event_name": "partner_profile_photo_uploaded",
-    "event_description": "A partner uploads a new profile photo to storage in Settings (client-side).",
-    "file": "app/(studio)/settings/ProfileSection.tsx"
-  },
-  {
-    "event_name": "partner_profile_photo_removed",
-    "event_description": "A partner clears their profile photo in Settings before saving (client-side).",
-    "file": "app/(studio)/settings/ProfileSection.tsx"
-  },
-  {
     "event_name": "user_signed_in",
     "event_description": "A user signs into Partner Studio via password or magic link (client-side). Property: method (password | magic_link).",
     "file": "app/login/page.tsx"

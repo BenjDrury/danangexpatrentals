@@ -49,12 +49,91 @@
 
   const name = pickName();
 
-  const logoImg = [...document.querySelectorAll("img")].find((el) => {
-    const src = el.currentSrc || el.src || "";
-    const w = el.naturalWidth || 0;
-    return /scontent|fbcdn/.test(src) && w >= 80 && w <= 400 && !/static\.xx\.fbcdn/.test(src);
-  });
-  const logoUrl = logoImg ? logoImg.currentSrc || logoImg.src : null;
+  function upgradeAvatarUrl(url) {
+    if (!url) return url;
+    return url
+      .replace(/stp=dst-jpg_fb50_s\d+x\d+/g, "stp=dst-jpg_s720x720")
+      .replace(/stp=dst-jpg_s\d{2,3}x\d{2,3}/g, "stp=dst-jpg_s720x720")
+      .replace(/stp=c\d+\.\d+\.\d+\.\d+a_dst-jpg_s\d+x\d+/g, "stp=dst-jpg_s720x720")
+      .replace(/ctp=s\d{2,3}x\d{2,3}/g, "ctp=s720x720")
+      .replace(/\/s\d+x\d+\//g, "/s720x720/");
+  }
+
+  function isInsidePost(el) {
+    return Boolean(el.closest('[role="article"]'));
+  }
+
+  function imgSize(el) {
+    const nw = Number(el.naturalWidth) || 0;
+    const nh = Number(el.naturalHeight) || 0;
+    if (nw > 0 && nh > 0) return { w: nw, h: nh };
+    const rect = el.getBoundingClientRect?.();
+    if (rect && rect.width > 0 && rect.height > 0) {
+      return { w: Math.round(rect.width), h: Math.round(rect.height) };
+    }
+    const aw = Number(el.getAttribute?.("width")) || 0;
+    const ah = Number(el.getAttribute?.("height")) || 0;
+    return { w: aw, h: ah };
+  }
+
+  function avatarScore(el, src, w, h) {
+    if (!src || !/scontent|fbcdn/.test(src)) return -1;
+    if (/static\.xx\.fbcdn|emoji|rsrc\.php|safe_image/i.test(src)) return -1;
+    // Facebook anonymous / default silhouette (not a real profile photo)
+    if (/\/453178253_471506465671661_/i.test(src)) return -1;
+    // Post / album photos — never use as company logo
+    if (/\/t39\.30808-[6-9]\/|\/t1\.6435-[6-9]\//.test(src)) return -1;
+    if (isInsidePost(el)) return -1;
+
+    let score = 0;
+    // Real uploaded profile pics use t39.30808-1; t1.30497-1 is often the default stub
+    if (/\/t39\.30808-1\//.test(src)) score += 100;
+    else if (/\/t1\.6435-1\//.test(src)) score += 70;
+    else if (/\/t1\.30497-1\//.test(src)) score += 10;
+    if (/[sc]tp=s?(40|48|50|60|64|80|100|120|160|200|240|320|480|720)x\1/i.test(src)) score += 35;
+    if (/profile|avatar|user.?photo/i.test(src)) score += 30;
+
+    const size = Math.max(w, h);
+    if (size >= 48 && size <= 320) score += 25;
+    else if (size > 320 && size <= 720) score += 15;
+    else if (size > 900) score -= 40;
+
+    const nearTitle =
+      el.closest("h1, h2") || (name && el.alt && el.alt.includes(name.slice(0, 12)));
+    if (nearTitle) score += 35;
+    const aria = `${el.getAttribute("aria-label") || ""} ${el.alt || ""}`;
+    if (name && name.length >= 2) {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(escaped, "i").test(aria)) score += 25;
+    }
+    if (/profile picture|ảnh đại diện|avatar/i.test(aria)) score += 50;
+
+    const rect = el.getBoundingClientRect?.();
+    if (rect && rect.top >= -40 && rect.top < 420 && rect.left >= 0 && rect.left < 900) {
+      score += 25;
+    }
+
+    return score;
+  }
+
+  function pickLogoUrl() {
+    const candidates = [];
+    for (const el of document.querySelectorAll("img, image")) {
+      const src =
+        el.currentSrc ||
+        el.src ||
+        el.getAttribute("href") ||
+        el.getAttribute("xlink:href") ||
+        "";
+      const { w, h } = imgSize(el);
+      const score = avatarScore(el, src, w, h);
+      if (score > 0) candidates.push({ src, score, w, h });
+    }
+    candidates.sort((a, b) => b.score - a.score || Math.max(b.w, b.h) - Math.max(a.w, a.h));
+    return candidates[0] ? upgradeAvatarUrl(candidates[0].src) : null;
+  }
+
+  const logoUrl = pickLogoUrl();
 
   function upgradeImageUrl(url) {
     if (!url) return url;

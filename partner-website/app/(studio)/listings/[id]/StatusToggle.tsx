@@ -14,7 +14,6 @@ import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { statusMessageKey } from "@/lib/i18n/messages";
 import { StatusChip } from "@/components/StatusChip";
 import { capture } from "@/lib/analytics";
-import type { Apartment } from "types";
 
 type Props = {
   listingId: string;
@@ -79,7 +78,7 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
       ) : (
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="font-medium text-charcoal">{t("status.label")}</span>
-          <StatusChip status={value as Apartment["status"]} />
+          <StatusChip status={value} rejectionNote={rejectionNote} />
           <span className="text-xs text-muted">{t("status.partnerReadOnlyHint")}</span>
         </div>
       )}

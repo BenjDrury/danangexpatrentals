@@ -13,6 +13,7 @@
  *   node scripts/run/extract-facebook-chrome.mjs
  *   node scripts/run/extract-facebook-chrome.mjs --url='https://www.facebook.com/groups/.../user/...'
  *   node scripts/run/extract-facebook-chrome.mjs --dry-run --limit=5
+ *   node scripts/run/extract-facebook-chrome.mjs --logo-only --url='https://www.facebook.com/groups/.../user/...'
  *   node scripts/run/extract-facebook-chrome.mjs --out=tmp_fb/export.json --area=my-khe --status=draft
  *
  * Requires (unless --dry-run): scripts/.secret.local with SUPABASE_URL (or
@@ -47,7 +48,10 @@ function flag(name, fallback = null) {
 }
 
 const dryRun = flag("dry-run") === true;
-const limit = Math.max(1, Math.min(30, Number(flag("limit", "5")) || 5));
+const logoOnly = flag("logo-only") === true;
+const limit = logoOnly
+  ? 0
+  : Math.max(1, Math.min(30, Number(flag("limit", "5")) || 5));
 const maxImages = Math.max(1, Math.min(40, Number(flag("images", "20")) || 20));
 // Reject thumbnails/avatars — real listing photos are usually >> 25KB
 const minImageBytes = Math.max(
@@ -55,10 +59,12 @@ const minImageBytes = Math.max(
   Number(flag("min-image-bytes", "25000")) || 25_000
 );
 // Max scroll steps; we stop early once we have --limit posts. Default is modest.
-const scrollCount = Math.max(
-  0,
-  Math.min(30, Number(flag("scrolls", String(Math.max(4, limit)))) || Math.max(4, limit))
-);
+const scrollCount = logoOnly
+  ? 0
+  : Math.max(
+      0,
+      Math.min(30, Number(flag("scrolls", String(Math.max(4, limit)))) || Math.max(4, limit))
+    );
 const status = String(flag("status", "draft") || "draft");
 const areaArg = flag("area", null);
 const navigateUrl = flag("url", null);
@@ -232,6 +238,10 @@ end tell
     }
 
     if (!best) throw new Error("Chrome returned empty extract result");
+    if (logoOnly) {
+      best.posts = [];
+      return best;
+    }
     return enrichImagesFromLightbox(best);
   } finally {
     try {
@@ -967,17 +977,14 @@ async function seed(data) {
     console.log("  inserted:", title.slice(0, 70));
   }
 
-  // Fill company logo + contact fields (do not overwrite contact values already set).
-  const needsStoredLogo =
-    !ecRow.logo_url ||
-    /fbcdn|scontent|facebook\.com/i.test(ecRow.logo_url);
-  const logoUrl = needsStoredLogo
-    ? await storeCompanyLogo(supabase, facebookId, company.logoUrl || ecRow.logo_url || null)
+  // Refresh company logo from the page avatar, and fill empty contact fields only.
+  const logoUrl = company.logoUrl
+    ? await storeCompanyLogo(supabase, facebookId, company.logoUrl)
     : null;
   const companyPatch = {
     updated_at: new Date().toISOString(),
   };
-  if (logoUrl && logoUrl !== ecRow.logo_url) companyPatch.logo_url = logoUrl;
+  if (logoUrl) companyPatch.logo_url = logoUrl;
   if (!ecRow.contact_phone && contactHints.phone) {
     companyPatch.contact_phone = contactHints.phone;
   }
@@ -997,7 +1004,7 @@ async function seed(data) {
       console.warn("Company contact/logo update failed:", patchErr.message);
     } else {
       console.log(
-        `Company profile: logo=${companyPatch.logo_url ? "set" : "keep"}, phone=${companyPatch.contact_phone || "—"}, wa=${companyPatch.contact_whatsapp || "—"}, email=${companyPatch.contact_email || "—"}`
+        `Company profile: logo=${companyPatch.logo_url ? "refreshed" : "keep"}, phone=${companyPatch.contact_phone || "—"}, wa=${companyPatch.contact_whatsapp || "—"}, email=${companyPatch.contact_email || "—"}`
       );
     }
   }

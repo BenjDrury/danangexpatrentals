@@ -8,7 +8,7 @@ import { StatusChip } from "@/components/StatusChip";
 import { ListingImage } from "@/components/ListingImage";
 import { Button, PageHeader } from "@/components/ui";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { ALL_LISTING_STATUSES } from "@/lib/listing-status";
+import { LISTING_STATUS_FILTERS, listingDisplayStatus } from "@/lib/listing-status";
 import { statusMessageKey } from "@/lib/i18n/messages";
 import { confirmListingValidity } from "./actions";
 
@@ -127,7 +127,9 @@ export function ListingsView({
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return listings.filter((apt) => {
-      if (status !== "all" && apt.status !== status) return false;
+      if (status !== "all" && listingDisplayStatus(apt.status, apt.live_rejection_note) !== status) {
+        return false;
+      }
       if (areaId !== "all" && apt.area_id !== areaId) return false;
       const isStale = staleSet.has(apt.id);
       const isBump = bumpSet.has(apt.id);
@@ -212,7 +214,7 @@ export function ListingsView({
               aria-label={t("listings.filter.status")}
             >
               <option value="all">{t("listings.filter.allStatuses")}</option>
-              {ALL_LISTING_STATUSES.map((s) => (
+              {LISTING_STATUS_FILTERS.map((s) => (
                 <option key={s} value={s}>
                   {t(statusMessageKey(s))}
                 </option>
@@ -330,7 +332,10 @@ export function ListingsView({
                         </td>
                         <td className="px-2 py-2 align-middle">
                           <Link href={`/listings/${apt.id}`} className="inline-flex">
-                            <StatusChip status={apt.status} />
+                            <StatusChip
+                              status={apt.status}
+                              rejectionNote={apt.live_rejection_note}
+                            />
                           </Link>
                         </td>
                         <td className="px-2 py-2 align-middle">

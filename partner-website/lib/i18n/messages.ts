@@ -52,7 +52,7 @@ const en = {
 
   "approvals.title": "Listing approvals",
   "approvals.subtitle":
-    "Partners requested these listings go live. Approve to publish, or reject back to draft.",
+    "Partners requested these listings go live. Approve to publish, or reject with a note (shown as Rejected in their list).",
   "approvals.empty": "No listings waiting for review.",
   "approvals.approve": "Approve (set available)",
   "approvals.approving": "Approving…",
@@ -191,21 +191,12 @@ const en = {
   "workspace.share.previewHint": "Not live yet — link works for preview once published.",
   "workspace.share.areaNamed": "Area · {name}",
   "workspace.share.areaHint": "Neighbourhood page with nearby listings.",
-  "workspace.contacts.title": "Contacts",
-  "workspace.contacts.subtitle": "People tied to this listing — reach them or manage deals.",
-  "workspace.contacts.manage": "Manage →",
-  "workspace.contacts.empty": "No contacts linked yet.",
-  "workspace.contacts.unnamed": "Contact",
-  "workspace.contacts.noCommission": "No commission set",
+  "workspace.contacts.empty": "No property contacts linked yet.",
   "workspace.contacts.noReach": "No phone / WhatsApp / email on file",
   "workspace.contacts.addFirst": "Add a contact first →",
-  "workspace.contacts.tabTitle": "Linked contacts",
-  "workspace.contacts.tabHint": "Connect people working this listing. Commission is optional per contact.",
-  "workspace.contacts.linkExisting": "Link existing",
-  "workspace.contacts.addNew": "Add new",
-  "workspace.contacts.addAndLink": "Add & link",
-  "workspace.contacts.added": "Contact added and linked.",
-  "workspace.contacts.namePlaceholder": "e.g. Alex",
+  "workspace.contacts.tabTitle": "Your contacts for this property",
+  "workspace.contacts.tabHint":
+    "Internal only — who you deal with on this listing (landlord, caretaker, building manager). Not shown on the public site. Commission notes are optional.",
 
   "form.section.basics": "Basics",
   "form.section.basicsHint": "Title, size, area, and availability.",
@@ -228,6 +219,7 @@ const en = {
 
   "status.label": "Status",
   "status.draft": "Draft",
+  "status.rejected": "Rejected",
   "status.pending_review": "Pending review",
   "status.available": "Available",
   "status.reserved": "Reserved",
@@ -346,7 +338,7 @@ const en = {
   "commission.setDefault": "Set expected commission",
   "commission.setDefaultHint":
     "No contact needed — jot the expected commission for this listing.",
-  "commission.connectContact": "Connect a contact",
+  "commission.connectContact": "Link a property contact",
   "commission.pickContact": "Choose a contact…",
   "commission.connected": "Contact connected.",
   "commission.usd": "Commission (USD)",
@@ -370,7 +362,7 @@ const en = {
 
   "settings.title": "Settings",
   "settings.subtitle":
-    "Company details, team, and tools for sharing listings — plus your personal profile.",
+    "Company details, team, and tools for sharing listings.",
 
   "settings.company.title": "Company",
   "settings.company.subtitle":
@@ -385,7 +377,7 @@ const en = {
   "settings.company.email": "Contact email",
   "settings.company.emailPlaceholder": "hello@agency.com",
   "settings.company.contactHint":
-    "Agency phone, WhatsApp/Zalo, and email — separate from your personal profile below.",
+    "Agency phone, WhatsApp/Zalo, and email shown with your listings.",
   "settings.company.logoEmpty": "Logo",
   "settings.company.logoUpload": "Upload logo",
   "settings.company.logoUploading": "Uploading…",
@@ -395,32 +387,6 @@ const en = {
   "settings.company.save": "Save company",
   "settings.company.saving": "Saving…",
   "settings.company.saved": "Company saved.",
-
-  "settings.profile.title": "Your profile",
-  "settings.profile.subtitle":
-    "Your personal photo and contact details — separate from the company name above.",
-  "settings.profile.displayName": "Display name",
-  "settings.profile.loginEmail": "Login email: {email}",
-  "settings.profile.phone": "Phone",
-  "settings.profile.phonePlaceholder": "+84…",
-  "settings.profile.whatsapp": "WhatsApp",
-  "settings.profile.whatsappPlaceholder": "+84… or WhatsApp link",
-  "settings.profile.contactEmail": "Public contact email",
-  "settings.profile.contactEmailHint":
-    "Optional — shown to clients. Can differ from your login email.",
-  "settings.profile.contactEmailPlaceholder": "you@example.com",
-  "settings.profile.bio": "Short bio",
-  "settings.profile.bioHint": "A sentence or two about you for listing pages.",
-  "settings.profile.bioPlaceholder": "Helping expats find homes in Da Nang…",
-  "settings.profile.uploadPhoto": "Upload photo",
-  "settings.profile.changePhoto": "Change photo",
-  "settings.profile.removePhoto": "Remove",
-  "settings.profile.uploading": "Uploading…",
-  "settings.profile.photoReady": "Photo uploaded — save to keep it.",
-  "settings.profile.photoRemoved": "Photo removed — save to keep the change.",
-  "settings.profile.save": "Save profile",
-  "settings.profile.saving": "Saving…",
-  "settings.profile.saved": "Profile saved.",
 
   "settings.integrations.title": "Integrations",
   "settings.integrations.subtitle":
@@ -582,7 +548,7 @@ const vi: Record<MessageKey, string> = {
 
   "approvals.title": "Duyệt tin đăng",
   "approvals.subtitle":
-    "Đối tác đã yêu cầu đưa các tin này lên live. Duyệt để công khai, hoặc từ chối về nháp.",
+    "Đối tác đã yêu cầu đưa các tin này lên live. Duyệt để công khai, hoặc từ chối kèm ghi chú (hiện là Từ chối trong danh sách).",
   "approvals.empty": "Không có tin nào đang chờ duyệt.",
   "approvals.approve": "Duyệt (đặt còn trống)",
   "approvals.approving": "Đang duyệt…",
@@ -722,21 +688,12 @@ const vi: Record<MessageKey, string> = {
   "workspace.share.previewHint": "Chưa live — link dùng xem trước khi đăng.",
   "workspace.share.areaNamed": "Khu vực · {name}",
   "workspace.share.areaHint": "Trang khu vực với tin gần đó.",
-  "workspace.contacts.title": "Liên hệ",
-  "workspace.contacts.subtitle": "Người gắn với tin này — gọi hoặc quản lý giao dịch.",
-  "workspace.contacts.manage": "Quản lý →",
-  "workspace.contacts.empty": "Chưa gắn liên hệ nào.",
-  "workspace.contacts.unnamed": "Liên hệ",
-  "workspace.contacts.noCommission": "Chưa đặt hoa hồng",
+  "workspace.contacts.empty": "Chưa gắn liên hệ bất động sản nào.",
   "workspace.contacts.noReach": "Chưa có SĐT / WhatsApp / email",
   "workspace.contacts.addFirst": "Thêm liên hệ trước →",
-  "workspace.contacts.tabTitle": "Liên hệ đã gắn",
-  "workspace.contacts.tabHint": "Gắn người đang làm tin này. Hoa hồng là tuỳ chọn theo từng liên hệ.",
-  "workspace.contacts.linkExisting": "Gắn có sẵn",
-  "workspace.contacts.addNew": "Thêm mới",
-  "workspace.contacts.addAndLink": "Thêm & gắn",
-  "workspace.contacts.added": "Đã thêm và gắn liên hệ.",
-  "workspace.contacts.namePlaceholder": "vd. Alex",
+  "workspace.contacts.tabTitle": "Liên hệ của bạn cho căn này",
+  "workspace.contacts.tabHint":
+    "Chỉ nội bộ — người bạn làm việc về tin này (chủ nhà, bảo vệ, quản lý tòa). Không hiện trên trang công khai. Ghi chú hoa hồng là tuỳ chọn.",
 
   "form.section.basics": "Cơ bản",
   "form.section.basicsHint": "Tiêu đề, diện tích, khu vực và ngày trống.",
@@ -759,6 +716,7 @@ const vi: Record<MessageKey, string> = {
 
   "status.label": "Trạng thái",
   "status.draft": "Nháp",
+  "status.rejected": "Từ chối",
   "status.pending_review": "Chờ duyệt",
   "status.available": "Còn trống",
   "status.reserved": "Đã giữ chỗ",
@@ -877,7 +835,7 @@ const vi: Record<MessageKey, string> = {
   "commission.setDefault": "Đặt hoa hồng dự kiến",
   "commission.setDefaultHint":
     "Không cần liên hệ — ghi nhanh hoa hồng dự kiến cho tin này.",
-  "commission.connectContact": "Gắn liên hệ",
+  "commission.connectContact": "Gắn liên hệ bất động sản",
   "commission.pickContact": "Chọn liên hệ…",
   "commission.connected": "Đã gắn liên hệ.",
   "commission.usd": "Hoa hồng (USD)",
@@ -901,7 +859,7 @@ const vi: Record<MessageKey, string> = {
 
   "settings.title": "Cài đặt",
   "settings.subtitle":
-    "Thông tin công ty, nhóm và công cụ chia sẻ tin đăng — cùng hồ sơ cá nhân của bạn.",
+    "Thông tin công ty, nhóm và công cụ chia sẻ tin đăng.",
 
   "settings.company.title": "Công ty",
   "settings.company.subtitle":
@@ -916,7 +874,7 @@ const vi: Record<MessageKey, string> = {
   "settings.company.email": "Email liên hệ",
   "settings.company.emailPlaceholder": "hello@agency.com",
   "settings.company.contactHint":
-    "Số điện thoại, WhatsApp/Zalo và email của công ty — tách biệt với hồ sơ cá nhân bên dưới.",
+    "Số điện thoại, WhatsApp/Zalo và email của công ty hiện cùng tin đăng.",
   "settings.company.logoEmpty": "Logo",
   "settings.company.logoUpload": "Tải logo",
   "settings.company.logoUploading": "Đang tải…",
@@ -926,32 +884,6 @@ const vi: Record<MessageKey, string> = {
   "settings.company.save": "Lưu công ty",
   "settings.company.saving": "Đang lưu…",
   "settings.company.saved": "Đã lưu công ty.",
-
-  "settings.profile.title": "Hồ sơ của bạn",
-  "settings.profile.subtitle":
-    "Ảnh và thông tin liên hệ cá nhân — tách biệt với tên công ty phía trên.",
-  "settings.profile.displayName": "Tên hiển thị",
-  "settings.profile.loginEmail": "Email đăng nhập: {email}",
-  "settings.profile.phone": "Điện thoại",
-  "settings.profile.phonePlaceholder": "+84…",
-  "settings.profile.whatsapp": "WhatsApp",
-  "settings.profile.whatsappPlaceholder": "+84… hoặc link WhatsApp",
-  "settings.profile.contactEmail": "Email liên hệ công khai",
-  "settings.profile.contactEmailHint":
-    "Tuỳ chọn — hiện cho khách. Có thể khác email đăng nhập.",
-  "settings.profile.contactEmailPlaceholder": "ban@example.com",
-  "settings.profile.bio": "Giới thiệu ngắn",
-  "settings.profile.bioHint": "Một câu về bạn cho trang tin đăng.",
-  "settings.profile.bioPlaceholder": "Hỗ trợ người nước ngoài tìm nhà tại Đà Nẵng…",
-  "settings.profile.uploadPhoto": "Tải ảnh lên",
-  "settings.profile.changePhoto": "Đổi ảnh",
-  "settings.profile.removePhoto": "Xoá",
-  "settings.profile.uploading": "Đang tải…",
-  "settings.profile.photoReady": "Đã tải ảnh — lưu để giữ lại.",
-  "settings.profile.photoRemoved": "Đã xoá ảnh — lưu để áp dụng.",
-  "settings.profile.save": "Lưu hồ sơ",
-  "settings.profile.saving": "Đang lưu…",
-  "settings.profile.saved": "Đã lưu hồ sơ.",
 
   "settings.integrations.title": "Tích hợp",
   "settings.integrations.subtitle":

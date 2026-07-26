@@ -1,4 +1,5 @@
 import { requireStudioCompany } from "@/lib/auth";
+import { getEstateCompany } from "@/lib/data/company";
 import { listCompanyFacebookGroups } from "@/lib/data/facebook-groups";
 import { getCompanyIntegration } from "@/lib/data/integrations";
 import { getCompanyTeam } from "@/lib/data/team";
@@ -12,13 +13,24 @@ export default async function SettingsPage({
 }) {
   const session = await requireStudioCompany();
   const params = await searchParams;
-  const integration = await getCompanyIntegration(session.estateCompanyId, "facebook");
-  const team = await getCompanyTeam(session.estateCompanyId);
-  const facebookGroups = await listCompanyFacebookGroups(session.estateCompanyId);
+  const [company, integration, team, facebookGroups] = await Promise.all([
+    getEstateCompany(session.estateCompanyId),
+    getCompanyIntegration(session.estateCompanyId, "facebook"),
+    getCompanyTeam(session.estateCompanyId),
+    listCompanyFacebookGroups(session.estateCompanyId),
+  ]);
   const p = session.profile;
 
   return (
     <SettingsView
+      company={{
+        id: session.estateCompanyId,
+        name: company?.name?.trim() || "",
+        logoUrl: company?.logoUrl?.trim() || "",
+        contactPhone: company?.contactPhone?.trim() || "",
+        contactWhatsapp: company?.contactWhatsapp?.trim() || "",
+        contactEmail: company?.contactEmail?.trim() || "",
+      }}
       profile={{
         userId: session.user.id,
         loginEmail: session.user.email ?? null,

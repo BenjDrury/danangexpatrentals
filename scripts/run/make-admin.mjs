@@ -33,9 +33,13 @@ if (!url || !key) {
 
 const supabase = createClient(url, key);
 
+// Admins are not company members — clear any prior estate_company_id link.
 const { data, error } = await supabase
   .from("profiles")
-  .upsert({ id: uuid, role: "admin" }, { onConflict: "id" })
+  .upsert(
+    { id: uuid, role: "admin", estate_company_id: null },
+    { onConflict: "id" },
+  )
   .select()
   .single();
 

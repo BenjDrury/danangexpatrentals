@@ -12,7 +12,9 @@ type SessionLike = Pick<
   "user" | "profile" | "estateCompanyId" | "isAdmin"
 >;
 
-async function loadCompanyGroupProps(companyId: string): Promise<Record<string, string | number | null>> {
+async function loadCompanyGroupProps(
+  companyId: string,
+): Promise<Record<string, string | number>> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("estate_companies")
@@ -20,14 +22,18 @@ async function loadCompanyGroupProps(companyId: string): Promise<Record<string, 
     .eq("id", companyId)
     .maybeSingle();
 
-  if (!data) return { name: null };
+  if (!data) return {};
 
-  return {
-    name: data.name ?? null,
-    page_url: data.page_url ?? null,
-    page_followers: data.page_followers ?? null,
-    facebook_id: data.facebook_id ?? null,
-  };
+  // Omit null/empty values — empty or null `$group_set` fields can wipe the
+  // group's display `name` in the PostHog UI.
+  const props: Record<string, string | number> = {};
+  if (data.name) props.name = data.name as string;
+  if (data.page_url) props.page_url = data.page_url as string;
+  if (data.page_followers != null) {
+    props.page_followers = data.page_followers as number;
+  }
+  if (data.facebook_id) props.facebook_id = data.facebook_id as string;
+  return props;
 }
 
 /**
@@ -50,12 +56,27 @@ export async function captureServer(
 
   if (companyId) {
     const companyProps = await loadCompanyGroupProps(companyId);
-    posthog.groupIdentify({
-      groupType: COMPANY_GROUP_TYPE,
-      groupKey: companyId,
-      properties: companyProps,
-    });
+    if (Object.keys(companyProps).length > 0) {
+      posthog.groupIdentify({
+        groupType: COMPANY_GROUP_TYPE,
+        groupKey: companyId,
+        properties: companyProps,
+      });
+    }
   }
+
+  const name = studio.profile.display_name?.trim() || null;
+
+  // Keep the person profile tied to our internal id + name on every server event.
+  posthog.identify({
+    distinctId: studio.user.id,
+    properties: {
+      email: studio.user.email ?? null,
+      name,
+      role: studio.profile.role,
+      estate_company_id: companyId,
+    },
+  });
 
   posthog.capture({
     distinctId: studio.user.id,
@@ -63,7 +84,7 @@ export async function captureServer(
     properties: {
       ...properties,
       email: studio.user.email ?? null,
-      name: studio.profile.display_name ?? null,
+      name,
       role: studio.profile.role,
       estate_company_id: companyId,
     },

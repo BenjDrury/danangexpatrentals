@@ -62,6 +62,7 @@ export async function updateSession(request: NextRequest) {
 
   const url = request.nextUrl.clone();
   const isLogin = url.pathname === "/login";
+  const isAuthCallback = url.pathname === "/auth/callback";
   const isUnauthorized = url.pathname === "/unauthorized";
   const isInvite = url.pathname.startsWith("/invite/");
   const isLegal =
@@ -91,9 +92,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Invite accept is public (logged-out users create/sign in on the page).
+  // /auth/callback exchanges PKCE codes before cookies exist.
   // Legal pages stay public for imprint / terms disclosure.
   // /unauthorized stays reachable while signed in (non-partners land here).
-  if (!isLogin && !isUnauthorized && !isInvite && !isLegal && !isAuthenticated) {
+  if (
+    !isLogin &&
+    !isAuthCallback &&
+    !isUnauthorized &&
+    !isInvite &&
+    !isLegal &&
+    !isAuthenticated
+  ) {
     url.pathname = "/login";
     url.search = "";
     const nextPath = request.nextUrl.pathname + request.nextUrl.search;

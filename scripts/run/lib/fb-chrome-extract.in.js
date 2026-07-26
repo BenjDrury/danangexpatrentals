@@ -66,8 +66,14 @@
   function isListingImage(src, w) {
     if (!src || !/scontent|fbcdn/.test(src)) return false;
     if (/static\.xx\.fbcdn|emoji|rsrc\.php/.test(src)) return false;
-    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60/.test(src)) return false;
-    if (w > 0 && w < 100) return false;
+    if (
+      /s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|p110x80|ctp=p\d+x\d+|stp=dst-jpg_s\d{2,3}x\d{2,3}/.test(
+        src
+      )
+    )
+      return false;
+    // Prefer real photo dimensions when known
+    if (w > 0 && w < 280) return false;
     return true;
   }
 

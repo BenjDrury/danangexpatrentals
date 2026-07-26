@@ -42,7 +42,7 @@ export default async function StudioLayout({
       <AnalyticsIdentity
         id={studio.user.id}
         email={studio.user.email}
-        name={studio.profile.display_name}
+        name={studio.profile.display_name?.trim() || null}
         role={studio.profile.role}
         isAdmin={studio.isAdmin}
         companyId={studio.estateCompanyId}

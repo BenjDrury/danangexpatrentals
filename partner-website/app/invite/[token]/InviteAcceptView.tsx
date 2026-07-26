@@ -8,7 +8,8 @@ import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { PartnerInviteStatus } from "types";
 import { acceptInviteAction, createAccountFromInviteAction } from "./actions";
-import { capture, identifyUser } from "@/lib/analytics";
+import { capture } from "@/lib/analytics";
+import { syncPostHogIdentity } from "@/lib/analytics-identity";
 
 export function InviteAcceptView({
   token,
@@ -139,14 +140,7 @@ export function InviteAcceptView({
         return;
       }
       if (signInData.user) {
-        identifyUser({
-          id: signInData.user.id,
-          email: signInData.user.email,
-          name: null,
-          role: "partner",
-          companyName: invite?.companyName ?? null,
-          isAdmin: false,
-        });
+        await syncPostHogIdentity(signInData.user);
       }
       capture("team_invite_accepted", { method: "existing_account" });
       setDone(true);
@@ -178,14 +172,7 @@ export function InviteAcceptView({
         return;
       }
       if (signInData.user) {
-        identifyUser({
-          id: signInData.user.id,
-          email: signInData.user.email,
-          name: displayName.trim() || null,
-          role: "partner",
-          companyName: invite?.companyName ?? null,
-          isAdmin: false,
-        });
+        await syncPostHogIdentity(signInData.user);
       }
       capture("team_invite_accepted", { method: "new_account" });
       setDone(true);

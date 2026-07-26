@@ -65,21 +65,32 @@ export function identifyUser(person: AnalyticsPerson): void {
     /* ignore */
   }
 
+  const name = person.name?.trim() || undefined;
+
   posthog.identify(person.id, {
     email: person.email ?? undefined,
-    name: person.name ?? undefined,
+    name,
     role: person.role ?? "partner",
     estate_company_id: person.companyId ?? undefined,
     company_name: person.companyName ?? undefined,
   });
 
   if (person.companyId) {
-    posthog.group(COMPANY_GROUP_TYPE, person.companyId, {
-      name: person.companyName ?? undefined,
-      page_url: person.companyPageUrl ?? undefined,
-      page_followers: person.companyFollowers ?? undefined,
-      facebook_id: person.companyFacebookId ?? undefined,
-    });
+    // Only send defined group props. Empty `$group_set: {}` can wipe the
+    // group's stored `name`, so the People → Groups list falls back to the UUID.
+    const groupProps: Record<string, string | number> = {};
+    if (person.companyName) groupProps.name = person.companyName;
+    if (person.companyPageUrl) groupProps.page_url = person.companyPageUrl;
+    if (person.companyFollowers != null) {
+      groupProps.page_followers = person.companyFollowers;
+    }
+    if (person.companyFacebookId) {
+      groupProps.facebook_id = person.companyFacebookId;
+    }
+
+    if (Object.keys(groupProps).length > 0) {
+      posthog.group(COMPANY_GROUP_TYPE, person.companyId, groupProps);
+    }
   }
 }
 

@@ -68,6 +68,9 @@ const en = {
   "login.password": "Password",
   "login.submit": "Enter studio",
   "login.submitting": "Signing in…",
+  "login.magicLinkCompleting": "Signing you in…",
+  "login.magicLinkFailed":
+    "This sign-in link is invalid or expired. Request a new one, or sign in with your password.",
   "login.inviteNote":
     "Partner accounts are invited. Need access? Ask the Da Nang Expat Rentals team.",
 
@@ -366,11 +369,36 @@ const en = {
   "guides.copied": "Copied",
 
   "settings.title": "Settings",
-  "settings.subtitle": "Manage your profile, team, and tools you’ll use when sharing listings.",
+  "settings.subtitle":
+    "Company details, team, and tools for sharing listings — plus your personal profile.",
+
+  "settings.company.title": "Company",
+  "settings.company.subtitle":
+    "How your partner business appears in the studio and on shared listings. Contact details may be filled from Facebook imports when found in posts.",
+  "settings.company.name": "Company name",
+  "settings.company.nameHint":
+    "Shown in the studio header and anywhere clients see your agency name.",
+  "settings.company.phone": "Phone",
+  "settings.company.phonePlaceholder": "+84…",
+  "settings.company.whatsapp": "WhatsApp / Zalo",
+  "settings.company.whatsappPlaceholder": "+84… or chat link",
+  "settings.company.email": "Contact email",
+  "settings.company.emailPlaceholder": "hello@agency.com",
+  "settings.company.contactHint":
+    "Agency phone, WhatsApp/Zalo, and email — separate from your personal profile below.",
+  "settings.company.logoEmpty": "Logo",
+  "settings.company.logoUpload": "Upload logo",
+  "settings.company.logoUploading": "Uploading…",
+  "settings.company.logoRemove": "Remove",
+  "settings.company.logoReady": "Logo ready — save to apply.",
+  "settings.company.logoRemoved": "Logo removed — save to apply.",
+  "settings.company.save": "Save company",
+  "settings.company.saving": "Saving…",
+  "settings.company.saved": "Company saved.",
 
   "settings.profile.title": "Your profile",
   "settings.profile.subtitle":
-    "Photo and contact details we can show clients on the public site when you’re ready.",
+    "Your personal photo and contact details — separate from the company name above.",
   "settings.profile.displayName": "Display name",
   "settings.profile.loginEmail": "Login email: {email}",
   "settings.profile.phone": "Phone",
@@ -571,6 +599,9 @@ const vi: Record<MessageKey, string> = {
   "login.password": "Mật khẩu",
   "login.submit": "Vào studio",
   "login.submitting": "Đang đăng nhập…",
+  "login.magicLinkCompleting": "Đang đăng nhập…",
+  "login.magicLinkFailed":
+    "Liên kết đăng nhập không hợp lệ hoặc đã hết hạn. Yêu cầu liên kết mới, hoặc đăng nhập bằng mật khẩu.",
   "login.inviteNote":
     "Tài khoản đối tác được mời. Cần quyền truy cập? Liên hệ đội ngũ Da Nang Expat Rentals.",
 
@@ -869,11 +900,36 @@ const vi: Record<MessageKey, string> = {
   "guides.copied": "Đã copy",
 
   "settings.title": "Cài đặt",
-  "settings.subtitle": "Quản lý hồ sơ, nhóm và công cụ bạn dùng khi chia sẻ tin đăng.",
+  "settings.subtitle":
+    "Thông tin công ty, nhóm và công cụ chia sẻ tin đăng — cùng hồ sơ cá nhân của bạn.",
+
+  "settings.company.title": "Công ty",
+  "settings.company.subtitle":
+    "Cách doanh nghiệp đối tác hiện trong studio và trên tin đăng chia sẻ. Thông tin liên hệ có thể được điền từ bài Facebook khi tìm thấy.",
+  "settings.company.name": "Tên công ty",
+  "settings.company.nameHint":
+    "Hiện trên header studio và mọi nơi khách thấy tên đại lý của bạn.",
+  "settings.company.phone": "Điện thoại",
+  "settings.company.phonePlaceholder": "+84…",
+  "settings.company.whatsapp": "WhatsApp / Zalo",
+  "settings.company.whatsappPlaceholder": "+84… hoặc link chat",
+  "settings.company.email": "Email liên hệ",
+  "settings.company.emailPlaceholder": "hello@agency.com",
+  "settings.company.contactHint":
+    "Số điện thoại, WhatsApp/Zalo và email của công ty — tách biệt với hồ sơ cá nhân bên dưới.",
+  "settings.company.logoEmpty": "Logo",
+  "settings.company.logoUpload": "Tải logo",
+  "settings.company.logoUploading": "Đang tải…",
+  "settings.company.logoRemove": "Xoá",
+  "settings.company.logoReady": "Logo sẵn sàng — lưu để áp dụng.",
+  "settings.company.logoRemoved": "Đã xoá logo — lưu để áp dụng.",
+  "settings.company.save": "Lưu công ty",
+  "settings.company.saving": "Đang lưu…",
+  "settings.company.saved": "Đã lưu công ty.",
 
   "settings.profile.title": "Hồ sơ của bạn",
   "settings.profile.subtitle":
-    "Ảnh và thông tin liên hệ — có thể hiển thị cho khách trên website khi bạn sẵn sàng.",
+    "Ảnh và thông tin liên hệ cá nhân — tách biệt với tên công ty phía trên.",
   "settings.profile.displayName": "Tên hiển thị",
   "settings.profile.loginEmail": "Email đăng nhập: {email}",
   "settings.profile.phone": "Điện thoại",

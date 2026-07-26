@@ -71,7 +71,8 @@ npm run extract-facebook -- --dry-run --limit=5
 # Options
 #   --limit=5          max posts (default 5)
 #   --images=20        max photos per post (default 20)
-#   --scrolls=20       feed scroll passes before extract
+#   --min-image-bytes=25000   skip downloads smaller than this (default 25KB)
+#   --scrolls=5        max scroll steps (default ≈ --limit); stops early once enough posts
 #   --out=tmp_fb/x.json
 #   --area=my-khe      fallback area_id (OpenAI overrides per post when key set)
 #   --status=draft     listing status (default draft)
@@ -79,9 +80,13 @@ npm run extract-facebook -- --dry-run --limit=5
 #   --match=<substr>   Chrome tab URL match (default: facebook.com or id from --url)
 ```
 
-With `OPENAI_API_KEY` in `.secret.local`, each post is sent to OpenAI (`OPENAI_MODEL`, default `gpt-4o`; tries `gpt-5` / others if needed) to produce title, description, area, price, bedrooms, features, etc.
+With `OPENAI_API_KEY` in `.secret.local`, each post is sent to OpenAI (`OPENAI_MODEL`, default `gpt-4o`; tries `gpt-5` / others if needed) to produce title, description, area, price, bedrooms, features, and seller contact (phone / WhatsApp-Zalo / email) when present.
 
-Duplicates are skipped by `source_url` / `source_post_id`. No partner auth user is created — use Admin → Become company to view.
+After posts are processed, the script also:
+- Downloads the Facebook profile/logo into the `apartments` Storage bucket (falls back to the CDN URL)
+- Fills empty `estate_companies` fields: `logo_url`, `contact_phone`, `contact_whatsapp`, `contact_email` (does not overwrite values already set)
+
+Duplicates are skipped by `source_url` / `source_post_id`. No partner auth user is created — use Admin → Become company to view company Settings.
 
 ---
 

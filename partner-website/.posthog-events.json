@@ -83,5 +83,25 @@
     "event_name": "partner_profile_photo_removed",
     "event_description": "A partner clears their profile photo in Settings before saving (client-side).",
     "file": "app/(studio)/settings/ProfileSection.tsx"
+  },
+  {
+    "event_name": "user_signed_in",
+    "event_description": "A user signs into Partner Studio via password or magic link (client-side). Property: method (password | magic_link).",
+    "file": "app/login/page.tsx"
+  },
+  {
+    "event_name": "partner_company_updated",
+    "event_description": "A partner saves company settings (name, logo, phone, WhatsApp/Zalo, email) in Settings (server + client).",
+    "file": "app/(studio)/settings/actions.ts"
+  },
+  {
+    "event_name": "partner_company_logo_uploaded",
+    "event_description": "A partner uploads a company logo image in Settings before saving.",
+    "file": "app/(studio)/settings/CompanySection.tsx"
+  },
+  {
+    "event_name": "partner_company_logo_removed",
+    "event_description": "A partner removes the company logo in Settings before saving.",
+    "file": "app/(studio)/settings/CompanySection.tsx"
   }
 ]

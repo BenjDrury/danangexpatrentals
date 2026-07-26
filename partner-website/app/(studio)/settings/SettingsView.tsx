@@ -15,6 +15,7 @@ import {
   revokeTeamInvite,
 } from "./actions";
 import { capture } from "@/lib/analytics";
+import { CompanySection, type CompanyView } from "./CompanySection";
 import { ProfileSection, type ProfileView } from "./ProfileSection";
 
 export type FacebookIntegrationView = {
@@ -32,6 +33,7 @@ const FB_FLASH: Record<string, MessageKey> = {
 };
 
 export function SettingsView({
+  company,
   profile,
   facebook,
   oauthConfigured,
@@ -41,6 +43,7 @@ export function SettingsView({
   missingServiceRole,
   facebookGroups,
 }: {
+  company: CompanyView;
   profile: ProfileView;
   facebook: FacebookIntegrationView | null;
   oauthConfigured: boolean;
@@ -98,7 +101,7 @@ export function SettingsView({
         </p>
       )}
 
-      <ProfileSection profile={profile} />
+      <CompanySection company={company} />
 
       <section className="space-y-5">
         <div>
@@ -472,6 +475,8 @@ export function SettingsView({
           </li>
         </ul>
       </section>
+
+      <ProfileSection profile={profile} />
 
       <section className="space-y-5">
         <div>

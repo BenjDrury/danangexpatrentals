@@ -53,7 +53,7 @@ export async function getCompanyTeam(
       .from("profiles")
       .select("id, display_name, role")
       .eq("estate_company_id", estateCompanyId)
-      .in("role", ["partner", "admin"]);
+      .eq("role", "partner");
 
     const { data: invites } = await supabase
       .from("partner_invites")
@@ -77,7 +77,7 @@ export async function getCompanyTeam(
     .from("profiles")
     .select("id, display_name, role")
     .eq("estate_company_id", estateCompanyId)
-    .in("role", ["partner", "admin"])
+    .eq("role", "partner")
     .order("display_name", { ascending: true });
 
   const emailById = new Map<string, string>();
@@ -159,8 +159,8 @@ export async function createPartnerInvite(
           .eq("id", existingUser.id)
           .maybeSingle();
         if (
-          profile?.estate_company_id === session.estateCompanyId &&
-          (profile.role === "partner" || profile.role === "admin")
+          profile?.role === "partner" &&
+          profile.estate_company_id === session.estateCompanyId
         ) {
           return { error: "That person is already on this team." };
         }

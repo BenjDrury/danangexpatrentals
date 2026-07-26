@@ -68,7 +68,7 @@ export async function startImpersonation(
   redirect("/");
 }
 
-/** Clears view-as cookie; admin falls back to profile.estate_company_id if set. */
+/** Clears view-as cookie; admin returns to the partner picker. */
 export async function stopImpersonation() {
   const admin = await requireAdmin();
   if (!admin) {

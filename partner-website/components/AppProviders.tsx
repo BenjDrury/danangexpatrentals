@@ -3,41 +3,38 @@
 import { useEffect } from "react";
 import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { createClient } from "@/lib/supabase/client";
-import { disableAnalyticsForAdmin, identifyUser } from "@/lib/analytics";
+import { resetAnalytics } from "@/lib/analytics";
+import { syncPostHogIdentity } from "@/lib/analytics-identity";
 
 /**
- * Root providers. On mount, sync PostHog with the Supabase session:
- * partners are identified (+ company when known later via AnalyticsIdentity);
- * admins are fully opted out.
+ * Root providers. Keeps PostHog identity in sync with the Supabase session:
+ * partners are identified by internal user id + display name as soon as they
+ * are signed in; admins are fully opted out; identity is cleared on sign-out.
  */
 export function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const supabase = createClient();
-    void (async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
-      if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, display_name, estate_company_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (profile?.role === "admin") {
-        disableAnalyticsForAdmin();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        resetAnalytics();
         return;
       }
 
-      identifyUser({
-        id: user.id,
-        email: user.email,
-        name: profile?.display_name ?? null,
-        role: profile?.role ?? null,
-        companyId: profile?.estate_company_id ?? null,
-        isAdmin: false,
-      });
-    })();
+      // Identify immediately on session restore and right after login.
+      if (
+        session?.user &&
+        (event === "INITIAL_SESSION" ||
+          event === "SIGNED_IN" ||
+          event === "USER_UPDATED")
+      ) {
+        void syncPostHogIdentity(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return <LocaleProvider>{children}</LocaleProvider>;

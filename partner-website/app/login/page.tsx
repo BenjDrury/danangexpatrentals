@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import { disableAnalyticsForAdmin, identifyUser, capture } from "@/lib/analytics";
+import { capture } from "@/lib/analytics";
+import { syncPostHogIdentity } from "@/lib/analytics-identity";
 
 function safeNext(next: string | null): string {
   if (!next) return "/";
@@ -15,15 +17,139 @@ function safeNext(next: string | null): string {
   return trimmed;
 }
 
+type HashAuth = {
+  accessToken?: string;
+  refreshToken?: string;
+  error?: string;
+};
+
+/** Capture hash tokens before parent effects (e.g. AppProviders) can clear them. */
+function readHashAuth(): HashAuth | null {
+  if (typeof window === "undefined") return null;
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const accessToken = hashParams.get("access_token") ?? undefined;
+  const refreshToken = hashParams.get("refresh_token") ?? undefined;
+  const error =
+    hashParams.get("error_description") || hashParams.get("error") || undefined;
+  if (error) return { error };
+  if (accessToken && refreshToken) return { accessToken, refreshToken };
+  return null;
+}
+
+function hasAuthCodeInSearch(): boolean {
+  if (typeof window === "undefined") return false;
+  return Boolean(new URLSearchParams(window.location.search).get("code"));
+}
+
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [hashAuth] = useState<HashAuth | null>(readHashAuth);
+  const [completingMagicLink, setCompletingMagicLink] = useState(
+    () =>
+      Boolean(hashAuth?.accessToken && hashAuth?.refreshToken) ||
+      hasAuthCodeInSearch(),
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
   const nextPath = safeNext(searchParams.get("next"));
+
+  // Supabase magic links redirect with tokens in the URL hash (implicit) or
+  // ?code= (PKCE). Hash fragments never reach the server, so complete the
+  // session here and then navigate into the studio.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function finishSignIn(user: User) {
+      await syncPostHogIdentity(user);
+      capture("user_signed_in", { method: "magic_link" });
+      router.replace(nextPath);
+      router.refresh();
+    }
+
+    async function completeFromUrl() {
+      const code = searchParams.get("code");
+      const queryError =
+        searchParams.get("error_description") || searchParams.get("error");
+      const authError = hashAuth?.error || queryError;
+
+      if (authError) {
+        if (cancelled) return;
+        setCompletingMagicLink(false);
+        setError(
+          authError === "magic_link"
+            ? t("login.magicLinkFailed")
+            : authError,
+        );
+        if (window.location.hash) {
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname + window.location.search,
+          );
+        }
+        return;
+      }
+
+      const accessToken = hashAuth?.accessToken;
+      const refreshToken = hashAuth?.refreshToken;
+      if ((!accessToken || !refreshToken) && !code) return;
+
+      setCompletingMagicLink(true);
+      const supabase = createClient();
+
+      if (code) {
+        const { data, error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError || !data.session) {
+          if (!cancelled) {
+            setCompletingMagicLink(false);
+            setError(exchangeError?.message ?? t("login.magicLinkFailed"));
+          }
+          return;
+        }
+        if (cancelled) return;
+        window.history.replaceState(null, "", window.location.pathname);
+        await finishSignIn(data.session.user);
+        return;
+      }
+
+      // Prefer an already-detected session (createBrowserClient may have
+      // parsed the hash via detectSessionInUrl in AppProviders).
+      const { data: existing } = await supabase.auth.getSession();
+      if (existing.session?.user) {
+        if (cancelled) return;
+        window.history.replaceState(null, "", window.location.pathname);
+        await finishSignIn(existing.session.user);
+        return;
+      }
+
+      if (accessToken && refreshToken) {
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (sessionError || !data.session) {
+          if (!cancelled) {
+            setCompletingMagicLink(false);
+            setError(sessionError?.message ?? t("login.magicLinkFailed"));
+          }
+          return;
+        }
+        if (cancelled) return;
+        window.history.replaceState(null, "", window.location.pathname);
+        await finishSignIn(data.session.user);
+      }
+    }
+
+    void completeFromUrl();
+    return () => {
+      cancelled = true;
+    };
+  }, [hashAuth, nextPath, router, searchParams, t]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,29 +169,23 @@ function LoginForm() {
     }
 
     if (signInData.user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, display_name, estate_company_id")
-        .eq("id", signInData.user.id)
-        .maybeSingle();
-
-      if (profile?.role === "admin") {
-        disableAnalyticsForAdmin();
-      } else {
-        identifyUser({
-          id: signInData.user.id,
-          email: signInData.user.email,
-          name: profile?.display_name ?? null,
-          role: profile?.role ?? null,
-          companyId: profile?.estate_company_id ?? null,
-          isAdmin: false,
-        });
-        capture("user_signed_in");
-      }
+      // Identify immediately (id + display name) before navigation.
+      await syncPostHogIdentity(signInData.user);
+      capture("user_signed_in", { method: "password" });
     }
 
     router.push(nextPath);
     router.refresh();
+  }
+
+  if (completingMagicLink) {
+    return (
+      <div className="mt-8 rounded-soft border border-line/80 bg-white/80 p-7 text-center shadow-[0_18px_50px_rgba(42,42,40,0.06)] backdrop-blur-sm">
+        <p className="text-sm font-medium text-charcoal">
+          {t("login.magicLinkCompleting")}
+        </p>
+      </div>
+    );
   }
 
   return (

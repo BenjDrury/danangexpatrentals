@@ -91,10 +91,10 @@ export const getStudioUser = cache(async function getStudioUser(): Promise<Studi
   const isAdmin = profileRow.role === "admin";
   const impersonatedId = isAdmin ? await getImpersonationCompanyId() : null;
 
+  // Admins are not members of companies — company context only via impersonation.
   let estateCompanyId: string | null = null;
   if (isAdmin) {
-    // Cookie wins; otherwise admin’s linked default company.
-    estateCompanyId = impersonatedId ?? profileRow.estate_company_id;
+    estateCompanyId = impersonatedId;
   } else {
     estateCompanyId = profileRow.estate_company_id;
   }
@@ -140,7 +140,7 @@ export const requireAdmin = cache(async function requireAdmin(): Promise<AdminSe
 
 /**
  * Soft check for studio data routes.
- * Partner → their company; admin → impersonation cookie or profile default company.
+ * Partner → their company; admin → impersonation cookie only.
  */
 export async function requirePartner(): Promise<PartnerSession | null> {
   const studio = await getStudioUser();
@@ -157,7 +157,7 @@ export async function requirePartner(): Promise<PartnerSession | null> {
 
 /**
  * Studio pages that need a company context.
- * Admins without cookie and without a linked default company go to the partner picker.
+ * Admins without an impersonation cookie go to the partner picker.
  */
 export async function requireStudioCompany(): Promise<PartnerSession> {
   const studio = await getStudioUser();

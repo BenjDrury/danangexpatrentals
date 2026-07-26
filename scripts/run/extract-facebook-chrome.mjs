@@ -49,7 +49,16 @@ function flag(name, fallback = null) {
 const dryRun = flag("dry-run") === true;
 const limit = Math.max(1, Math.min(30, Number(flag("limit", "5")) || 5));
 const maxImages = Math.max(1, Math.min(40, Number(flag("images", "20")) || 20));
-const scrollCount = Math.max(2, Math.min(40, Number(flag("scrolls", "20")) || 20));
+// Reject thumbnails/avatars — real listing photos are usually >> 25KB
+const minImageBytes = Math.max(
+  5_000,
+  Number(flag("min-image-bytes", "25000")) || 25_000
+);
+// Max scroll steps; we stop early once we have --limit posts. Default is modest.
+const scrollCount = Math.max(
+  0,
+  Math.min(30, Number(flag("scrolls", String(Math.max(4, limit)))) || Math.max(4, limit))
+);
 const status = String(flag("status", "draft") || "draft");
 const areaArg = flag("area", null);
 const navigateUrl = flag("url", null);
@@ -135,15 +144,12 @@ function findAndExtract() {
   writeFileSync(jsPath, extractJs, "utf8");
 
   try {
-    const script = `
-set jsPath to ${asQuote(jsPath)}
-set jsCode to read POSIX file jsPath as «class utf8»
-
+    // Activate matching Chrome tab once
+    runOsascript(`
+set matchHint to ${asQuote(matchHint)}
 tell application "Google Chrome"
-  set matchHint to ${asQuote(matchHint)}
   set foundWin to missing value
   set foundTabIndex to 0
-
   repeat with w in windows
     set i to 0
     repeat with t in tabs of w
@@ -159,7 +165,6 @@ tell application "Google Chrome"
     end repeat
     if foundWin is not missing value then exit repeat
   end repeat
-
   if foundWin is missing value then
     if (count of windows) = 0 then error "No Chrome windows open. Open Facebook in Chrome first."
     set foundWin to front window
@@ -169,45 +174,65 @@ tell application "Google Chrome"
       error "No tab matching " & matchHint & ". Open the Facebook profile/group-user page in Chrome (or pass --url=)."
     end if
   end if
-
   set index of foundWin to 1
   set active tab index of foundWin to foundTabIndex
-  set targetTab to active tab of foundWin
-
-  execute targetTab javascript "window.scrollTo(0, 0); true;"
-  delay 0.5
-  repeat ${scrollCount} times
-    execute targetTab javascript "window.scrollBy(0, 1600); true;"
-    delay 0.55
-    execute targetTab javascript "
-      (() => {
-        for (const el of document.querySelectorAll('[role=\\"button\\"], div[tabindex=\\"0\\"]')) {
-          const t = (el.innerText || '').trim();
-          if (/^see more$/i.test(t) || /^xem thêm$/i.test(t)) {
-            try { el.click(); } catch (e) {}
-          }
-        }
-        return true;
-      })();
-    "
-    delay 0.35
-  end repeat
-  delay 1.0
-
-  set output to execute targetTab javascript jsCode
-  return output
+  set t to active tab of foundWin
+  execute t javascript "window.scrollTo(0, 0); true;"
 end tell
-`;
+`);
+    execFileSync("sleep", ["0.6"]);
 
-    const raw = runOsascript(script);
-    if (!raw) throw new Error("Chrome returned empty extract result");
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      throw new Error(`Could not parse extract JSON (first 200 chars): ${raw.slice(0, 200)}`);
+    /** @type {any} */
+    let best = null;
+    for (let step = 0; step <= scrollCount; step++) {
+      if (step > 0) {
+        // Small steps so we don't jump past the first N listings
+        runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "window.scrollBy(0, 850); true;"
+  delay 0.35
+  execute t javascript "(() => { for (const el of document.querySelectorAll('[role=\\"button\\"], div[tabindex=\\"0\\"]')) { const t = (el.innerText || '').trim(); if (/^see more$/i.test(t) || /^xem thêm$/i.test(t)) { try { el.click(); } catch (e) {} } } return true; })();"
+end tell
+`);
+        execFileSync("sleep", ["0.45"]);
+      } else {
+        runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "(() => { for (const el of document.querySelectorAll('[role=\\"button\\"], div[tabindex=\\"0\\"]')) { const t = (el.innerText || '').trim(); if (/^see more$/i.test(t) || /^xem thêm$/i.test(t)) { try { el.click(); } catch (e) {} } } return true; })();"
+end tell
+`);
+        execFileSync("sleep", ["0.35"]);
+      }
+
+      const raw = runOsascript(`
+set jsPath to ${asQuote(jsPath)}
+set jsCode to read POSIX file jsPath as «class utf8»
+tell application "Google Chrome"
+  set t to active tab of front window
+  return execute t javascript jsCode
+end tell
+`);
+      if (!raw || raw === "missing value") {
+        console.warn(`  extract step ${step}: empty result`);
+        continue;
+      }
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        console.warn(`  extract step ${step}: bad JSON`);
+        continue;
+      }
+      const n = data.posts?.length ?? 0;
+      best = data;
+      console.log(`  feed step ${step}: ${n}/${limit} posts`);
+      if (n >= limit) break;
     }
-    return enrichImagesFromLightbox(data);
+
+    if (!best) throw new Error("Chrome returned empty extract result");
+    return enrichImagesFromLightbox(best);
   } finally {
     try {
       rmSync(tmp, { recursive: true, force: true });
@@ -304,7 +329,7 @@ end tell
   function add(src) {
     src = upgrade(src);
     if (!src || !/scontent|fbcdn/.test(src)) return;
-    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|static\\.xx\\.fbcdn/.test(src)) return;
+    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|static\\.xx\\.fbcdn|ctp=p\\d+x\\d+/.test(src)) return;
     const k = key(src);
     if (seen.has(k)) return;
     seen.add(k);
@@ -391,6 +416,13 @@ end tell
         execFileSync("sleep", ["0.35"]);
         if (!allExtra.length) {
           console.warn(`  lightbox post ${i + 1}: empty album (${openResult})`);
+          runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); window.scrollBy(0, 900); true;"
+end tell
+`);
+          execFileSync("sleep", ["0.5"]);
           continue;
         }
         const merged = [];
@@ -404,6 +436,21 @@ end tell
         }
         posts[i].images = merged;
         console.log(`  lightbox post ${i + 1}: ${merged.length} images (${openResult})`);
+        runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;"
+end tell
+`);
+        execFileSync("sleep", ["0.45"]);
+        // Nudge feed so next post is findable again
+        runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "window.scrollBy(0, 700); true;"
+end tell
+`);
+        execFileSync("sleep", ["0.35"]);
       } catch (e) {
         console.warn(`  lightbox post ${i + 1} skipped:`, (e.message || String(e)).slice(0, 120));
       }
@@ -499,7 +546,10 @@ REQUIRED JSON SHAPE:
   "size_sqm": <number or null>,
   "features": ["<string>", ...],
   "available_from": "<YYYY-MM-DD or null>",
-  "min_lease_months": <number or null>
+  "min_lease_months": <number or null>,
+  "contact_phone": "<string or null>",
+  "contact_whatsapp": "<string or null>",
+  "contact_email": "<string or null>"
 }
 
 AREAS (area_id must be exactly one of these ids):
@@ -513,7 +563,60 @@ FIELD RULES:
 - price_display: e.g. "~$1000/month" or "Price on request".
 - bedrooms, bathrooms: Integers; bathrooms null if unknown.
 - features: lowercase short phrases: furnished, balcony, parking, near beach, wifi, air conditioning, etc.
-- available_from / min_lease_months: only when stated; else null.`;
+- available_from / min_lease_months: only when stated; else null.
+- contact_phone / contact_whatsapp / contact_email: extract seller contact from the post when present (phone, Zalo, WhatsApp, email). Normalize phones to digits with optional leading +. Use null when absent. Do not invent contacts.`;
+}
+
+/** Regex fallback when LLM is off or misses contact fields. */
+function extractContactFromText(text) {
+  if (!text || typeof text !== "string") {
+    return { contact_phone: null, contact_whatsapp: null, contact_email: null };
+  }
+
+  const emailMatch = text.match(
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
+  );
+  const contact_email = emailMatch ? emailMatch[0].slice(0, 200) : null;
+
+  const phoneMatches = [
+    ...text.matchAll(/(?:\+84|0)(?:[\s.\-]?\d){8,11}/g),
+  ].map((m) => m[0].replace(/[^\d+]/g, "").slice(0, 20));
+
+  let contact_phone = phoneMatches[0] || null;
+  let contact_whatsapp = null;
+
+  const zaloBlock = text.match(
+    /(?:zalo|whatsapp|wa\.me|line)[:\s]*([+\d][\d\s.\-]{7,18})/i
+  );
+  if (zaloBlock) {
+    contact_whatsapp = zaloBlock[1].replace(/[^\d+]/g, "").slice(0, 20);
+    if (!contact_phone) contact_phone = contact_whatsapp;
+  } else if (/zalo|whatsapp/i.test(text) && contact_phone) {
+    contact_whatsapp = contact_phone;
+  }
+
+  return { contact_phone, contact_whatsapp, contact_email };
+}
+
+function firstNonEmpty(...values) {
+  for (const v of values) {
+    if (v == null) continue;
+    const s = String(v).trim();
+    if (s) return s;
+  }
+  return null;
+}
+
+function normalizeContactPhone(value) {
+  if (!value) return null;
+  const cleaned = String(value).replace(/[^\d+]/g, "").slice(0, 20);
+  return cleaned.length >= 8 ? cleaned : null;
+}
+
+function normalizeContactEmail(value) {
+  if (!value) return null;
+  const s = String(value).trim().slice(0, 200);
+  return s.includes("@") ? s : null;
 }
 
 /**
@@ -591,6 +694,9 @@ async function extractWithLLM(content, areas) {
           parsed.min_lease_months != null && parsed.min_lease_months !== ""
             ? Math.max(0, Number(parsed.min_lease_months))
             : null,
+        contact_phone: normalizeContactPhone(parsed.contact_phone),
+        contact_whatsapp: normalizeContactPhone(parsed.contact_whatsapp),
+        contact_email: normalizeContactEmail(parsed.contact_email),
       };
     } catch (e) {
       console.warn(`  LLM ${model} failed:`, e.message);
@@ -599,7 +705,7 @@ async function extractWithLLM(content, areas) {
   return null;
 }
 
-async function downloadImage(url) {
+async function downloadImage(url, { minBytes = minImageBytes } = {}) {
   const res = await fetch(url, {
     headers: {
       "User-Agent":
@@ -610,10 +716,33 @@ async function downloadImage(url) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
-  if (buf.length < 3000 || buf.slice(0, 15).toString().includes("<!DOCTYPE")) {
-    throw new Error(`not an image (${buf.length} bytes)`);
+  if (buf.length < minBytes || buf.slice(0, 15).toString().includes("<!DOCTYPE")) {
+    throw new Error(`too small or not an image (${buf.length} bytes, min ${minBytes})`);
   }
   return buf;
+}
+
+/**
+ * Download FB profile/logo into apartments storage; fall back to remote URL.
+ * @returns {Promise<string|null>}
+ */
+async function storeCompanyLogo(supabase, facebookId, remoteLogoUrl) {
+  if (!remoteLogoUrl) return null;
+  try {
+    const buf = await downloadImage(remoteLogoUrl, { minBytes: 3_000 });
+    const storagePath = `${facebookId}/logo.jpg`;
+    const up = await supabase.storage
+      .from("apartments")
+      .upload(storagePath, buf, { contentType: "image/jpeg", upsert: true });
+    if (up.error) throw up.error;
+    const publicUrl = supabase.storage.from("apartments").getPublicUrl(storagePath)
+      .data.publicUrl;
+    console.log(`  logo stored (${buf.length} bytes)`);
+    return publicUrl;
+  } catch (e) {
+    console.warn("  logo download failed, keeping remote URL:", e.message || e);
+    return remoteLogoUrl;
+  }
 }
 
 async function seed(data) {
@@ -678,7 +807,6 @@ async function seed(data) {
     facebook_id: String(facebookId),
     name: String(company.name || `FB Partner – ${facebookId}`).slice(0, 500),
     page_url: company.pageUrl || null,
-    logo_url: company.logoUrl || null,
     updated_at: new Date().toISOString(),
   };
 
@@ -693,7 +821,9 @@ async function seed(data) {
 
   const { data: ecRow, error: ecFetchErr } = await supabase
     .from("estate_companies")
-    .select("id, name, facebook_id")
+    .select(
+      "id, name, facebook_id, logo_url, contact_phone, contact_whatsapp, contact_email"
+    )
     .eq("facebook_id", companyPayload.facebook_id)
     .single();
   if (ecFetchErr || !ecRow) {
@@ -706,6 +836,11 @@ async function seed(data) {
   let inserted = 0;
   let skipped = 0;
   const posts = Array.isArray(data.posts) ? data.posts : [];
+  const contactHints = {
+    phone: null,
+    whatsapp: null,
+    email: null,
+  };
 
   for (const post of posts) {
     const content = post.text || "";
@@ -732,6 +867,14 @@ async function seed(data) {
     if (existing) {
       skipped += 1;
       console.log("  skip duplicate:", extractTitle(content).slice(0, 60));
+      // Still mine contact from skipped posts so company profile can fill in.
+      const regexContact = extractContactFromText(content);
+      contactHints.phone = firstNonEmpty(contactHints.phone, regexContact.contact_phone);
+      contactHints.whatsapp = firstNonEmpty(
+        contactHints.whatsapp,
+        regexContact.contact_whatsapp
+      );
+      contactHints.email = firstNonEmpty(contactHints.email, regexContact.contact_email);
       continue;
     }
 
@@ -761,6 +904,22 @@ async function seed(data) {
       extracted = await extractWithLLM(content, areas);
       console.log(extracted ? `ok → ${extracted.title.slice(0, 60)}` : "failed, falling back to regex");
       await new Promise((r) => setTimeout(r, 200));
+    }
+
+    const regexContact = extractContactFromText(content);
+    const contactPhone = firstNonEmpty(extracted?.contact_phone, regexContact.contact_phone);
+    const contactWhatsapp = firstNonEmpty(
+      extracted?.contact_whatsapp,
+      regexContact.contact_whatsapp
+    );
+    const contactEmail = firstNonEmpty(extracted?.contact_email, regexContact.contact_email);
+    contactHints.phone = firstNonEmpty(contactHints.phone, contactPhone);
+    contactHints.whatsapp = firstNonEmpty(contactHints.whatsapp, contactWhatsapp);
+    contactHints.email = firstNonEmpty(contactHints.email, contactEmail);
+    if (contactPhone || contactWhatsapp || contactEmail) {
+      console.log(
+        `  contact: phone=${contactPhone || "—"} wa=${contactWhatsapp || "—"} email=${contactEmail || "—"}`
+      );
     }
 
     const title = extracted?.title || extractTitle(content);
@@ -808,6 +967,41 @@ async function seed(data) {
     console.log("  inserted:", title.slice(0, 70));
   }
 
+  // Fill company logo + contact fields (do not overwrite contact values already set).
+  const needsStoredLogo =
+    !ecRow.logo_url ||
+    /fbcdn|scontent|facebook\.com/i.test(ecRow.logo_url);
+  const logoUrl = needsStoredLogo
+    ? await storeCompanyLogo(supabase, facebookId, company.logoUrl || ecRow.logo_url || null)
+    : null;
+  const companyPatch = {
+    updated_at: new Date().toISOString(),
+  };
+  if (logoUrl && logoUrl !== ecRow.logo_url) companyPatch.logo_url = logoUrl;
+  if (!ecRow.contact_phone && contactHints.phone) {
+    companyPatch.contact_phone = contactHints.phone;
+  }
+  if (!ecRow.contact_whatsapp && contactHints.whatsapp) {
+    companyPatch.contact_whatsapp = contactHints.whatsapp;
+  }
+  if (!ecRow.contact_email && contactHints.email) {
+    companyPatch.contact_email = contactHints.email;
+  }
+
+  if (Object.keys(companyPatch).length > 1) {
+    const { error: patchErr } = await supabase
+      .from("estate_companies")
+      .update(companyPatch)
+      .eq("id", ecRow.id);
+    if (patchErr) {
+      console.warn("Company contact/logo update failed:", patchErr.message);
+    } else {
+      console.log(
+        `Company profile: logo=${companyPatch.logo_url ? "set" : "keep"}, phone=${companyPatch.contact_phone || "—"}, wa=${companyPatch.contact_whatsapp || "—"}, email=${companyPatch.contact_email || "—"}`
+      );
+    }
+  }
+
   return { company: ecRow, inserted, skipped, posts: posts.length };
 }
 
@@ -823,7 +1017,7 @@ async function main() {
   }
 
   console.log(
-    `Extracting from Chrome tab (match=${matchHint}, limit=${limit}, images=${maxImages}, scrolls=${scrollCount})…`
+    `Extracting from Chrome tab (match=${matchHint}, limit=${limit}, images=${maxImages}, minBytes=${minImageBytes}, maxScrolls=${scrollCount})…`
   );
   const data = findAndExtract();
 

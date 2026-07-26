@@ -12,8 +12,45 @@ import {
   avatarStoragePath,
   updatePartnerProfile,
 } from "@/lib/data/profile";
+import { updateEstateCompany } from "@/lib/data/company";
 import { createPartnerInvite, revokePartnerInvite } from "@/lib/data/team";
 import { createClient } from "@/lib/supabase/server";
+
+export async function saveCompanySettings(input: {
+  name: string;
+  logoUrl?: string;
+  contactPhone?: string;
+  contactWhatsapp?: string;
+  contactEmail?: string;
+}): Promise<{ error?: string; ok?: boolean }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
+  const result = await updateEstateCompany(session.estateCompanyId, {
+    name: input.name,
+    logoUrl: input.logoUrl ?? "",
+    contactPhone: input.contactPhone ?? "",
+    contactWhatsapp: input.contactWhatsapp ?? "",
+    contactEmail: input.contactEmail ?? "",
+  });
+  if (result.error) return { error: result.error };
+
+  await captureServer(
+    "partner_company_updated",
+    {
+      has_name: Boolean(input.name.trim()),
+      has_logo: Boolean(input.logoUrl?.trim()),
+      has_phone: Boolean(input.contactPhone?.trim()),
+      has_whatsapp: Boolean(input.contactWhatsapp?.trim()),
+      has_contact_email: Boolean(input.contactEmail?.trim()),
+    },
+    session,
+  );
+
+  revalidatePath("/settings");
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
 
 export async function savePartnerProfile(input: {
   displayName: string;

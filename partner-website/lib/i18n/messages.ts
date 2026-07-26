@@ -427,6 +427,19 @@ const en = {
   "settings.team.missingServiceRole":
     "Full team list (with emails) needs SUPABASE_SERVICE_ROLE_KEY in partner-website/.secret.local. Invites still work.",
 
+  "settings.legal.title": "Legal",
+  "settings.legal.subtitle":
+    "Terms for Partner Studio, plus imprint and privacy information.",
+  "settings.legal.terms": "Terms & Conditions",
+  "settings.legal.privacy": "Imprint & Privacy",
+
+  "legal.terms.title": "Terms & Conditions",
+  "legal.privacy.title": "Imprint & Privacy",
+  "legal.terms.link": "Terms & Conditions",
+  "legal.privacy.link": "Imprint & Privacy",
+  "legal.updated": "Last updated: {date}",
+  "legal.backSettings": "Settings",
+
   "invite.title": "Join the team",
   "invite.subtitle": "You’ve been invited to Partner Studio for {company}.",
   "invite.companyFallback": "this company",
@@ -885,6 +898,19 @@ const vi: Record<MessageKey, string> = {
   "settings.team.inviteRevoked": "Đã thu hồi lời mời.",
   "settings.team.missingServiceRole":
     "Danh sách đầy đủ (kèm email) cần SUPABASE_SERVICE_ROLE_KEY trong partner-website/.secret.local. Lời mời vẫn dùng được.",
+
+  "settings.legal.title": "Pháp lý",
+  "settings.legal.subtitle":
+    "Điều khoản Partner Studio, cùng imprint và thông tin quyền riêng tư.",
+  "settings.legal.terms": "Điều khoản & Điều kiện",
+  "settings.legal.privacy": "Imprint & Quyền riêng tư",
+
+  "legal.terms.title": "Điều khoản & Điều kiện",
+  "legal.privacy.title": "Imprint & Quyền riêng tư",
+  "legal.terms.link": "Điều khoản & Điều kiện",
+  "legal.privacy.link": "Imprint & Quyền riêng tư",
+  "legal.updated": "Cập nhật lần cuối: {date}",
+  "legal.backSettings": "Cài đặt",
 
   "invite.title": "Tham gia nhóm",
   "invite.subtitle": "Bạn được mời vào Partner Studio của {company}.",

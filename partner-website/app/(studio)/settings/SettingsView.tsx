@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -456,6 +457,41 @@ export function SettingsView({
                 </button>
               )}
             </div>
+          </li>
+        </ul>
+      </section>
+
+      <section className="space-y-5">
+        <div>
+          <h2 className="font-display text-xl font-semibold text-charcoal">
+            {t("settings.legal.title")}
+          </h2>
+          <p className="mt-1 max-w-lg text-sm text-muted">
+            {t("settings.legal.subtitle")}
+          </p>
+        </div>
+        <ul className="divide-y divide-line/60 rounded-soft border border-line/70 bg-white/70">
+          <li>
+            <Link
+              href="/terms"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-charcoal transition hover:bg-foam/50 sm:px-5"
+            >
+              <span>{t("settings.legal.terms")}</span>
+              <span aria-hidden className="text-muted">
+                →
+              </span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/privacy"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-charcoal transition hover:bg-foam/50 sm:px-5"
+            >
+              <span>{t("settings.legal.privacy")}</span>
+              <span aria-hidden className="text-muted">
+                →
+              </span>
+            </Link>
           </li>
         </ul>
       </section>

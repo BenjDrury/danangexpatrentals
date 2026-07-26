@@ -118,11 +118,11 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
             © {currentYear} Da Nang Expat Rentals
           </p>
           <div className="flex flex-wrap gap-6 text-sm">
-            <Link href="/privacy" className={linkClass}>
-              Privacy
-            </Link>
             <Link href="/terms" className={linkClass}>
-              Terms
+              Terms & Conditions
+            </Link>
+            <Link href="/privacy" className={linkClass}>
+              Imprint & Privacy
             </Link>
           </div>
         </div>

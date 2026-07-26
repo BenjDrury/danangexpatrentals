@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002",
-    "build": "npm run build --prefix ../types && next build",
+    "build": "npm run build --prefix ../backend && npm run build --prefix ../types && next build",
     "start": "next start -p 3002",
     "lint": "next lint"
   },

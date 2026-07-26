@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { capture } from "@/lib/analytics";
 import { syncPostHogIdentity } from "@/lib/analytics-identity";
 import { requestMagicLink } from "./actions";
@@ -17,7 +18,7 @@ import {
 
 function mapLoginError(
   message: string | null | undefined,
-  t: (key: string) => string,
+  t: (key: MessageKey) => string,
 ): string {
   if (!message) return t("login.magicLinkFailed");
   if (message === AUTH_RATE_LIMITED || isAuthRateLimitError(message)) {

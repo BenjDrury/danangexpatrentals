@@ -21,6 +21,12 @@ export default async function AdminDashboardPage() {
             {leadsCount}
           </dd>
           <p className="mt-1 text-sm text-muted">Contact form submissions</p>
+          <Link
+            href="/leads"
+            className="mt-3 inline-block text-sm font-medium text-ocean underline-offset-2 hover:underline"
+          >
+            View all leads
+          </Link>
         </div>
         <div className="border-t border-line/80 pt-5">
           <dt className="text-sm font-medium text-muted">Apartments</dt>
@@ -32,7 +38,10 @@ export default async function AdminDashboardPage() {
       </dl>
 
       <div className="mt-10 flex flex-wrap gap-3">
-        <Link href="/apartments" className="btn-primary">
+        <Link href="/leads" className="btn-primary">
+          View leads
+        </Link>
+        <Link href="/apartments" className="btn-secondary">
           View apartments
         </Link>
         <Link href="/areas" className="btn-secondary">

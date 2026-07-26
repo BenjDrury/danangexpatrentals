@@ -1,4 +1,5 @@
 export { getAreas, getAreaById, getAreaNames } from "./areas";
 export { getApartmentTypes, getApartmentTypeById } from "./apartment-types";
 export { getApartments, getApartmentsCount } from "./apartments";
-export { getLeadsCount } from "./leads";
+export { getLeads, getLeadsCount } from "./leads";
+export type { Lead } from "./leads";

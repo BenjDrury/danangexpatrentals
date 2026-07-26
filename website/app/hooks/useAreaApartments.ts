@@ -52,8 +52,9 @@ export function useAreaApartments(
         }
       }
       if (filters.maxDepositMonths != null) {
+        // Only keep listings with a known deposit at or under the max.
         if (
-          apt.deposit_months != null &&
+          apt.deposit_months == null ||
           apt.deposit_months > filters.maxDepositMonths
         ) {
           return false;

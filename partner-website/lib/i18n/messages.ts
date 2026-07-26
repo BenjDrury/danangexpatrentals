@@ -366,7 +366,34 @@ const en = {
   "guides.copied": "Copied",
 
   "settings.title": "Settings",
-  "settings.subtitle": "Manage your team and connect tools you’ll use when sharing listings.",
+  "settings.subtitle": "Manage your profile, team, and tools you’ll use when sharing listings.",
+
+  "settings.profile.title": "Your profile",
+  "settings.profile.subtitle":
+    "Photo and contact details we can show clients on the public site when you’re ready.",
+  "settings.profile.displayName": "Display name",
+  "settings.profile.loginEmail": "Login email: {email}",
+  "settings.profile.phone": "Phone",
+  "settings.profile.phonePlaceholder": "+84…",
+  "settings.profile.whatsapp": "WhatsApp",
+  "settings.profile.whatsappPlaceholder": "+84… or WhatsApp link",
+  "settings.profile.contactEmail": "Public contact email",
+  "settings.profile.contactEmailHint":
+    "Optional — shown to clients. Can differ from your login email.",
+  "settings.profile.contactEmailPlaceholder": "you@example.com",
+  "settings.profile.bio": "Short bio",
+  "settings.profile.bioHint": "A sentence or two about you for listing pages.",
+  "settings.profile.bioPlaceholder": "Helping expats find homes in Da Nang…",
+  "settings.profile.uploadPhoto": "Upload photo",
+  "settings.profile.changePhoto": "Change photo",
+  "settings.profile.removePhoto": "Remove",
+  "settings.profile.uploading": "Uploading…",
+  "settings.profile.photoReady": "Photo uploaded — save to keep it.",
+  "settings.profile.photoRemoved": "Photo removed — save to keep the change.",
+  "settings.profile.save": "Save profile",
+  "settings.profile.saving": "Saving…",
+  "settings.profile.saved": "Profile saved.",
+
   "settings.integrations.title": "Integrations",
   "settings.integrations.subtitle":
     "Link accounts so Partner Studio can help you post later. More apps can land here over time.",
@@ -842,7 +869,34 @@ const vi: Record<MessageKey, string> = {
   "guides.copied": "Đã copy",
 
   "settings.title": "Cài đặt",
-  "settings.subtitle": "Quản lý nhóm và kết nối công cụ bạn dùng khi chia sẻ tin đăng.",
+  "settings.subtitle": "Quản lý hồ sơ, nhóm và công cụ bạn dùng khi chia sẻ tin đăng.",
+
+  "settings.profile.title": "Hồ sơ của bạn",
+  "settings.profile.subtitle":
+    "Ảnh và thông tin liên hệ — có thể hiển thị cho khách trên website khi bạn sẵn sàng.",
+  "settings.profile.displayName": "Tên hiển thị",
+  "settings.profile.loginEmail": "Email đăng nhập: {email}",
+  "settings.profile.phone": "Điện thoại",
+  "settings.profile.phonePlaceholder": "+84…",
+  "settings.profile.whatsapp": "WhatsApp",
+  "settings.profile.whatsappPlaceholder": "+84… hoặc link WhatsApp",
+  "settings.profile.contactEmail": "Email liên hệ công khai",
+  "settings.profile.contactEmailHint":
+    "Tuỳ chọn — hiện cho khách. Có thể khác email đăng nhập.",
+  "settings.profile.contactEmailPlaceholder": "ban@example.com",
+  "settings.profile.bio": "Giới thiệu ngắn",
+  "settings.profile.bioHint": "Một câu về bạn cho trang tin đăng.",
+  "settings.profile.bioPlaceholder": "Hỗ trợ người nước ngoài tìm nhà tại Đà Nẵng…",
+  "settings.profile.uploadPhoto": "Tải ảnh lên",
+  "settings.profile.changePhoto": "Đổi ảnh",
+  "settings.profile.removePhoto": "Xoá",
+  "settings.profile.uploading": "Đang tải…",
+  "settings.profile.photoReady": "Đã tải ảnh — lưu để giữ lại.",
+  "settings.profile.photoRemoved": "Đã xoá ảnh — lưu để áp dụng.",
+  "settings.profile.save": "Lưu hồ sơ",
+  "settings.profile.saving": "Đang lưu…",
+  "settings.profile.saved": "Đã lưu hồ sơ.",
+
   "settings.integrations.title": "Tích hợp",
   "settings.integrations.subtitle":
     "Liên kết tài khoản để Partner Studio hỗ trợ đăng bài sau này. Có thể thêm app khác theo thời gian.",

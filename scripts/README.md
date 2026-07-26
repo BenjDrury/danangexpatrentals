@@ -70,12 +70,16 @@ npm run extract-facebook -- --dry-run --limit=5
 
 # Options
 #   --limit=5          max posts (default 5)
-#   --scrolls=12       feed scroll passes before extract
+#   --images=20        max photos per post (default 20)
+#   --scrolls=20       feed scroll passes before extract
 #   --out=tmp_fb/x.json
-#   --area=my-khe      fallback area_id
+#   --area=my-khe      fallback area_id (OpenAI overrides per post when key set)
 #   --status=draft     listing status (default draft)
+#   --no-llm           skip OpenAI structuring (regex only)
 #   --match=<substr>   Chrome tab URL match (default: facebook.com or id from --url)
 ```
+
+With `OPENAI_API_KEY` in `.secret.local`, each post is sent to OpenAI (`OPENAI_MODEL`, default `gpt-4o`; tries `gpt-5` / others if needed) to produce title, description, area, price, bedrooms, features, etc.
 
 Duplicates are skipped by `source_url` / `source_post_id`. No partner auth user is created — use Admin → Become company to view.
 

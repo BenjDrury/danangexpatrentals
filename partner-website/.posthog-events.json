@@ -68,5 +68,20 @@
     "event_name": "facebook_integration_disconnected",
     "event_description": "A partner disconnects their Facebook Page integration from the studio (client-side).",
     "file": "app/(studio)/settings/SettingsView.tsx"
+  },
+  {
+    "event_name": "partner_profile_updated",
+    "event_description": "A partner saves their personal profile (name, photo, phone, WhatsApp, email, bio) in Settings (server + client).",
+    "file": "app/(studio)/settings/actions.ts"
+  },
+  {
+    "event_name": "partner_profile_photo_uploaded",
+    "event_description": "A partner uploads a new profile photo to storage in Settings (client-side).",
+    "file": "app/(studio)/settings/ProfileSection.tsx"
+  },
+  {
+    "event_name": "partner_profile_photo_removed",
+    "event_description": "A partner clears their profile photo in Settings before saving (client-side).",
+    "file": "app/(studio)/settings/ProfileSection.tsx"
   }
 ]

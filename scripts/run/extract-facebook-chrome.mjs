@@ -17,13 +17,16 @@
  *
  * Requires (unless --dry-run): scripts/.secret.local with SUPABASE_URL (or
  * NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY.
+ * Optional: OPENAI_API_KEY (recommended) — each post is sent to OpenAI to fill
+ *   title, description, price, area_id, bedrooms, features, etc.
+ * Optional: OPENAI_MODEL (default gpt-4o-mini).
  * Optional: VND_TO_USD (default 25000).
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { config } from "dotenv";
-import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from "fs";
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync, readFileSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
@@ -45,10 +48,12 @@ function flag(name, fallback = null) {
 
 const dryRun = flag("dry-run") === true;
 const limit = Math.max(1, Math.min(30, Number(flag("limit", "5")) || 5));
+const maxImages = Math.max(1, Math.min(40, Number(flag("images", "20")) || 20));
 const scrollCount = Math.max(2, Math.min(40, Number(flag("scrolls", "20")) || 20));
 const status = String(flag("status", "draft") || "draft");
 const areaArg = flag("area", null);
 const navigateUrl = flag("url", null);
+const skipLlm = flag("no-llm") === true;
 const outPath = resolve(
   process.cwd(),
   flag("out", join("tmp_fb", `fb-extract-${Date.now()}.json`))
@@ -62,6 +67,8 @@ const matchHint =
     : "facebook.com");
 
 const vndToUsd = Number(process.env.VND_TO_USD) || 25000;
+const openaiKey = process.env.OPENAI_API_KEY || "";
+const openaiModel = process.env.OPENAI_MODEL || "gpt-4o";
 const ALLOWED_STATUSES = new Set([
   "draft",
   "pending_review",
@@ -78,282 +85,13 @@ function asQuote(s) {
   return `"${String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
-/** Browser-side extractor. `__LIMIT__` replaced before write. */
-const EXTRACT_JS_TEMPLATE = String.raw`
-(() => {
-  const limit = __LIMIT__;
-  const href = location.href;
+const EXTRACT_JS_PATH = join(__dirname, "lib", "fb-chrome-extract.in.js");
 
-  function parseIds(url) {
-    const user =
-      (url.match(/\/user\/(\d+)/) || url.match(/[?&]id=(\d+)/) || [])[1] || null;
-    const group = (url.match(/\/groups\/(\d+)/) || [])[1] || null;
-    return { facebookId: user, groupId: group };
-  }
-
-  const ids = parseIds(href);
-  const BAD_NAMES = /^(notifications?|facebook|menu|home|search|marketplace|watch|friends|groups)$/i;
-
-  // Expand truncated post bodies before scraping
-  for (const el of document.querySelectorAll('[role="button"], div[tabindex="0"]')) {
-    const t = (el.innerText || "").trim();
-    if (/^see more$/i.test(t) || /^xem thêm$/i.test(t)) {
-      try { el.click(); } catch (_) {}
-    }
-  }
-
-  function pickName() {
-    const posted = (document.body.innerText || "").match(
-      /([A-Za-zÀ-ỹ][A-Za-zÀ-ỹ'’.\- ]{1,60}?)\s+posted to\s+/
-    );
-    if (posted && posted[1] && !BAD_NAMES.test(posted[1].trim())) {
-      return posted[1].trim();
-    }
-    for (const el of document.querySelectorAll("h1, h2, strong, span")) {
-      const t = (el.innerText || "").replace(/\s+/g, " ").trim();
-      if (!t || t.length < 2 || t.length > 80) continue;
-      if (BAD_NAMES.test(t)) continue;
-      if (/unread|notification|message|add friend|view profile|points/i.test(t)) continue;
-      if (el.closest('[role="navigation"], [role="banner"], [aria-label*="Notification"]')) continue;
-      if (/^h[12]$/i.test(el.tagName) && !BAD_NAMES.test(t)) return t;
-    }
-    const title = (document.title || "")
-      .replace(/\s*[|–—].*$/, "")
-      .replace(/\s*-\s*Facebook.*$/i, "")
-      .trim();
-    if (title && !BAD_NAMES.test(title)) return title;
-    return "FB Partner";
-  }
-
-  const name = pickName();
-
-  const logoImg = [...document.querySelectorAll("img")].find((el) => {
-    const src = el.currentSrc || el.src || "";
-    const w = el.naturalWidth || 0;
-    return /scontent|fbcdn/.test(src) && w >= 80 && w <= 400 && !/static\.xx\.fbcdn/.test(src);
-  });
-  const logoUrl = logoImg ? logoImg.currentSrc || logoImg.src : null;
-
-  function isListingImage(src, w) {
-    if (!src || !/scontent|fbcdn/.test(src)) return false;
-    if (w < 180) return false;
-    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|emoji|static\.xx\.fbcdn/.test(src))
-      return false;
-    return true;
-  }
-
-  function imageKey(src) {
-    const m = src.match(/\/(\d+_\d+_\d+_n)\./);
-    return m ? m[1] : src.split("?")[0];
-  }
-
-  function collectImages(root, max) {
-    if (!root) return [];
-    const imgs = [...root.querySelectorAll("img")]
-      .map((img) => ({
-        src: img.currentSrc || img.src || "",
-        w: img.naturalWidth || 0,
-        h: img.naturalHeight || 0,
-      }))
-      .filter((im) => isListingImage(im.src, im.w))
-      .sort((a, b) => b.w * b.h - a.w * a.h);
-    const seen = new Set();
-    const out = [];
-    for (const im of imgs) {
-      const k = imageKey(im.src);
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(im.src);
-      if (out.length >= max) break;
-    }
-    return out;
-  }
-
-  function findPermalink(root) {
-    if (!root) return null;
-    for (const a of root.querySelectorAll("a[href]")) {
-      const h = a.href || "";
-      if (/\/permalink\/\d+|\/posts\/\d+|story_fbid=\d+|multi_permalinks=\d+/.test(h)) {
-        return h.split("?")[0].replace(/\/$/, "");
-      }
-    }
-    return null;
-  }
-
-  function postIdFromUrl(url) {
-    if (!url) return null;
-    const m =
-      url.match(/permalink\/(\d+)/) ||
-      url.match(/\/posts\/(\d+)/) ||
-      url.match(/story_fbid=(\d+)/) ||
-      url.match(/multi_permalinks=(\d+)/);
-    return m ? m[1] : null;
-  }
-
-  function looksLikeListing(text) {
-    if (!text || text.length < 40) return false;
-    if (/^(Intro|Group posts|Recent photos|Number of unread)/i.test(text)) return false;
-    if (/Member of .+ since /i.test(text) && text.length < 200) return false;
-    return /(cho thuê|for rent|bedroom|phòng ngủ|căn hộ|apartment|villa|nhà|giá|triệu|million|\$\d|studio|thuê|kiệt|full (nội thất|furniture)|pn\b)/i.test(
-      text
-    );
-  }
-
-  function cleanPostText(text) {
-    return text
-      .replace(/Facebook(\s+Facebook)+/g, " ")
-      .replace(/Comment as [^\s]+/gi, " ")
-      .replace(/See (translation|original)/gi, " ")
-      .replace(/Rate this translation/gi, " ")
-      .replace(/See more/gi, " ")
-      .replace(/All reactions:?/gi, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function findContainerForSnippet(snippet) {
-    const needle = snippet.slice(0, 48);
-    if (needle.length < 12) return null;
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode()) {
-      const v = walker.currentNode.nodeValue || "";
-      if (!v.includes(needle.slice(0, 24))) continue;
-      let el = walker.currentNode.parentElement;
-      let best = null;
-      for (let i = 0; i < 20 && el; i++) {
-        const block = (el.innerText || "").replace(/\s+/g, " ").trim();
-        const imgs = collectImages(el, 8);
-        // One post: not the whole feed (avoid multi "posted to")
-        const postedCount = (block.match(/\sposted to\s/gi) || []).length;
-        if (
-          block.length >= 40 &&
-          block.length <= 3500 &&
-          postedCount <= 1 &&
-          (imgs.length >= 1 || looksLikeListing(block))
-        ) {
-          best = el;
-          if (imgs.length >= 2 && postedCount <= 1) break;
-        }
-        el = el.parentElement;
-      }
-      if (best) return best;
-    }
-    return null;
-  }
-
-  const posts = [];
-  const seenText = new Set();
-
-  function pushPost(rawText, root) {
-    if (posts.length >= limit) return false;
-    let text = cleanPostText(rawText);
-    if (!looksLikeListing(text)) return false;
-    let body = text;
-    const marker = body.match(/posted to .+?(?:·|:)\s*(.+)$/i);
-    if (marker) body = marker[1].trim();
-    body = body.replace(
-      /^.*?((?:NCC\s*[-–—:]?\s*)?(?:CHO THUÊ|Cho thuê|House for rent|For rent|Bedroom|\d+-Bedroom|Căn hộ).+)$/i,
-      "$1"
-    );
-    if (body.length < 30) body = text;
-    // Trim trailing UI
-    body = body.replace(/\s*\+\d+\s*$/, "").trim();
-    const key = body.slice(0, 100);
-    if (seenText.has(key)) return false;
-    seenText.add(key);
-
-    let images = collectImages(root, 8);
-    let permalink = findPermalink(root);
-    if ((!images.length || !permalink) && !root) {
-      const found = findContainerForSnippet(body);
-      if (found) {
-        if (!images.length) images = collectImages(found, 8);
-        if (!permalink) permalink = findPermalink(found);
-        root = found;
-      }
-    }
-
-    posts.push({
-      text: body.slice(0, 4000),
-      images,
-      permalink,
-      postId: postIdFromUrl(permalink),
-    });
-    return true;
-  }
-
-  // 1) Split whole-page text on "Name posted to" — most reliable for FB group member feeds
-  const pageText = (document.body.innerText || "").replace(/\s+/g, " ");
-  const splitRe =
-    /([A-Za-zÀ-ỹ][A-Za-zÀ-ỹ'’.\- ]{1,60}?)\s+posted to\s+(.+?)(?=(?:[A-Za-zÀ-ỹ][A-Za-zÀ-ỹ'’.\- ]{1,60}?\s+posted to\s+)|$)/gi;
-  let m;
-  const chunks = [];
-  while ((m = splitRe.exec(pageText)) !== null) {
-    chunks.push(m[0]);
-  }
-  for (const chunk of chunks) {
-    if (posts.length >= limit) break;
-    pushPost(chunk, findContainerForSnippet(chunk.replace(/\s+/g, " ").slice(40, 120)));
-  }
-
-  // 2) Individual role=article nodes
-  if (posts.length < limit) {
-    for (const article of document.querySelectorAll('[role="article"]')) {
-      if (posts.length >= limit) break;
-      const text = (article.innerText || "").replace(/\s+/g, " ").trim();
-      if ((text.match(/\sposted to\s/gi) || []).length > 1) continue;
-      pushPost(text, article);
-    }
-  }
-
-  // 3) Keyword walk fallback
-  if (posts.length < limit) {
-    const needles = [
-      "CHO THUÊ", "Cho thuê", "for rent", "For rent", "House for rent",
-      "Bedroom", "phòng ngủ", "triệu", "Giá thuê", "Apartment", "Căn hộ", "NCC",
-      "kiệt", "full nội thất", "Full furniture",
-    ];
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode() && posts.length < limit) {
-      const t = walker.currentNode.nodeValue || "";
-      if (!needles.some((k) => t.includes(k))) continue;
-      let el = walker.currentNode.parentElement;
-      let best = null;
-      for (let i = 0; i < 18 && el; i++) {
-        const block = (el.innerText || "").replace(/\s+/g, " ").trim();
-        const postedCount = (block.match(/\sposted to\s/gi) || []).length;
-        const imgs = collectImages(el, 8);
-        if (
-          imgs.length >= 1 &&
-          block.length >= 50 &&
-          block.length <= 3500 &&
-          postedCount <= 1 &&
-          looksLikeListing(block)
-        ) {
-          best = el;
-          break;
-        }
-        el = el.parentElement;
-      }
-      if (!best) continue;
-      pushPost(best.innerText, best);
-    }
-  }
-
-  return JSON.stringify({
-    scrapedAt: new Date().toISOString(),
-    pageUrl: href,
-    company: {
-      name: name.slice(0, 500),
-      facebookId: ids.facebookId,
-      groupId: ids.groupId,
-      pageUrl: href,
-      logoUrl,
-    },
-    posts,
-  });
-})();
-`;
+function loadExtractJs() {
+  return readFileSync(EXTRACT_JS_PATH, "utf8")
+    .replace(/__LIMIT__/g, String(limit))
+    .replace(/__IMAGES__/g, String(maxImages));
+}
 
 function runOsascript(source) {
   const dir = mkdtempSync(join(tmpdir(), "fb-as-"));
@@ -393,7 +131,7 @@ end tell
 function findAndExtract() {
   const tmp = mkdtempSync(join(tmpdir(), "fb-extract-"));
   const jsPath = join(tmp, "extract.js");
-  const extractJs = EXTRACT_JS_TEMPLATE.replace(/__LIMIT__/g, String(limit));
+  const extractJs = loadExtractJs();
   writeFileSync(jsPath, extractJs, "utf8");
 
   try {
@@ -463,11 +201,13 @@ end tell
 
     const raw = runOsascript(script);
     if (!raw) throw new Error("Chrome returned empty extract result");
+    let data;
     try {
-      return JSON.parse(raw);
+      data = JSON.parse(raw);
     } catch {
       throw new Error(`Could not parse extract JSON (first 200 chars): ${raw.slice(0, 200)}`);
     }
+    return enrichImagesFromLightbox(data);
   } finally {
     try {
       rmSync(tmp, { recursive: true, force: true });
@@ -475,6 +215,207 @@ end tell
       /* ignore */
     }
   }
+}
+
+function enrichImagesFromLightbox(data) {
+  if (!data?.posts?.length) return data;
+  console.log("Enriching photos via Chrome lightbox…");
+  const posts = data.posts;
+  const dir = mkdtempSync(join(tmpdir(), "fb-lightbox-"));
+  try {
+    runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "window.scrollTo(0,0); true;"
+end tell
+`);
+    execFileSync("sleep", ["0.5"]);
+
+    for (let i = 0; i < posts.length; i++) {
+      const snippet = (posts[i].text || "").replace(/\s+/g, " ").slice(0, 40);
+      const openPath = join(dir, `open-${i}.js`);
+      const collectPath = join(dir, `collect-${i}.js`);
+      writeFileSync(
+        openPath,
+        `(() => {
+  const needles = [
+    ${JSON.stringify(snippet)},
+    ${JSON.stringify(snippet.slice(0, 24))},
+    ${JSON.stringify((posts[i].text || "").match(/(?:CHO THUÊ|Cho thuê|House for rent|For rent|NCC)[^.]{0,40}/i)?.[0] || "")},
+  ].filter(Boolean);
+  function tryOpen(el) {
+    const imgs = [...el.querySelectorAll("img")].filter((img) => {
+      const s = img.currentSrc || img.src || "";
+      return /scontent|fbcdn/.test(s) && (img.naturalWidth || 0) >= 100;
+    });
+    if (imgs.length) {
+      try { imgs.sort((a,b)=>(b.naturalWidth*b.naturalHeight)-(a.naturalWidth*a.naturalHeight))[0].click(); return true; } catch (e) {}
+    }
+    const plus = [...el.querySelectorAll("span, div, a")].find((n) =>
+      /^\\+\\d+$/.test((n.innerText || "").trim())
+    );
+    if (plus) {
+      try { plus.click(); return true; } catch (e) {}
+    }
+    return false;
+  }
+  for (const needle of needles) {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const v = (walker.currentNode.nodeValue || "").replace(/\\s+/g, " ");
+      if (!v.includes(needle.slice(0, Math.min(16, needle.length)))) continue;
+      let el = walker.currentNode.parentElement;
+      for (let d = 0; d < 20 && el; d++) {
+        if (tryOpen(el)) return "opened:" + needle.slice(0, 20);
+        el = el.parentElement;
+      }
+    }
+  }
+  // Fallback: open Nth large listing image on page
+  const big = [...document.querySelectorAll("img")]
+    .filter((img) => /scontent|fbcdn/.test(img.currentSrc || img.src || "") && (img.naturalWidth || 0) >= 280)
+    .slice(0, 40);
+  if (big[${i}]) {
+    try { big[${i}].click(); return "opened-nth"; } catch (e) {}
+  }
+  return "miss";
+})();`,
+        "utf8"
+      );
+      writeFileSync(
+        collectPath,
+        `(() => {
+  function upgrade(url) {
+    return (url || "").replace(/ctp=p\\d+x\\d+/g, "ctp=s2048x2048").replace(/&amp;/g, "&");
+  }
+  function key(src) {
+    const m = src.match(/\\/(\\d+_\\d+_\\d+_n)\\./);
+    return m ? m[1] : src.split("?")[0];
+  }
+  const roots = [
+    document.querySelector('[role="dialog"]'),
+    document.querySelector('[aria-label*="Photo"]'),
+    document.querySelector('[aria-label*="photo"]'),
+    ...document.querySelectorAll('div[style*="z-index"]'),
+    document.body,
+  ].filter(Boolean);
+  const urls = [];
+  const seen = new Set();
+  function add(src) {
+    src = upgrade(src);
+    if (!src || !/scontent|fbcdn/.test(src)) return;
+    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|static\\.xx\\.fbcdn/.test(src)) return;
+    const k = key(src);
+    if (seen.has(k)) return;
+    seen.add(k);
+    urls.push(src);
+  }
+  for (const root of roots) {
+    for (const img of root.querySelectorAll("img")) {
+      add(img.currentSrc || img.src || "");
+      const srcset = img.getAttribute("srcset") || "";
+      for (const part of srcset.split(",")) {
+        const u = part.trim().split(/\\s+/)[0];
+        if (u) add(u);
+      }
+    }
+    const html = root.innerHTML || "";
+    const re = /https:\\/\\/[^"'\\\\\\s<>]+(?:scontent|fbcdn\\.net)[^"'\\\\\\s<>]*/g;
+    let m;
+    while ((m = re.exec(html)) !== null) add(m[0]);
+    if (urls.length >= ${maxImages}) break;
+  }
+  return JSON.stringify(urls.slice(0, ${maxImages}));
+})();`,
+        "utf8"
+      );
+
+      try {
+        const openResult = runOsascript(`
+set jsPath to ${asQuote(openPath)}
+set jsCode to read POSIX file jsPath as «class utf8»
+tell application "Google Chrome"
+  set t to active tab of front window
+  return execute t javascript jsCode
+end tell
+`);
+        if (!openResult || openResult === "miss") {
+          console.warn(`  lightbox post ${i + 1}: could not open album`);
+          continue;
+        }
+        execFileSync("sleep", ["1.0"]);
+        const allExtra = [];
+        const seenExtra = new Set();
+        const harvest = () => {
+          const collectedRaw = runOsascript(`
+set jsPath to ${asQuote(collectPath)}
+set jsCode to read POSIX file jsPath as «class utf8»
+tell application "Google Chrome"
+  set t to active tab of front window
+  return execute t javascript jsCode
+end tell
+`);
+          if (!collectedRaw || collectedRaw === "missing value") return;
+          try {
+            const batch = JSON.parse(collectedRaw);
+            if (!Array.isArray(batch)) return;
+            for (const u of batch) {
+              const k = u.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || u.split("?")[0];
+              if (seenExtra.has(k)) continue;
+              seenExtra.add(k);
+              allExtra.push(u);
+            }
+          } catch {
+            /* ignore */
+          }
+        };
+        harvest();
+        for (let step = 0; step < Math.min(18, maxImages); step++) {
+          const stepped = runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  return execute t javascript "(() => { const n = document.querySelector('[aria-label=\\"Next\\"], [aria-label=\\"Next photo\\"]'); if (n) { n.click(); return 'ok'; } return 'no'; })();"
+end tell
+`);
+          if (stepped === "no") break;
+          execFileSync("sleep", ["0.35"]);
+          harvest();
+          if (allExtra.length >= maxImages) break;
+        }
+        runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;"
+end tell
+`);
+        execFileSync("sleep", ["0.35"]);
+        if (!allExtra.length) {
+          console.warn(`  lightbox post ${i + 1}: empty album (${openResult})`);
+          continue;
+        }
+        const merged = [];
+        const seen = new Set();
+        for (const u of [...(posts[i].images || []), ...allExtra]) {
+          const k = u.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || u.split("?")[0];
+          if (seen.has(k)) continue;
+          seen.add(k);
+          merged.push(u);
+          if (merged.length >= maxImages) break;
+        }
+        posts[i].images = merged;
+        console.log(`  lightbox post ${i + 1}: ${merged.length} images (${openResult})`);
+      } catch (e) {
+        console.warn(`  lightbox post ${i + 1} skipped:`, (e.message || String(e)).slice(0, 120));
+      }
+    }
+  } finally {
+    try {
+      rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+  return data;
 }
 
 function extractTitle(content) {
@@ -535,6 +476,129 @@ function postHash(post) {
   return createHash("sha1").update(basis).digest("hex").slice(0, 16);
 }
 
+/**
+ * @param {{ id: string, name: string, vibe?: string }[]} areas
+ */
+function buildExtractionSystemPrompt(areas) {
+  const areaList = areas
+    .map((a) => `- "${a.id}": ${a.name}${a.vibe ? ` — ${a.vibe}` : ""}`)
+    .join("\n");
+  return `You extract rental listing data from Facebook posts for a Da Nang expat-rentals site. The audience is foreigners (digital nomads, remote workers, long-term visitors) looking for apartments or houses in Da Nang, Vietnam. Write for them: clear location, USD pricing, lease terms, and what matters to expats (furnished, internet, safety, proximity to beach/cafes, English-friendly areas).
+
+OUTPUT FORMAT — You must respond with exactly one valid JSON object. No markdown, no code fences, no commentary. Raw JSON only.
+
+REQUIRED JSON SHAPE:
+{
+  "area_id": "<one of the area ids below>",
+  "title": "<short title, max 120 chars>",
+  "description": "<string or null>",
+  "price": <number>,
+  "price_display": "<string>",
+  "bedrooms": <number>,
+  "bathrooms": <number or null>,
+  "size_sqm": <number or null>,
+  "features": ["<string>", ...],
+  "available_from": "<YYYY-MM-DD or null>",
+  "min_lease_months": <number or null>
+}
+
+AREAS (area_id must be exactly one of these ids):
+${areaList}
+If the post mentions a ward/area not listed, choose the closest match or use "other".
+
+FIELD RULES:
+- title: Short, clear English for expats. E.g. "3BR furnished house near Dragon Bridge" or "Studio near My Khe beach". Max 120 characters. Do not paste raw Vietnamese marketing headers like "NCC - CHO THUÊ…" — translate/summarize.
+- description: Clear English summary for expats. Keep location, price, rooms, key amenities, and contact (phone/Zalo/WhatsApp) if present. You may keep original Vietnamese phrases in parentheses when helpful.
+- price: Monthly rent in USD. Convert from VND using ${vndToUsd} VND = 1 USD. Integer. Use 0 only if no price given.
+- price_display: e.g. "~$1000/month" or "Price on request".
+- bedrooms, bathrooms: Integers; bathrooms null if unknown.
+- features: lowercase short phrases: furnished, balcony, parking, near beach, wifi, air conditioning, etc.
+- available_from / min_lease_months: only when stated; else null.`;
+}
+
+/**
+ * @param {string} content
+ * @param {{ id: string, name: string, vibe?: string }[]} areas
+ */
+async function extractWithLLM(content, areas) {
+  if (!openaiKey || !content?.trim()) return null;
+  const systemPrompt = buildExtractionSystemPrompt(areas);
+  const userMessage = `Extract listing data from this Facebook post. Reply with a single JSON object only:\n\n${content.slice(0, 12000)}`;
+  const models = [openaiModel, "gpt-4o", "gpt-5", "gpt-4o-mini", "gpt-3.5-turbo"].filter(
+    (m, i, arr) => arr.indexOf(m) === i
+  );
+
+  for (const model of models) {
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        console.warn(`  OpenAI ${model} error:`, res.status, err.slice(0, 120));
+        continue;
+      }
+      const data = await res.json();
+      let text = data?.choices?.[0]?.message?.content;
+      if (!text || typeof text !== "string") continue;
+      text = text.trim();
+      const jsonMatch =
+        text.match(/^```(?:json)?\s*([\s\S]*?)```$/m) ||
+        text.match(/^```(?:json)?\s*([\s\S]*)$/m);
+      const rawJson = jsonMatch ? jsonMatch[1].trim() : text;
+      const parsed = JSON.parse(rawJson);
+      const areaIds = new Set(areas.map((a) => a.id));
+      const fallbackAreaId = areas[0]?.id ?? "other";
+      if (model !== openaiModel) console.warn(`  (used fallback model ${model})`);
+      return {
+        area_id: areaIds.has(parsed.area_id) ? parsed.area_id : fallbackAreaId,
+        title: String(parsed.title ?? "").slice(0, 500) || "Imported listing",
+        description:
+          parsed.description != null ? String(parsed.description).slice(0, 10000) : null,
+        price: Math.max(0, Number(parsed.price) || 0),
+        price_display:
+          String(parsed.price_display ?? "").slice(0, 100) || "Price on request",
+        bedrooms: Math.min(99, Math.max(0, Number(parsed.bedrooms) || 1)),
+        bathrooms:
+          parsed.bathrooms != null && parsed.bathrooms !== ""
+            ? Math.min(99, Math.max(0, Number(parsed.bathrooms)))
+            : null,
+        size_sqm:
+          parsed.size_sqm != null && parsed.size_sqm !== ""
+            ? Number(parsed.size_sqm)
+            : null,
+        features: Array.isArray(parsed.features)
+          ? parsed.features.map((f) => String(f).slice(0, 100)).filter(Boolean)
+          : [],
+        available_from:
+          parsed.available_from && /^\d{4}-\d{2}-\d{2}$/.test(String(parsed.available_from))
+            ? String(parsed.available_from)
+            : null,
+        min_lease_months:
+          parsed.min_lease_months != null && parsed.min_lease_months !== ""
+            ? Math.max(0, Number(parsed.min_lease_months))
+            : null,
+      };
+    } catch (e) {
+      console.warn(`  LLM ${model} failed:`, e.message);
+    }
+  }
+  return null;
+}
+
 async function downloadImage(url) {
   const res = await fetch(url, {
     headers: {
@@ -579,7 +643,9 @@ async function seed(data) {
 
   const supabase = createClient(url, key);
 
-  const { data: areasList, error: areasError } = await supabase.from("areas").select("id, name");
+  const { data: areasList, error: areasError } = await supabase
+    .from("areas")
+    .select("id, name, vibe");
   if (areasError) {
     console.error("Failed to fetch areas:", areasError.message);
     process.exit(1);
@@ -595,6 +661,17 @@ async function seed(data) {
     console.error("Area not found:", areaArg);
     console.error("Valid area_id values:", areas.map((a) => a.id).join(", "));
     process.exit(1);
+  }
+
+  const useLlm = Boolean(openaiKey) && !skipLlm;
+  if (useLlm) {
+    console.log(`Using OpenAI (${openaiModel}) to structure each listing.`);
+  } else if (!openaiKey) {
+    console.warn(
+      "No OPENAI_API_KEY — using regex fields. Add key to scripts/.secret.local for better titles/areas."
+    );
+  } else {
+    console.log("LLM skipped (--no-llm).");
   }
 
   const companyPayload = {
@@ -659,7 +736,7 @@ async function seed(data) {
     }
 
     const hash = postHash(post);
-    const imageUrls = Array.isArray(post.images) ? post.images.slice(0, 8) : [];
+    const imageUrls = Array.isArray(post.images) ? post.images.slice(0, maxImages) : [];
     const stored = [];
     for (let i = 0; i < imageUrls.length; i++) {
       try {
@@ -678,20 +755,32 @@ async function seed(data) {
       }
     }
 
-    const title = extractTitle(content);
-    const bedrooms = parseBedrooms(content);
-    const bathrooms = parseBathrooms(content);
-    const { priceUsd, priceDisplay } = parsePriceVndToUsd(content);
+    let extracted = null;
+    if (useLlm) {
+      process.stdout.write("  openai… ");
+      extracted = await extractWithLLM(content, areas);
+      console.log(extracted ? `ok → ${extracted.title.slice(0, 60)}` : "failed, falling back to regex");
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    const title = extracted?.title || extractTitle(content);
+    const bedrooms = extracted?.bedrooms ?? parseBedrooms(content);
+    const bathrooms = extracted?.bathrooms ?? parseBathrooms(content);
+    const regexPrice = parsePriceVndToUsd(content);
+    const priceUsd = extracted ? extracted.price : regexPrice.priceUsd;
+    const priceDisplay = extracted
+      ? extracted.price_display
+      : regexPrice.priceDisplay || "Price on request";
     const mainImage =
       stored[0] || imageUrls[0] || "https://placehold.co/800x600?text=No+image";
 
     const row = {
-      area_id: defaultAreaId,
+      area_id: extracted?.area_id || defaultAreaId,
       estate_company_id: ecRow.id,
       source_url: permalink,
       source_post_id: sourcePostId,
       title: title.slice(0, 500),
-      description: content.slice(0, 10000) || null,
+      description: extracted?.description ?? (content.slice(0, 10000) || null),
       price: Math.max(0, priceUsd),
       price_display: priceDisplay || "Price on request",
       price_usd: priceUsd > 0 ? priceUsd : null,
@@ -701,10 +790,10 @@ async function seed(data) {
       images: stored.length > 1 ? stored.slice(1) : [],
       bedrooms,
       bathrooms,
-      size_sqm: null,
-      features: [],
-      available_from: null,
-      min_lease_months: null,
+      size_sqm: extracted?.size_sqm ?? null,
+      features: extracted?.features ?? [],
+      available_from: extracted?.available_from ?? null,
+      min_lease_months: extracted?.min_lease_months ?? null,
       sort_order: 0,
       status,
       last_validity_check: new Date().toISOString(),
@@ -734,7 +823,7 @@ async function main() {
   }
 
   console.log(
-    `Extracting from Chrome tab (match=${matchHint}, limit=${limit}, scrolls=${scrollCount})…`
+    `Extracting from Chrome tab (match=${matchHint}, limit=${limit}, images=${maxImages}, scrolls=${scrollCount})…`
   );
   const data = findAndExtract();
 

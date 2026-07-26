@@ -15,6 +15,7 @@ import {
   revokeTeamInvite,
 } from "./actions";
 import { capture } from "@/lib/analytics";
+import { ProfileSection, type ProfileView } from "./ProfileSection";
 
 export type FacebookIntegrationView = {
   status: "connected" | "disconnected";
@@ -31,6 +32,7 @@ const FB_FLASH: Record<string, MessageKey> = {
 };
 
 export function SettingsView({
+  profile,
   facebook,
   oauthConfigured,
   flash,
@@ -39,6 +41,7 @@ export function SettingsView({
   missingServiceRole,
   facebookGroups,
 }: {
+  profile: ProfileView;
   facebook: FacebookIntegrationView | null;
   oauthConfigured: boolean;
   flash: string | null;
@@ -94,6 +97,8 @@ export function SettingsView({
           {message ?? flashText}
         </p>
       )}
+
+      <ProfileSection profile={profile} />
 
       <section className="space-y-5">
         <div>

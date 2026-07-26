@@ -15,9 +15,20 @@ export default async function SettingsPage({
   const integration = await getCompanyIntegration(session.estateCompanyId, "facebook");
   const team = await getCompanyTeam(session.estateCompanyId);
   const facebookGroups = await listCompanyFacebookGroups(session.estateCompanyId);
+  const p = session.profile;
 
   return (
     <SettingsView
+      profile={{
+        userId: session.user.id,
+        loginEmail: session.user.email ?? null,
+        displayName: p.display_name?.trim() ?? "",
+        avatarUrl: p.avatar_url?.trim() ?? "",
+        phone: p.phone?.trim() ?? "",
+        whatsapp: p.whatsapp?.trim() ?? "",
+        contactEmail: p.contact_email?.trim() ?? "",
+        bio: p.bio?.trim() ?? "",
+      }}
       facebook={
         integration
           ? {

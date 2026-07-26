@@ -35,11 +35,18 @@ export const getProfile = cache(async function getProfile(userId: string): Promi
   role: UserRole;
   estate_company_id: string | null;
   display_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  contact_email: string | null;
+  bio: string | null;
 } | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("role, estate_company_id, display_name")
+    .select(
+      "role, estate_company_id, display_name, avatar_url, phone, whatsapp, contact_email, bio",
+    )
     .eq("id", userId)
     .single();
   if (error || !data) return null;
@@ -47,6 +54,11 @@ export const getProfile = cache(async function getProfile(userId: string): Promi
     role: data.role as UserRole,
     estate_company_id: data.estate_company_id ?? null,
     display_name: data.display_name ?? null,
+    avatar_url: (data.avatar_url as string | null) ?? null,
+    phone: (data.phone as string | null) ?? null,
+    whatsapp: (data.whatsapp as string | null) ?? null,
+    contact_email: (data.contact_email as string | null) ?? null,
+    bio: (data.bio as string | null) ?? null,
   };
 });
 
@@ -89,17 +101,29 @@ export const getStudioUser = cache(async function getStudioUser(): Promise<Studi
 
   return {
     user,
-    profile: {
-      id: user.id,
-      role: profileRow.role,
-      estate_company_id: profileRow.estate_company_id,
-      display_name: profileRow.display_name,
-    },
+    profile: profileFromRow(user.id, profileRow),
     estateCompanyId,
     isAdmin,
     isImpersonating: Boolean(isAdmin && impersonatedId),
   };
 });
+
+function profileFromRow(
+  userId: string,
+  profileRow: NonNullable<Awaited<ReturnType<typeof getProfile>>>,
+): User {
+  return {
+    id: userId,
+    role: profileRow.role,
+    estate_company_id: profileRow.estate_company_id,
+    display_name: profileRow.display_name,
+    avatar_url: profileRow.avatar_url,
+    phone: profileRow.phone,
+    whatsapp: profileRow.whatsapp,
+    contact_email: profileRow.contact_email,
+    bio: profileRow.bio,
+  };
+}
 
 export const requireAdmin = cache(async function requireAdmin(): Promise<AdminSession | null> {
   const user = await claimsUser();
@@ -110,12 +134,7 @@ export const requireAdmin = cache(async function requireAdmin(): Promise<AdminSe
 
   return {
     user,
-    profile: {
-      id: user.id,
-      role: profileRow.role,
-      estate_company_id: profileRow.estate_company_id,
-      display_name: profileRow.display_name,
-    },
+    profile: profileFromRow(user.id, profileRow),
   };
 });
 

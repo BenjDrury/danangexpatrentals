@@ -1,0 +1,24 @@
+---
+description: Always add PostHog analytics events for new partner/website product features
+alwaysApply: true
+---
+
+# PostHog events for new work
+
+Whenever you add or change user-facing product behavior in `partner-website` or `website`, also instrument PostHog.
+
+## Required
+
+- Fire a named custom event for meaningful actions (create/update/delete, connect/disconnect, submit, upload, invite, etc.).
+- Prefer existing helpers:
+  - Partner Studio client: `capture()` from `@/lib/analytics`
+  - Partner Studio server: `captureServer()` from `@/lib/analytics-server`
+  - Public website: follow that app’s existing analytics helpers
+- Use snake_case event names (`partner_profile_updated`, `listing_created`).
+- Include useful non-PII properties when relevant (`has_avatar`, `listing_id`, status flags). Do not put raw phone numbers, emails, or message bodies in event properties.
+- Register new events in the app’s `.posthog-events.json` (name, short description, file).
+
+## Skip
+
+- Pure refactors, typography/CSS-only tweaks, or internal type/schema renames with no new user action.
+- Admin sessions (Partner Studio already opts admins out).

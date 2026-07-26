@@ -68,7 +68,11 @@ npm run extract-facebook -- --url='https://www.facebook.com/groups/2035599038157
 # Extract JSON only (no DB writes)
 npm run extract-facebook -- --dry-run --limit=5
 
+# Refresh company logo only (no listings / lightbox)
+npm run extract-facebook -- --logo-only --url='https://www.facebook.com/groups/203559903815711/user/100054892217906'
+
 # Options
+#   --logo-only        company avatar/logo only (skips posts + lightbox)
 #   --limit=5          max posts (default 5)
 #   --images=20        max photos per post (default 20)
 #   --min-image-bytes=25000   skip downloads smaller than this (default 25KB)

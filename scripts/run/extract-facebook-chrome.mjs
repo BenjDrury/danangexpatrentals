@@ -782,35 +782,41 @@ async function seed(data) {
 
   const supabase = createClient(url, key);
 
-  const { data: areasList, error: areasError } = await supabase
-    .from("areas")
-    .select("id, name, vibe");
-  if (areasError) {
-    console.error("Failed to fetch areas:", areasError.message);
-    process.exit(1);
-  }
-  const areas = Array.isArray(areasList) ? areasList : [];
-  if (!areas.length) {
-    console.error("No areas in database. Seed areas first.");
-    process.exit(1);
-  }
-  const defaultAreaId =
-    areaArg && areas.some((a) => a.id === areaArg) ? areaArg : areas[0].id;
-  if (areaArg && defaultAreaId !== areaArg) {
-    console.error("Area not found:", areaArg);
-    console.error("Valid area_id values:", areas.map((a) => a.id).join(", "));
-    process.exit(1);
-  }
+  let areas = [];
+  let defaultAreaId = null;
+  let useLlm = false;
 
-  const useLlm = Boolean(openaiKey) && !skipLlm;
-  if (useLlm) {
-    console.log(`Using OpenAI (${openaiModel}) to structure each listing.`);
-  } else if (!openaiKey) {
-    console.warn(
-      "No OPENAI_API_KEY — using regex fields. Add key to scripts/.secret.local for better titles/areas."
-    );
-  } else {
-    console.log("LLM skipped (--no-llm).");
+  if (!logoOnly) {
+    const { data: areasList, error: areasError } = await supabase
+      .from("areas")
+      .select("id, name, vibe");
+    if (areasError) {
+      console.error("Failed to fetch areas:", areasError.message);
+      process.exit(1);
+    }
+    areas = Array.isArray(areasList) ? areasList : [];
+    if (!areas.length) {
+      console.error("No areas in database. Seed areas first.");
+      process.exit(1);
+    }
+    defaultAreaId =
+      areaArg && areas.some((a) => a.id === areaArg) ? areaArg : areas[0].id;
+    if (areaArg && defaultAreaId !== areaArg) {
+      console.error("Area not found:", areaArg);
+      console.error("Valid area_id values:", areas.map((a) => a.id).join(", "));
+      process.exit(1);
+    }
+
+    useLlm = Boolean(openaiKey) && !skipLlm;
+    if (useLlm) {
+      console.log(`Using OpenAI (${openaiModel}) to structure each listing.`);
+    } else if (!openaiKey) {
+      console.warn(
+        "No OPENAI_API_KEY — using regex fields. Add key to scripts/.secret.local for better titles/areas."
+      );
+    } else {
+      console.log("LLM skipped (--no-llm).");
+    }
   }
 
   const companyPayload = {
@@ -842,6 +848,26 @@ async function seed(data) {
   }
 
   console.log(`Company: ${ecRow.name} (${ecRow.id}) facebook_id=${ecRow.facebook_id}`);
+
+  if (logoOnly) {
+    const logoUrl = company.logoUrl
+      ? await storeCompanyLogo(supabase, facebookId, company.logoUrl)
+      : null;
+    if (!logoUrl) {
+      console.warn("No logo URL found on page — company logo unchanged.");
+      return { company: ecRow, inserted: 0, skipped: 0, posts: 0 };
+    }
+    const { error: patchErr } = await supabase
+      .from("estate_companies")
+      .update({ logo_url: logoUrl, updated_at: new Date().toISOString() })
+      .eq("id", ecRow.id);
+    if (patchErr) {
+      console.error("Logo update failed:", patchErr.message);
+      process.exit(1);
+    }
+    console.log("Company logo refreshed:", logoUrl);
+    return { company: { ...ecRow, logo_url: logoUrl }, inserted: 0, skipped: 0, posts: 0 };
+  }
 
   let inserted = 0;
   let skipped = 0;
@@ -1024,14 +1050,16 @@ async function main() {
   }
 
   console.log(
-    `Extracting from Chrome tab (match=${matchHint}, limit=${limit}, images=${maxImages}, minBytes=${minImageBytes}, maxScrolls=${scrollCount})…`
+    logoOnly
+      ? `Extracting company logo only (match=${matchHint})…`
+      : `Extracting from Chrome tab (match=${matchHint}, limit=${limit}, images=${maxImages}, minBytes=${minImageBytes}, maxScrolls=${scrollCount})…`
   );
   const data = findAndExtract();
 
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, JSON.stringify(data, null, 2), "utf8");
   console.log(
-    `Wrote ${outPath} — company="${data.company?.name}", facebookId=${data.company?.facebookId}, posts=${data.posts?.length ?? 0}`
+    `Wrote ${outPath} — company="${data.company?.name}", facebookId=${data.company?.facebookId}, logo=${data.company?.logoUrl ? "yes" : "no"}, posts=${data.posts?.length ?? 0}`
   );
 
   if (dryRun) {
@@ -1040,9 +1068,13 @@ async function main() {
   }
 
   const result = await seed(data);
-  console.log(
-    `Done. Company ${result.company.name} (${result.company.id}): inserted ${result.inserted}, skipped ${result.skipped} of ${result.posts} posts.`
-  );
+  if (logoOnly) {
+    console.log(`Done. Logo refreshed for ${result.company.name} (${result.company.id}).`);
+  } else {
+    console.log(
+      `Done. Company ${result.company.name} (${result.company.id}): inserted ${result.inserted}, skipped ${result.skipped} of ${result.posts} posts.`
+    );
+  }
   console.log("JSON:", outPath);
 }
 

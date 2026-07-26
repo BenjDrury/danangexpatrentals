@@ -39,7 +39,7 @@ const require = createRequire(import.meta.url);
 const { sanitizeListingDescription } = require(
   "../../types/dist/lib/sanitize-listing-description.js"
 );
-const { inferPropertyType, parsePropertyType } = require(
+const { resolveListingTerms, parseMonthsOfRent, parseUtilitiesIncluded } = require(
   "../../types/dist/lib/listing-terms.js"
 );
 const scriptsDir = join(__dirname, "..");
@@ -755,6 +755,9 @@ REQUIRED JSON SHAPE:
   "available_from": "<YYYY-MM-DD or null>",
   "min_lease_months": <number or null>,
   "property_type": "<apartment|house|villa|serviced>",
+  "utilities_included": "<not_included|partial|included>",
+  "deposit_months": <number>,
+  "agency_fee_months": <number>,
   "contact_phone": "<string or null>",
   "contact_whatsapp": "<string or null>",
   "contact_email": "<string or null>"
@@ -773,6 +776,9 @@ FIELD RULES:
 - features: lowercase short phrases: furnished, balcony, parking, near beach, wifi, air conditioning, etc.
 - available_from / min_lease_months: only when stated; else null.
 - property_type: one of apartment, house, villa, serviced. Use villa for villas/biệt thự; house for houses/townhouses/nhà; serviced for serviced apartments; apartment for condo/studio/căn hộ/flat. Default apartment when unclear.
+- utilities_included: not_included | partial | included. Use included when rent covers electricity+water (and usually wifi); partial when only some (e.g. water/wifi) are included; not_included when tenant pays utilities. Default not_included when unclear (typical Da Nang private rental).
+- deposit_months: security deposit as months of rent (e.g. 1, 2). Default 1 when not stated.
+- agency_fee_months: tenant-facing agency/broker fee as months of rent. Use 0 when none / not mentioned (typical Facebook landlord posts). Never leave null.
 - contact_phone / contact_whatsapp / contact_email: extract seller contact from the post when present (phone, Zalo, WhatsApp, email). Normalize phones to digits with optional leading +. Use null when absent. Do not invent contacts.`;
 }
 
@@ -904,7 +910,10 @@ async function extractWithLLM(content, areas) {
           parsed.min_lease_months != null && parsed.min_lease_months !== ""
             ? Math.max(0, Number(parsed.min_lease_months))
             : null,
-        property_type: parsePropertyType(parsed.property_type),
+        property_type: parsed.property_type ?? null,
+        utilities_included: parseUtilitiesIncluded(parsed.utilities_included),
+        deposit_months: parseMonthsOfRent(parsed.deposit_months),
+        agency_fee_months: parseMonthsOfRent(parsed.agency_fee_months),
         contact_phone: normalizeContactPhone(parsed.contact_phone),
         contact_whatsapp: normalizeContactPhone(parsed.contact_whatsapp),
         contact_email: normalizeContactEmail(parsed.contact_email),
@@ -1234,6 +1243,18 @@ async function seed(data) {
       : regexPrice.priceDisplay || "Price on request";
     const mainImage =
       stored[0] || imageUrls[0] || "https://placehold.co/800x600?text=No+image";
+    const description = sanitizeListingDescription(
+      extracted?.description ?? (content.slice(0, 10000) || null)
+    );
+    const terms = resolveListingTerms({
+      title,
+      description,
+      sourceText: content,
+      property_type: extracted?.property_type,
+      utilities_included: extracted?.utilities_included,
+      deposit_months: extracted?.deposit_months,
+      agency_fee_months: extracted?.agency_fee_months,
+    });
 
     const row = {
       area_id: extracted?.area_id || defaultAreaId,
@@ -1241,9 +1262,7 @@ async function seed(data) {
       source_url: permalink,
       source_post_id: sourcePostId,
       title: title.slice(0, 500),
-      description: sanitizeListingDescription(
-        extracted?.description ?? (content.slice(0, 10000) || null)
-      ),
+      description,
       price: Math.max(0, priceUsd),
       price_display: priceDisplay || "Price on request",
       price_usd: priceUsd > 0 ? priceUsd : null,
@@ -1257,9 +1276,10 @@ async function seed(data) {
       features: extracted?.features ?? [],
       available_from: extracted?.available_from ?? null,
       min_lease_months: extracted?.min_lease_months ?? null,
-      property_type:
-        extracted?.property_type ||
-        inferPropertyType(title, extracted?.description ?? content),
+      property_type: terms.property_type,
+      utilities_included: terms.utilities_included,
+      deposit_months: terms.deposit_months,
+      agency_fee_months: terms.agency_fee_months,
       sort_order: 0,
       status,
       last_validity_check: new Date().toISOString(),

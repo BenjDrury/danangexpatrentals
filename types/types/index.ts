@@ -31,9 +31,20 @@ export {
   formatMonthsOfRent,
   propertyTypeLabel,
   parsePropertyType,
+  parseUtilitiesIncluded,
+  parseMonthsOfRent,
   inferPropertyType,
+  inferUtilitiesIncluded,
+  inferDepositMonths,
+  inferAgencyFeeMonths,
+  resolveListingTerms,
+  DEFAULT_PROPERTY_TYPE,
+  DEFAULT_UTILITIES_INCLUDED,
+  DEFAULT_DEPOSIT_MONTHS,
+  DEFAULT_AGENCY_FEE_MONTHS,
   utilitiesIncludedLabel,
   agencyFeeLabel,
 } from "../lib/listing-terms";
+export type { ResolvedListingTerms } from "../lib/listing-terms";
 export { sanitizeListingDescription } from "../lib/sanitize-listing-description";
 

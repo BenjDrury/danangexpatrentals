@@ -32,9 +32,11 @@ const require = createRequire(import.meta.url);
 const { sanitizeListingDescription } = require(
   "../../types/dist/lib/sanitize-listing-description.js"
 );
-const { inferPropertyType, parsePropertyType } = require(
-  "../../types/dist/lib/listing-terms.js"
-);
+const {
+  resolveListingTerms,
+  parseMonthsOfRent,
+  parseUtilitiesIncluded,
+} = require("../../types/dist/lib/listing-terms.js");
 const scriptsDir = join(__dirname, "..");
 config({ path: join(scriptsDir, ".env") });
 config({ path: join(scriptsDir, ".secret.local") });
@@ -60,7 +62,7 @@ if (!url || !key) {
 }
 
 /** @typedef {{ id: string, name: string, vibe?: string }} AreaRow */
-/** @typedef {{ area_id: string, title: string, description: string | null, price: number, price_display: string, bedrooms: number, bathrooms: number | null, size_sqm: number | null, features: string[], available_from: string | null, min_lease_months: number | null, property_type: string | null }} ExtractedApartment */
+/** @typedef {{ area_id: string, title: string, description: string | null, price: number, price_display: string, bedrooms: number, bathrooms: number | null, size_sqm: number | null, features: string[], available_from: string | null, min_lease_months: number | null, property_type: string | null, utilities_included: string | null, deposit_months: number | null, agency_fee_months: number | null }} ExtractedApartment */
 
 /**
  * Extract title from content (first line or first sentence, cleaned).
@@ -140,7 +142,10 @@ REQUIRED JSON SHAPE (use these keys exactly; use null for optional fields when n
   "features": ["<string>", ...],
   "available_from": "<YYYY-MM-DD or null>",
   "min_lease_months": <number or null>,
-  "property_type": "<apartment|house|villa|serviced>"
+  "property_type": "<apartment|house|villa|serviced>",
+  "utilities_included": "<not_included|partial|included>",
+  "deposit_months": <number>,
+  "agency_fee_months": <number>
 }
 
 AREAS (area_id must be exactly one of these ids):
@@ -159,6 +164,9 @@ FIELD RULES:
 - available_from: "YYYY-MM-DD" only if a specific date is given; otherwise null.
 - min_lease_months: Integer (e.g. 6 for "6 month minimum") or null.
 - property_type: one of apartment, house, villa, serviced. Use villa for villas; house for houses/townhouses; serviced for serviced apartments; apartment for condo/studio/flat. Default apartment when unclear.
+- utilities_included: not_included | partial | included. Default not_included when unclear.
+- deposit_months: months of rent for security deposit. Default 1 when not stated.
+- agency_fee_months: months of rent for agency/broker fee. Use 0 when none / not mentioned.
 
 Again: respond with nothing but a single valid JSON object. No markdown, no backticks, no extra text.`;
 }
@@ -232,7 +240,10 @@ async function extractWithLLM(content, areas) {
         parsed.min_lease_months != null && parsed.min_lease_months !== ""
           ? Math.max(0, Number(parsed.min_lease_months))
           : null,
-      property_type: parsePropertyType(parsed.property_type),
+      property_type: parsed.property_type ?? null,
+      utilities_included: parseUtilitiesIncluded(parsed.utilities_included),
+      deposit_months: parseMonthsOfRent(parsed.deposit_months),
+      agency_fee_months: parseMonthsOfRent(parsed.agency_fee_months),
     };
   } catch (e) {
     console.warn("LLM extraction failed:", e.message);
@@ -289,6 +300,15 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
   const mainImage = images[0] || post.post_image || "https://placehold.co/800x600?text=No+image";
 
   if (extracted) {
+    const terms = resolveListingTerms({
+      title: extracted.title,
+      description: extracted.description,
+      sourceText: content,
+      property_type: extracted.property_type,
+      utilities_included: extracted.utilities_included,
+      deposit_months: extracted.deposit_months,
+      agency_fee_months: extracted.agency_fee_months,
+    });
     return {
       area_id: extracted.area_id,
       estate_company_id: estateCompanyId || null,
@@ -306,9 +326,10 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
       features: extracted.features || [],
       available_from: extracted.available_from,
       min_lease_months: extracted.min_lease_months,
-      property_type:
-        extracted.property_type ||
-        inferPropertyType(extracted.title, extracted.description),
+      property_type: terms.property_type,
+      utilities_included: terms.utilities_included,
+      deposit_months: terms.deposit_months,
+      agency_fee_months: terms.agency_fee_months,
       sort_order: 0,
     };
   }
@@ -318,6 +339,11 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
   const bathrooms = parseBathrooms(content);
   const { priceUsd, priceDisplay } = parsePriceVndToUsd(content);
   const description = sanitizeListingDescription(content.slice(0, 10000) || null);
+  const terms = resolveListingTerms({
+    title,
+    description,
+    sourceText: content,
+  });
 
   return {
     area_id: areaId,
@@ -336,7 +362,10 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
     features: [],
     available_from: null,
     min_lease_months: null,
-    property_type: inferPropertyType(title, description),
+    property_type: terms.property_type,
+    utilities_included: terms.utilities_included,
+    deposit_months: terms.deposit_months,
+    agency_fee_months: terms.agency_fee_months,
     sort_order: 0,
   };
 }

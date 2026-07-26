@@ -84,7 +84,7 @@ npm run extract-facebook -- --logo-only --url='https://www.facebook.com/groups/2
 #   --match=<substr>   Chrome tab URL match (default: facebook.com or id from --url)
 ```
 
-With `OPENAI_API_KEY` in `.secret.local`, each post is sent to OpenAI (`OPENAI_MODEL`, default `gpt-4o`; tries `gpt-5` / others if needed) to produce title, description, area, price, bedrooms, features, and seller contact (phone / WhatsApp-Zalo / email) when present.
+With `OPENAI_API_KEY` in `.secret.local`, each post is sent to OpenAI (`OPENAI_MODEL`, default `gpt-4o`; tries `gpt-5` / others if needed) to produce title, description, area, price, bedrooms, features, property type, utilities, deposit, agency fee, and seller contact (phone / WhatsApp-Zalo / email) when present. Missing terms fall back to text inference, then Da Nang defaults (`apartment`, utilities `not_included`, deposit `1` month, agency fee `0`).
 
 After posts are processed, the script also:
 - Downloads the Facebook profile/logo into the `apartments` Storage bucket (falls back to the CDN URL)

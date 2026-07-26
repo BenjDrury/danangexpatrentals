@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { SectionHero } from "../components/sections";
+import { WHATSAPP_URL } from "../lib/contact-links";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "FAQ — Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "FAQ",
   description: "Frequently asked questions about finding apartments in Da Nang.",
-};
+  path: "/faq",
+});
 
 export default function FaqPage() {
   return (
@@ -12,7 +15,11 @@ export default function FaqPage() {
       <SectionHero
         variant="page"
         title="FAQ"
-        subtitle="Coming soon. In the meantime, get in touch via the contact page or WhatsApp."
+        subtitle={
+          WHATSAPP_URL
+            ? "Coming soon. In the meantime, get in touch via the contact page or WhatsApp."
+            : "Coming soon. In the meantime, get in touch via the contact page."
+        }
       />
     </div>
   );

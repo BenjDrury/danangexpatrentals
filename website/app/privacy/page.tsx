@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDoc, LegalSection } from "../components/LegalDoc";
+import { WHATSAPP_URL } from "../lib/contact-links";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Imprint & Privacy — Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Imprint & Privacy",
   description:
     "Provider information (imprint) and privacy policy for Da Nang Expat Rentals.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
@@ -40,18 +43,20 @@ export default function PrivacyPage() {
               </a>
             </dd>
           </div>
-          <div>
-            <dt className="text-sm font-medium text-muted">WhatsApp</dt>
-            <dd className="mt-0.5 text-charcoal">
-              Via the number linked on our{" "}
-              <Link
-                href="/contact"
-                className="font-medium text-ocean transition hover:text-ocean-deep"
-              >
-                contact page
-              </Link>
-            </dd>
-          </div>
+          {WHATSAPP_URL && (
+            <div>
+              <dt className="text-sm font-medium text-muted">WhatsApp</dt>
+              <dd className="mt-0.5 text-charcoal">
+                Via the number linked on our{" "}
+                <Link
+                  href="/contact"
+                  className="font-medium text-ocean transition hover:text-ocean-deep"
+                >
+                  contact page
+                </Link>
+              </dd>
+            </div>
+          )}
         </dl>
         <p>
           Website content is provided in good faith for informational and matching

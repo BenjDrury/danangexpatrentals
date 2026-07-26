@@ -107,7 +107,7 @@ export default async function Home() {
         subtitle="Share your budget and timing — we’ll send a few solid options within 24 hours."
         primaryCta={{ href: "/contact", label: "Get matched" }}
         secondaryCta={{ href: "/how-it-works", label: "How it works" }}
-        whatsapp={{ href: WHATSAPP_URL }}
+        whatsapp={WHATSAPP_URL ? { href: WHATSAPP_URL } : undefined}
         partnersHref="/partners"
       />
     </div>

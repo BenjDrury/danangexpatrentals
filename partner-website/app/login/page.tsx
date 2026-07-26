@@ -8,6 +8,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { capture } from "@/lib/analytics";
 import { syncPostHogIdentity } from "@/lib/analytics-identity";
+import { getPublicSiteUrl } from "@/lib/public-url";
 
 function safeNext(next: string | null): string {
   if (!next) return "/";
@@ -260,6 +261,18 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="mt-6 text-center text-sm text-muted">{t("login.inviteNote")}</p>
+        <p className="mt-3 text-center text-sm text-muted">
+          {t("login.applyPrompt")}{" "}
+          <a
+            href={`${getPublicSiteUrl()}/partners/apply`}
+            className="font-medium text-ocean transition hover:text-ocean-deep"
+            onClick={() =>
+              capture("partner_apply_cta_clicked", { source: "login_page" })
+            }
+          >
+            {t("login.applyLink")}
+          </a>
+        </p>
       </div>
     </div>
   );

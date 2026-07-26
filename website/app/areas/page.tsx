@@ -5,12 +5,14 @@ import { Section, SectionHero } from "../components/sections";
 import { TrackedLink } from "../components/TrackedLink";
 import { getAreas } from "@/lib/data";
 import { formatAliases } from "@/lib/area-utils";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Neighbourhood guides — Where to live in Da Nang",
   description:
     "Editorial guides to Da Nang neighbourhoods for expats: My An, An Thuong, Son Tra, Hai Chau, and quieter coastal areas.",
-};
+  path: "/areas",
+});
 
 export const revalidate = 60;
 
@@ -84,7 +86,7 @@ export default async function AreasPage() {
                       Read the guide
                     </TrackedLink>
                     <TrackedLink
-                      href={`/contact?preferred_area=${encodeURIComponent(area.name)}&areaId=${area.id}`}
+                      href={`/areas/${area.id}#listings`}
                       event="area_find_home_clicked"
                       eventProps={{ area_id: area.id, area_name: area.name }}
                       className="inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"

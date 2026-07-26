@@ -4,12 +4,14 @@ import Image from "next/image";
 import { getGuideArticlesForHub } from "../lib/living-guide";
 import { CtaButton } from "../components/CtaButton";
 import { Section, SectionHero } from "../components/sections";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Living in Da Nang — Guide | Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Living in Da Nang — Guide",
   description:
     "A practical guide for expats and remote workers living in Da Nang: daily life tours, cost of living, neighbourhoods, visas, coworking, and activities.",
-};
+  path: "/moving-guide",
+});
 
 const REGISTRIES = [
   {

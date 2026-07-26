@@ -4,12 +4,14 @@ import { ActivitiesRegistry } from "@/app/components/guide/ActivitiesRegistry";
 import { CtaButton } from "@/app/components/CtaButton";
 import { Section, SectionHero } from "@/app/components/sections";
 import { getActivities } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Things to do in Da Nang — Living guide | Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Things to do in Da Nang — Living guide",
   description:
     "Activity registry for Da Nang: surf lessons, yoga, day trips, food, and outdoors — with typical prices for expats and remote workers.",
-};
+  path: "/moving-guide/activities",
+});
 
 export default async function ActivitiesRegistryPage() {
   const activities = await getActivities();

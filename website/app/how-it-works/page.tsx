@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Section, SectionHero } from "../components/sections";
 import { CtaButton } from "../components/CtaButton";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "How It Works — Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "How It Works",
   description:
     "Find out how we match you with verified apartments in Da Nang. Tell us your budget and timing — we check real availability and send options within 24 hours.",
-};
+  path: "/how-it-works",
+});
 
 const STEPS = [
   { step: 1, title: "Tell us your budget & timing", body: "Share how long you want to stay and when you need the place. No commitment." },

@@ -4,7 +4,7 @@ import { CONTENT_CONTAINER, SECTION_PADDING } from "@/app/lib/constants";
 type SectionWhatsAppCtaProps = {
   title: string;
   description: string;
-  whatsappUrl: string;
+  whatsappUrl: string | null;
   buttonLabel?: string;
 };
 
@@ -22,6 +22,8 @@ export function SectionWhatsAppCta({
   whatsappUrl,
   buttonLabel = "Chat on WhatsApp",
 }: SectionWhatsAppCtaProps) {
+  if (!whatsappUrl) return null;
+
   return (
     <section className={`w-full ${SECTION_PADDING} bg-foam`}>
       <div className={CONTENT_CONTAINER}>

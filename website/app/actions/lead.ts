@@ -4,6 +4,7 @@ import { LEAD_NOTIFY_EMAIL, RESEND_FROM_EMAIL } from "backend";
 import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
 import { captureServer } from "@/lib/analytics-server";
+import { WHATSAPP_URL } from "@/app/lib/contact-links";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -35,7 +36,12 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     const { error } = await supabase.from("leads").insert(lead);
     if (error) {
       console.error("Supabase lead insert error:", error);
-      return { ok: false, error: "Failed to save. Please try again or message us on WhatsApp." };
+      return {
+        ok: false,
+        error: WHATSAPP_URL
+          ? "Failed to save. Please try again or message us on WhatsApp."
+          : "Failed to save. Please try again.",
+      };
     }
   }
 

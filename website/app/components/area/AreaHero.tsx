@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { WHATSAPP_NUMBER } from "backend";
 import type { Area } from "types";
 import { CONTENT_CONTAINER } from "@/app/lib/constants";
+import { WHATSAPP_URL } from "@/app/lib/contact-links";
 import { CtaButton } from "@/app/components/CtaButton";
 import {
   expatScoreOutOfTen,
@@ -18,8 +18,6 @@ import {
   PercentMeter,
   ScoreMeter,
 } from "./AreaMeters";
-
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
 
 type AreaHeroProps = {
   area: Area;
@@ -122,9 +120,11 @@ export function AreaHero({ area }: AreaHeroProps) {
           <CtaButton href={contactWithArea} variant="onDark">
             Get apartment matches
           </CtaButton>
-          <CtaButton href={WHATSAPP_URL} variant="onDarkSecondary">
-            Chat on WhatsApp
-          </CtaButton>
+          {WHATSAPP_URL && (
+            <CtaButton href={WHATSAPP_URL} variant="onDarkSecondary">
+              Chat on WhatsApp
+            </CtaButton>
+          )}
         </div>
       </div>
     </section>

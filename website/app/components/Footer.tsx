@@ -14,7 +14,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 const linkClass = "text-muted transition hover:text-charcoal";
 
-export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
+export function Footer({ whatsappUrl }: { whatsappUrl: string | null }) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -142,20 +142,22 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
                   Concierge form
                 </TrackedLink>
               </li>
-              <li>
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() =>
-                    capture("whatsapp_cta_clicked", { source: "footer" })
-                  }
-                  className="inline-flex items-center gap-2 text-muted transition hover:text-charcoal"
-                >
-                  <WhatsAppIcon className="h-4 w-4 shrink-0" />
-                  WhatsApp
-                </a>
-              </li>
+              {whatsappUrl && (
+                <li>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() =>
+                      capture("whatsapp_cta_clicked", { source: "footer" })
+                    }
+                    className="inline-flex items-center gap-2 text-muted transition hover:text-charcoal"
+                  >
+                    <WhatsAppIcon className="h-4 w-4 shrink-0" />
+                    WhatsApp
+                  </a>
+                </li>
+              )}
               <li>
                 <TrackedLink
                   href="/partners"

@@ -1,0 +1,27 @@
+[
+  {
+    "event_name": "listing_guide_clicked",
+    "event_description": "User clicked an informational guide link from an apartment detail page (cost of living, area guide, visas, etc.).",
+    "file": "app/components/area/ListingGuides.tsx"
+  },
+  {
+    "event_name": "partner_application_submitted",
+    "event_description": "A prospective partner successfully submits the public partner application form (client-side).",
+    "file": "app/partners/apply/PartnerApplyForm.tsx"
+  },
+  {
+    "event_name": "partner_application_submit_failed",
+    "event_description": "A prospective partner's application form submission failed (client-side).",
+    "file": "app/partners/apply/PartnerApplyForm.tsx"
+  },
+  {
+    "event_name": "partner_application_submitted_server",
+    "event_description": "A partner application was saved and notified on the server.",
+    "file": "app/actions/partner-application.ts"
+  },
+  {
+    "event_name": "partner_apply_cta_clicked",
+    "event_description": "User clicked a CTA linking to the partner application form.",
+    "file": "app/partners/PartnersPageContent.tsx"
+  }
+]

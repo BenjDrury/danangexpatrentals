@@ -3,13 +3,15 @@ import { Section, SectionHero } from "../components/sections";
 import { TrackedLink } from "../components/TrackedLink";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../lib/constants";
 import { getAreas, getApartmentTypes, getApartmentsPaginated } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
 import { ApartmentCard } from "../components/area/ApartmentCard";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Apartments in Da Nang — Verified homes for expats",
   description:
     "Curated, verified apartments in Da Nang for expats and remote workers. Transparent prices, real photos, honest neighbourhood guidance.",
-};
+  path: "/apartments",
+});
 
 /** Revalidate listing pages so soft nav can hit a warm cache. */
 export const revalidate = 60;

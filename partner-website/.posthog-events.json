@@ -75,6 +75,11 @@
     "file": "app/login/page.tsx"
   },
   {
+    "event_name": "partner_apply_cta_clicked",
+    "event_description": "User clicked Apply to become a partner from the Partner Studio login page.",
+    "file": "app/login/page.tsx"
+  },
+  {
     "event_name": "partner_company_updated",
     "event_description": "A partner saves company settings (name, logo, phone, WhatsApp/Zalo, email) in Settings (server + client).",
     "file": "app/(studio)/settings/actions.ts"

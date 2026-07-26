@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { PARTNERS_WHATSAPP_URL } from "@/app/lib/contact-links";
+import { PARTNERS_APPLY_HREF, PARTNERS_WHATSAPP_URL } from "@/app/lib/contact-links";
 import { CtaButton } from "@/app/components/CtaButton";
 import { Section, SectionHero } from "@/app/components/sections";
 import { capture } from "@/lib/analytics";
@@ -22,11 +22,14 @@ const copy = {
       "We prefer clear pricing, honest photos, and English-friendly communication.",
       "No hard sell — just a short conversation about whether it’s a fit.",
     ],
+    apply: "Apply to partner",
     whatsapp: "Message on WhatsApp",
     studioLogin: "Partner Studio login",
     rentInstead: "Looking to rent instead?",
-    footer:
-      "Already a partner? Open Partner Studio to manage listings, contacts, and share living guides with clients. New here? Start on WhatsApp with a quick note about your inventory and the areas you cover — we’ll take it from there.",
+    footerWithWhatsApp:
+      "Already a partner? Open Partner Studio to manage listings, contacts, and share living guides with clients. New here? Apply via the form, or start on WhatsApp with a quick note about your inventory — we’ll take it from there.",
+    footerWithoutWhatsApp:
+      "Already a partner? Open Partner Studio to manage listings, contacts, and share living guides with clients. New here? Apply via the form above and we’ll be in touch.",
     back: "← Back to the site",
     lang: "Language",
   },
@@ -41,11 +44,14 @@ const copy = {
       "Chúng tôi thích giá rõ ràng, ảnh trung thực và giao tiếp thân thiện tiếng Anh.",
       "Không ép bán — chỉ một cuộc trò chuyện ngắn xem có phù hợp không.",
     ],
+    apply: "Đăng ký làm đối tác",
     whatsapp: "Nhắn WhatsApp",
     studioLogin: "Đăng nhập Partner Studio",
     rentInstead: "Bạn đang tìm thuê?",
-    footer:
-      "Đã là đối tác? Mở Partner Studio để quản lý tin đăng, liên hệ và chia sẻ hướng dẫn sống với khách. Mới đến? Bắt đầu trên WhatsApp với vài dòng về tồn kho và khu vực bạn cover — chúng tôi sẽ tiếp tục.",
+    footerWithWhatsApp:
+      "Đã là đối tác? Mở Partner Studio để quản lý tin đăng, liên hệ và chia sẻ hướng dẫn sống với khách. Mới đến? Điền form đăng ký, hoặc bắt đầu trên WhatsApp với vài dòng về tồn kho — chúng tôi sẽ tiếp tục.",
+    footerWithoutWhatsApp:
+      "Đã là đối tác? Mở Partner Studio để quản lý tin đăng, liên hệ và chia sẻ hướng dẫn sống với khách. Mới đến? Điền form đăng ký ở trên — chúng tôi sẽ liên hệ.",
     back: "← Về trang chính",
     lang: "Ngôn ngữ",
   },
@@ -127,12 +133,22 @@ export function PartnersPageContent() {
 
           <div className="mt-12 flex flex-wrap gap-3">
             <CtaButton
-              href={PARTNERS_WHATSAPP_URL}
+              href={PARTNERS_APPLY_HREF}
               variant="primary"
-              event="partners_whatsapp_clicked"
+              event="partner_apply_cta_clicked"
+              eventProps={{ source: "partners_page" }}
             >
-              {t.whatsapp}
+              {t.apply}
             </CtaButton>
+            {PARTNERS_WHATSAPP_URL && (
+              <CtaButton
+                href={PARTNERS_WHATSAPP_URL}
+                variant="secondary"
+                event="partners_whatsapp_clicked"
+              >
+                {t.whatsapp}
+              </CtaButton>
+            )}
             <CtaButton
               href={partnerStudioUrl()}
               variant="secondary"
@@ -145,7 +161,9 @@ export function PartnersPageContent() {
             </CtaButton>
           </div>
 
-          <p className="mt-8 text-sm text-muted">{t.footer}</p>
+          <p className="mt-8 text-sm text-muted">
+            {PARTNERS_WHATSAPP_URL ? t.footerWithWhatsApp : t.footerWithoutWhatsApp}
+          </p>
 
           <p className="mt-10 text-sm">
             <Link href="/" className="font-medium text-ocean transition hover:text-ocean-deep">

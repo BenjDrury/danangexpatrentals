@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalDoc, LegalSection } from "../components/LegalDoc";
+import { WHATSAPP_URL } from "../lib/contact-links";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms & Conditions — Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Terms & Conditions",
   description:
     "Terms and conditions for using Da Nang Expat Rentals’ website and matching service.",
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
@@ -150,14 +153,19 @@ export default function TermsPage() {
             className="font-medium text-ocean transition hover:text-ocean-deep"
           >
             benjamin@danangexpatrentals.com
-          </a>{" "}
-          or via WhatsApp from our{" "}
-          <Link
-            href="/contact"
-            className="font-medium text-ocean transition hover:text-ocean-deep"
-          >
-            contact page
-          </Link>
+          </a>
+          {WHATSAPP_URL ? (
+            <>
+              {" "}
+              or via WhatsApp from our{" "}
+              <Link
+                href="/contact"
+                className="font-medium text-ocean transition hover:text-ocean-deep"
+              >
+                contact page
+              </Link>
+            </>
+          ) : null}
           .
         </p>
       </LegalSection>

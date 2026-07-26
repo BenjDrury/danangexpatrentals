@@ -4,12 +4,14 @@ import { CoworkingRegistry } from "@/app/components/guide/CoworkingRegistry";
 import { CtaButton } from "@/app/components/CtaButton";
 import { Section, SectionHero } from "@/app/components/sections";
 import { getCoworkingSpaces } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Coworking in Da Nang — Living guide | Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Coworking in Da Nang — Living guide",
   description:
     "Coworking and laptop-friendly work spots in Da Nang for remote workers — day passes, monthly desks, and neighbourhood notes.",
-};
+  path: "/moving-guide/coworking",
+});
 
 export default async function CoworkingRegistryPage() {
   const spaces = await getCoworkingSpaces();

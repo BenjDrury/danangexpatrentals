@@ -53,7 +53,7 @@ export function AreaApartmentsSection({
   const noListingsAtAll = !hasAnyListings;
 
   return (
-    <Section bg="bg-white" className="!py-12 sm:!py-16">
+    <Section id="listings" bg="bg-white" className="!py-12 sm:!py-16 scroll-mt-24">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-ocean">Listings</p>

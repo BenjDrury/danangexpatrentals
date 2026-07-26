@@ -5,8 +5,10 @@ import { notFound } from "next/navigation";
 import { listingPriceLabel } from "types";
 import { TrackListingView } from "@/app/components/TrackListingView";
 import { ApartmentInquiryLink } from "@/app/components/area/ApartmentInquiryLink";
+import { ListingGuides } from "@/app/components/area/ListingGuides";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
+import { absoluteUrl, buildPageMetadata } from "@/lib/seo";
 
 export const revalidate = 60;
 
@@ -16,15 +18,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const apartment = await getApartmentById(id);
   if (!apartment) return { title: "Apartment not found" };
-  const area = apartment ? await getAreaById(apartment.area_id) : null;
+  const area = await getAreaById(apartment.area_id);
   const areaName = area?.name ?? "Da Nang";
   const priceLabel = listingPriceLabel(apartment);
-  return {
-    title: `${apartment.title} — ${areaName} | Da Nang Expat Rentals`,
-    description:
-      apartment.description ??
-      `${apartment.title} in ${areaName}. ${priceLabel}. ${apartment.bedrooms} bedroom${apartment.bedrooms !== 1 ? "s" : ""}.`,
-  };
+  const bedLabel = `${apartment.bedrooms} bedroom${apartment.bedrooms !== 1 ? "s" : ""}`;
+  const description =
+    apartment.description?.trim() ||
+    `${apartment.title} in ${areaName}. ${priceLabel}. ${bedLabel}. Verified listing for expats in Da Nang.`;
+  const path = `/apartments/${apartment.public_slug || apartment.id}`;
+  const image =
+    apartment.main_image?.trim() ||
+    apartment.images?.find((url) => Boolean(url?.trim())) ||
+    null;
+
+  return buildPageMetadata({
+    title: `${apartment.title} — ${areaName}`,
+    description,
+    path,
+    image,
+    imageAlt: `${apartment.title} in ${areaName}`,
+  });
 }
 
 export default async function ApartmentPage({ params }: Props) {
@@ -34,9 +47,51 @@ export default async function ApartmentPage({ params }: Props) {
 
   const area = await getAreaById(apartment.area_id);
   const allImages = [apartment.main_image, ...apartment.images].filter(Boolean);
+  const areaName = area?.name ?? "Da Nang";
+  const priceLabel = listingPriceLabel(apartment);
+  const listingPath = `/apartments/${apartment.public_slug || apartment.id}`;
+  const listingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Apartment",
+    name: apartment.title,
+    description:
+      apartment.description?.trim() ||
+      `${apartment.title} in ${areaName}. ${priceLabel}.`,
+    image: allImages.map((url) => absoluteUrl(url)),
+    url: absoluteUrl(listingPath),
+    numberOfRooms: apartment.bedrooms,
+    ...(apartment.size_sqm != null
+      ? {
+          floorSize: {
+            "@type": "QuantitativeValue",
+            value: apartment.size_sqm,
+            unitCode: "MTK",
+          },
+        }
+      : {}),
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: areaName,
+      addressRegion: "Da Nang",
+      addressCountry: "VN",
+    },
+    offers: {
+      "@type": "Offer",
+      price: apartment.price_amount ?? apartment.price_usd ?? apartment.price,
+      priceCurrency:
+        apartment.price_currency ??
+        (apartment.price_usd != null ? "USD" : "VND"),
+      availability: "https://schema.org/InStock",
+      url: absoluteUrl(listingPath),
+    },
+  };
 
   return (
     <div className="min-h-screen bg-foam">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }}
+      />
       <TrackListingView apartmentId={apartment.id} areaId={apartment.area_id} />
       <section className={`w-full ${SECTION_PADDING} bg-white pt-28 sm:pt-36`}>
         <div className={CONTENT_CONTAINER}>
@@ -163,6 +218,12 @@ export default async function ApartmentPage({ params }: Props) {
         </div>
         </div>
       </section>
+
+      <ListingGuides
+        apartmentId={apartment.id}
+        areaId={area?.id}
+        areaName={area?.name}
+      />
     </div>
   );
 }

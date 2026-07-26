@@ -3,12 +3,14 @@ import { ConciergeForm } from "../components/ConciergeForm";
 import { TrackedLink } from "../components/TrackedLink";
 import { Section, SectionHero } from "../components/sections";
 import { WHATSAPP_URL } from "../lib/contact-links";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Get matched — Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Get matched",
   description:
     "Tell us your budget and timing. We’ll send verified apartment options in Da Nang within 24 hours — short stays or longer.",
-};
+  path: "/contact",
+});
 
 type Props = { searchParams: Promise<{ [key: string]: string | string[] | undefined }> };
 
@@ -39,20 +41,22 @@ export default async function ContactPage({ searchParams }: Props) {
                   Best when you want to share budget, dates, and neighbourhood preferences in one place.
                 </p>
               </li>
-              <li>
-                <h3 className="font-display text-lg font-semibold text-charcoal">WhatsApp</h3>
-                <p className="mt-2 text-muted leading-relaxed">
-                  Fastest if you’re already in Da Nang or working to a tight timeline.
-                </p>
-                <TrackedLink
-                  href={WHATSAPP_URL}
-                  event="whatsapp_cta_clicked"
-                  eventProps={{ source: "contact_page" }}
-                  className="mt-4 inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
-                >
-                  Message on WhatsApp
-                </TrackedLink>
-              </li>
+              {WHATSAPP_URL && (
+                <li>
+                  <h3 className="font-display text-lg font-semibold text-charcoal">WhatsApp</h3>
+                  <p className="mt-2 text-muted leading-relaxed">
+                    Fastest if you’re already in Da Nang or working to a tight timeline.
+                  </p>
+                  <TrackedLink
+                    href={WHATSAPP_URL}
+                    event="whatsapp_cta_clicked"
+                    eventProps={{ source: "contact_page" }}
+                    className="mt-4 inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
+                  >
+                    Message on WhatsApp
+                  </TrackedLink>
+                </li>
+              )}
               <li>
                 <h3 className="font-display text-lg font-semibold text-charcoal">After you write</h3>
                 <p className="mt-2 text-muted leading-relaxed">
@@ -64,12 +68,12 @@ export default async function ContactPage({ searchParams }: Props) {
             <p className="mt-12 border-t border-line pt-6 text-sm text-muted">
               Agent or property owner?{" "}
               <TrackedLink
-                href="/partners"
-                event="partners_cta_clicked"
+                href="/partners/apply"
+                event="partner_apply_cta_clicked"
                 eventProps={{ source: "contact_page" }}
                 className="font-medium text-ocean transition hover:text-ocean-deep"
               >
-                See how we work with partners →
+                Apply to partner →
               </TrackedLink>
             </p>
           </div>

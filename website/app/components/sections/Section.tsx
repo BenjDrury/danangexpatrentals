@@ -5,6 +5,8 @@ type SectionProps = {
   bg: string;
   /** Extra class names for the section element */
   className?: string;
+  /** Optional id for in-page anchors (e.g. #listings) */
+  id?: string;
   /** If true, render children inside CONTENT_CONTAINER. If false, children only (for custom layout) */
   withContainer?: boolean;
   children: React.ReactNode;
@@ -17,11 +19,15 @@ type SectionProps = {
 export function Section({
   bg,
   className = "",
+  id,
   withContainer = true,
   children,
 }: SectionProps) {
   return (
-    <section className={`w-full ${SECTION_PADDING} ${bg} ${className}`.trim()}>
+    <section
+      id={id}
+      className={`w-full ${SECTION_PADDING} ${bg} ${className}`.trim()}
+    >
       {withContainer ? (
         <div className={CONTENT_CONTAINER}>{children}</div>
       ) : (

@@ -3,6 +3,8 @@
 import { SignOutButton } from "@/components/SignOutButton";
 import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { capture } from "@/lib/analytics";
+import { getPublicSiteUrl } from "@/lib/public-url";
 
 export function UnauthorizedView({ email }: { email?: string | null }) {
   const { t } = useLocale();
@@ -30,6 +32,18 @@ export function UnauthorizedView({ email }: { email?: string | null }) {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <SignOutButton className="rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep" />
         </div>
+        <p className="mt-6 text-sm text-muted">
+          {t("login.applyPrompt")}{" "}
+          <a
+            href={`${getPublicSiteUrl()}/partners/apply`}
+            className="font-medium text-ocean transition hover:text-ocean-deep"
+            onClick={() =>
+              capture("partner_apply_cta_clicked", { source: "unauthorized_page" })
+            }
+          >
+            {t("login.applyLink")}
+          </a>
+        </p>
       </div>
     </div>
   );

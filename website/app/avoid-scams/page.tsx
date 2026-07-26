@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Section, SectionHero } from "../components/sections";
 import { CtaButton } from "../components/CtaButton";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "How to Avoid Apartment Scams in Da Nang — Expat Guide",
+export const metadata: Metadata = buildPageMetadata({
+  title: "How to Avoid Apartment Scams in Da Nang",
   description:
     "Fake listings, deposit traps, agent markups, and remote booking risks in Da Nang. How we verify apartments and protect you.",
-};
+  path: "/avoid-scams",
+});
 
 const WATCH_ITEMS = [
   {

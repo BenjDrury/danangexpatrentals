@@ -73,6 +73,8 @@ const en = {
     "This sign-in link is invalid or expired. Request a new one, or sign in with your password.",
   "login.inviteNote":
     "Partner accounts are invited. Need access? Ask the Da Nang Expat Rentals team.",
+  "login.applyPrompt": "Want to become a partner?",
+  "login.applyLink": "Apply here →",
 
   "unauthorized.title": "Almost there",
   "unauthorized.body":
@@ -570,6 +572,8 @@ const vi: Record<MessageKey, string> = {
     "Liên kết đăng nhập không hợp lệ hoặc đã hết hạn. Yêu cầu liên kết mới, hoặc đăng nhập bằng mật khẩu.",
   "login.inviteNote":
     "Tài khoản đối tác được mời. Cần quyền truy cập? Liên hệ đội ngũ Da Nang Expat Rentals.",
+  "login.applyPrompt": "Muốn trở thành đối tác?",
+  "login.applyLink": "Đăng ký tại đây →",
 
   "unauthorized.title": "Gần xong rồi",
   "unauthorized.body":

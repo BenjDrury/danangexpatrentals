@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { Section, SectionHero } from "../components/sections";
 import { CtaButton } from "../components/CtaButton";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Why Foreigners Trust Us — Da Nang Expat Rentals",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Why Foreigners Trust Us",
   description:
     "We verify apartments, work with English-friendly agents, and give honest pricing guidance. Find out why expats trust us to find rentals in Da Nang.",
-};
+  path: "/why-us",
+});
 
 export default function WhyUsPage() {
   return (

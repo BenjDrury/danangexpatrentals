@@ -6,6 +6,7 @@ import {
   getGuideArticle,
 } from "@/app/lib/living-guide";
 import { getAreas } from "@/lib/data";
+import { buildPageMetadata } from "@/lib/seo";
 import { GuideArticleContent } from "../GuideArticleContent";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -18,10 +19,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = getGuideArticle(slug);
   if (!article) return { title: "Guide not found" };
-  return {
-    title: `${article.title} | Da Nang Expat Rentals`,
+  const figure = article.blocks.find(
+    (b): b is Extract<(typeof article.blocks)[number], { type: "figure" }> =>
+      b.type === "figure"
+  );
+  const tourImage = article.blocks.find(
+    (b): b is Extract<(typeof article.blocks)[number], { type: "tour" }> =>
+      b.type === "tour"
+  )?.image.src;
+  return buildPageMetadata({
+    title: article.title,
     description: article.description,
-  };
+    path: `/moving-guide/${article.slug}`,
+    image: figure?.src ?? tourImage ?? null,
+    imageAlt: figure?.alt ?? article.title,
+    type: "article",
+  });
 }
 
 export default async function LivingGuideArticlePage({ params }: Props) {

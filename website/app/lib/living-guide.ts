@@ -459,8 +459,9 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
         title: "Hội An day trip",
         tagline: "Lantern streets, slower pace, excellent food — still home for dinner if you want.",
         image: {
-          src: "/danang-hands.jpg",
-          alt: "Hands and everyday life details in central Vietnam",
+          src: "/hoi-an-ancient-town.jpg",
+          alt: "Yellow riverside buildings in Hội An Ancient Town",
+          credit: "Photo: Steffen Schmitz / Wikimedia Commons (CC BY-SA 4.0)",
         },
         duration: "Full day (or overnight)",
         cost: "~$25–60 pp depending on transport + meals",

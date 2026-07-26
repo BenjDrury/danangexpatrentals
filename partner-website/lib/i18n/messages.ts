@@ -672,7 +672,7 @@ const vi: Record<MessageKey, string> = {
   "admin.headerTitle": "Admin · Partner Studio",
   "admin.partnersTitle": "Tất cả đối tác",
   "admin.partnersSubtitle":
-    "Mở studio của đối tác đúng như họ thấy — tiện để gỡ lỗi tài khoản.",
+    "Xem studio của đối tác dưới góc nhìn của họ — hữu ích cho việc kiểm tra và gỡ lỗi tài khoản.",
   "admin.partnersEmpty": "Chưa có tài khoản đối tác.",
   "admin.partnersSearch": "Tìm theo tên, email, công ty hoặc id…",
   "admin.partnersSearchEmpty": "Không có đối tác khớp tìm kiếm.",
@@ -699,7 +699,7 @@ const vi: Record<MessageKey, string> = {
   "admin.fxEnvOverride": "FX_USD_VND đang được đặt — giá trị env được dùng thay cho cài đặt này.",
   "admin.addPartnerTitle": "Thêm đối tác",
   "admin.addPartnerHint":
-    "Tạo công ty, gửi email mời đăng nhập một chạm qua Resend, và giữ link dự phòng để sao chép.",
+    "Tạo công ty, gửi email mời đăng nhập nhanh qua Resend, và giữ link dự phòng để sao chép.",
   "admin.addPartnerCompany": "Tên công ty",
   "admin.addPartnerCompanyPlaceholder": "vd. Sunrise Homes Đà Nẵng",
   "admin.addPartnerEmail": "Email đối tác",
@@ -784,7 +784,7 @@ const vi: Record<MessageKey, string> = {
   "home.partnerFallback": "Đối tác",
   "home.thereFallback": "bạn",
   "home.intro":
-    "Danh sách việc nhẹ cho chỗ của bạn — xác nhận còn trống, rồi quản lý chi tiết ở Tin đăng.",
+    "Danh sách truy cập nhanh các chỗ nghỉ của bạn — xác nhận chỗ ở còn trống, quản lý thông tin chi tiết trong mục Tin đăng.",
   "home.addListing": "Thêm tin đăng",
   "home.viewListings": "Xem tin đăng",
   "home.emptyTitle": "Studio của bạn còn trống",

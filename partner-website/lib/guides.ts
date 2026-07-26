@@ -12,7 +12,7 @@ export const PARTNER_GUIDE_LINKS: PartnerGuideLink[] = [
     title: "Living in Da Nang (hub)",
     titleVi: "Sống ở Đà Nẵng (trang chính)",
     description: "Start here — practical guide for international residents.",
-    descriptionVi: "Bắt đầu từ đây — hướng dẫn thực tế cho cư dân quốc tế.",
+    descriptionVi: "Bắt đầu từ đây — hướng dẫn thực tế cho khách quốc tế.",
     path: "/moving-guide",
   },
   {
@@ -33,14 +33,14 @@ export const PARTNER_GUIDE_LINKS: PartnerGuideLink[] = [
     title: "Neighbourhoods",
     titleVi: "Các khu vực",
     description: "Where to live and what each area feels like.",
-    descriptionVi: "Nên ở đâu và cảm giác từng khu.",
+    descriptionVi: "Nên ở đâu và trải nghiệm ở từng khu vực.",
     path: "/moving-guide/neighbourhoods",
   },
   {
     title: "Visas",
     titleVi: "Visa",
     description: "High-level visa notes for longer stays.",
-    descriptionVi: "Ghi chú visa tổng quan cho lưu trú dài hơn.",
+    descriptionVi: "Ghi chú visa tổng quan cho lưu trú dài hạn.",
     path: "/moving-guide/visas",
   },
   {
@@ -61,7 +61,7 @@ export const PARTNER_GUIDE_LINKS: PartnerGuideLink[] = [
     title: "Activities",
     titleVi: "Hoạt động",
     description: "Surf, wellness, day trips — things to do nearby.",
-    descriptionVi: "Lướt sóng, wellness, tour trong ngày — việc nên làm gần đây.",
+    descriptionVi: "Lướt sóng, wellness, tour trong ngày — các hoạt động gần bạn.",
     path: "/moving-guide/activities",
   },
   {
@@ -75,7 +75,7 @@ export const PARTNER_GUIDE_LINKS: PartnerGuideLink[] = [
     title: "Avoid scams",
     titleVi: "Tránh lừa đảo",
     description: "Trust signals and red flags for apartment hunting.",
-    descriptionVi: "Dấu hiệu tin cậy và cảnh báo đỏ khi tìm căn hộ.",
+    descriptionVi: "Dấu hiệu tin cậy và điểm đáng lưu ý khi tìm căn hộ.",
     path: "/avoid-scams",
   },
 ];

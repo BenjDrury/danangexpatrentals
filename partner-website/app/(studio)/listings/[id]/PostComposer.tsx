@@ -5,6 +5,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { Button, Section, inputClass } from "@/components/ui";
 import { bumpListing, savePostDraft } from "../actions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import posthog from "posthog-js";
 
 export function PostComposer({
   listingId,
@@ -42,6 +43,7 @@ export function PostComposer({
             startTransition(async () => {
               const result = await savePostDraft(listingId, caption);
               setMessage(result.error ?? t("composer.draftSaved"));
+              if (!result.error) posthog.capture("post_draft_saved", { listing_id: listingId });
             });
           }}
         >
@@ -54,6 +56,7 @@ export function PostComposer({
             startTransition(async () => {
               const result = await bumpListing(listingId);
               setMessage(result.error ?? t("composer.markedBumped"));
+              if (!result.error) posthog.capture("listing_bumped", { listing_id: listingId });
             });
           }}
           className="rounded-md bg-palm px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"

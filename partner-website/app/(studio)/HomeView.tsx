@@ -6,6 +6,7 @@ import { listingPriceLabel } from "types";
 import type { HomeFeedItem } from "@/lib/listing-validity";
 import { confirmListingValidity } from "./listings/actions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import posthog from "posthog-js";
 import { ListingImage } from "@/components/ListingImage";
 import { Button, PageHeader } from "@/components/ui";
 
@@ -25,6 +26,7 @@ function ValidityCard({ item }: { item: Extract<HomeFeedItem, { type: "validity"
     setMenuOpen(false);
     startTransition(async () => {
       await confirmListingValidity(listing.id, outcome);
+      posthog.capture("listing_validity_confirmed", { listing_id: listing.id, outcome });
     });
   }
 

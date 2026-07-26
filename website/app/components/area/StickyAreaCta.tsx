@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import posthog from "posthog-js";
 import { WHATSAPP_NUMBER } from "backend";
 
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER.replace(/\D/g, "")}`;
@@ -18,6 +19,7 @@ export function StickyAreaCta({ areaId, areaName }: StickyAreaCtaProps) {
       <div className="content-band flex flex-wrap items-center justify-center gap-3">
         <Link
           href={contactHref}
+          onClick={() => posthog.capture("area_cta_clicked", { area_id: areaId, area_name: areaName, source: "sticky_cta" })}
           className="inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
           style={{ backgroundColor: "#2f6f7e" }}
         >
@@ -27,6 +29,7 @@ export function StickyAreaCta({ areaId, areaName }: StickyAreaCtaProps) {
           href={WHATSAPP_URL}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => posthog.capture("whatsapp_cta_clicked", { area_id: areaId, area_name: areaName, source: "sticky_cta" })}
           className="inline-flex items-center gap-2 rounded-xl border border-line bg-white px-6 py-3 text-sm font-semibold text-charcoal transition hover:bg-sand"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>

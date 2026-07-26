@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { permanentRedirect, notFound } from "next/navigation";
 import {
   agencyFeeLabel,
@@ -10,6 +9,7 @@ import {
   utilitiesIncludedLabel,
 } from "types";
 import { TrackListingView } from "@/app/components/TrackListingView";
+import { ApartmentGallery } from "@/app/components/area/ApartmentGallery";
 import { ApartmentInquiryLink } from "@/app/components/area/ApartmentInquiryLink";
 import { ListingGuides } from "@/app/components/area/ListingGuides";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
@@ -136,37 +136,12 @@ export default async function ApartmentPage({ params }: Props) {
         </Link>
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-12">
-          {/* Gallery */}
-          <div className="flex-1 space-y-4">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-sand">
-              <Image
-                src={apartment.main_image}
-                alt={apartment.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 60vw"
-                priority
-              />
-            </div>
-            {allImages.length > 1 && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {allImages.slice(1, 7).map((url, i) => (
-                  <div
-                    key={i}
-                    className="relative aspect-[4/3] overflow-hidden rounded-quieter bg-sand"
-                  >
-                    <Image
-                      src={url}
-                      alt={`${apartment.title} — photo ${i + 2}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 50vw, 20vw"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ApartmentGallery
+            title={apartment.title}
+            images={allImages}
+            apartmentId={apartment.id}
+            areaId={apartment.area_id}
+          />
 
           {/* Details */}
           <div className="w-full lg:max-w-md lg:shrink-0">

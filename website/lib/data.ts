@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Area, Apartment, ApartmentType, CoworkingSpace, Activity } from "types";
+import { sanitizeListingDescription } from "types";
 import {
   apartmentDerivedSlug,
   apartmentIdPrefixFromParam,
@@ -41,7 +42,9 @@ function mapApartmentRow(row: Record<string, unknown>): Apartment {
     id: String(row.id),
     area_id: row.area_id as string,
     title: row.title as string,
-    description: (row.description as string | null) ?? null,
+    description: sanitizeListingDescription(
+      (row.description as string | null) ?? null
+    ),
     price: Number(row.price),
     price_display: String(row.price_display ?? ""),
     price_amount: row.price_amount != null ? Number(row.price_amount) : null,

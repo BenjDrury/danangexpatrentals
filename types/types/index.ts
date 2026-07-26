@@ -33,4 +33,5 @@ export {
   utilitiesIncludedLabel,
   agencyFeeLabel,
 } from "../lib/listing-terms";
+export { sanitizeListingDescription } from "../lib/sanitize-listing-description";
 

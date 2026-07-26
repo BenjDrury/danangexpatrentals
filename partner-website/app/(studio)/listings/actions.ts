@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   convertPrice,
+  sanitizeListingDescription,
   type Apartment,
   type PriceCurrency,
   type PropertyType,
@@ -157,7 +158,9 @@ async function readListingFields(
 ) {
   const title = String(formData.get("title") ?? "").trim();
   const area_id = String(formData.get("area_id") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim() || null;
+  const description = sanitizeListingDescription(
+    String(formData.get("description") ?? "")
+  );
   const bedrooms = Number(formData.get("bedrooms") ?? 1);
   const bathroomsRaw = String(formData.get("bathrooms") ?? "").trim();
   const sizeRaw = String(formData.get("size_sqm") ?? "").trim();

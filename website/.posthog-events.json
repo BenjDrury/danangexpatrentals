@@ -20,6 +20,11 @@
     "file": "app/components/TrackListingView.tsx"
   },
   {
+    "event_name": "listing_gallery_opened",
+    "event_description": "User opened the full-screen photo lightbox on a listing detail page.",
+    "file": "app/components/area/ApartmentGallery.tsx"
+  },
+  {
     "event_name": "listing_card_clicked",
     "event_description": "User clicked a listing card (image, title, or details).",
     "file": "app/components/area/ApartmentCard.tsx"

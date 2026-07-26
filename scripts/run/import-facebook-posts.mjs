@@ -21,12 +21,17 @@
 
 import { createClient } from "@supabase/supabase-js";
 import { config } from "dotenv";
+import { createRequire } from "module";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { filterScrapedPosts } from "./lib/fb-post-quality.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const { sanitizeListingDescription } = require(
+  "../../types/dist/lib/sanitize-listing-description.js"
+);
 const scriptsDir = join(__dirname, "..");
 config({ path: join(scriptsDir, ".env") });
 config({ path: join(scriptsDir, ".secret.local") });
@@ -141,7 +146,7 @@ If the post mentions a ward/area not listed (e.g. Hoa Xuan, Cam Le), choose the 
 FIELD RULES:
 - area_id: Exactly one of the ids above. Prefer the area that best matches the post’s location for an expat (e.g. "near Mega market" → consider which area that is; "Hoa Xuan" → "other" unless it clearly fits a listed area).
 - title: Short, clear for expats. E.g. "3BR house in Hoa Xuan, furnished" or "Studio near My Khe beach". Max 120 characters.
-- description: Full post text or a clear summary. Keep location, price mention, key perks, and contact info. Write so an expat can quickly see if it fits (location, USD equivalent, lease length, furnished/amenities).
+- description: Full post text or a clear summary. Keep location, price mention, and key perks. Do NOT include phone numbers, emails, Zalo, WhatsApp, or other contact details. Write so an expat can quickly see if it fits (location, USD equivalent, lease length, furnished/amenities).
 - price: Monthly rent in USD. Convert from VND using ${vndToUsd} VND = 1 USD (e.g. "30 million/month" → ${Math.round(30_000_000 / vndToUsd)}). Integer. Use 0 only if no price given.
 - price_display: String like "~$1200/month" or "From $400/month" or "Price on request" if no price.
 - bedrooms, bathrooms: Integers 1–99. bathrooms null if not stated.
@@ -199,7 +204,9 @@ async function extractWithLLM(content, areas) {
     return {
       area_id: areaIds.has(parsed.area_id) ? parsed.area_id : fallbackAreaId,
       title: String(parsed.title ?? "").slice(0, 500) || "Imported listing",
-      description: parsed.description != null ? String(parsed.description).slice(0, 10000) : null,
+      description: sanitizeListingDescription(
+        parsed.description != null ? String(parsed.description).slice(0, 10000) : null
+      ),
       price: Math.max(0, Number(parsed.price) || 0),
       price_display: String(parsed.price_display ?? "").slice(0, 100) || "Price on request",
       bedrooms: Math.min(99, Math.max(0, Number(parsed.bedrooms) || 1)),
@@ -282,7 +289,7 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
       source_url: normalizePermalink(post.url || post.input?.url) || (post.url || post.input?.url) || null,
       source_post_id: post.post_id ? String(post.post_id) : null,
       title: extracted.title.slice(0, 500),
-      description: extracted.description,
+      description: sanitizeListingDescription(extracted.description),
       price: extracted.price,
       price_display: extracted.price_display || "Price on request",
       main_image: mainImage,
@@ -301,7 +308,7 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
   const bedrooms = parseBedrooms(content);
   const bathrooms = parseBathrooms(content);
   const { priceUsd, priceDisplay } = parsePriceVndToUsd(content);
-  const description = content.slice(0, 10000) || null;
+  const description = sanitizeListingDescription(content.slice(0, 10000) || null);
 
   return {
     area_id: areaId,

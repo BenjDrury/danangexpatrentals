@@ -27,6 +27,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createHash } from "crypto";
 import { config } from "dotenv";
+import { createRequire } from "module";
 import { mkdirSync, mkdtempSync, writeFileSync, rmSync, readFileSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
@@ -35,6 +36,10 @@ import { tmpdir } from "os";
 import { filterScrapedPosts } from "./lib/fb-post-quality.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const { sanitizeListingDescription } = require(
+  "../../types/dist/lib/sanitize-listing-description.js"
+);
 const scriptsDir = join(__dirname, "..");
 config({ path: join(scriptsDir, ".env") });
 config({ path: join(scriptsDir, ".secret.local") });
@@ -264,11 +269,18 @@ end tell
   }
 }
 
+function imageUrlKey(url) {
+  if (!url) return "";
+  return url.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || url.split("?")[0];
+}
+
 function enrichImagesFromLightbox(data) {
   if (!data?.posts?.length) return data;
   console.log("Enriching photos via Chrome lightbox…");
   const posts = data.posts;
   const dir = mkdtempSync(join(tmpdir(), "fb-lightbox-"));
+  /** Image keys already claimed by an earlier post — never reuse across listings. */
+  const claimedKeys = new Set();
   try {
     runOsascript(`
 tell application "Google Chrome"
@@ -279,7 +291,8 @@ end tell
     execFileSync("sleep", ["0.5"]);
 
     for (let i = 0; i < posts.length; i++) {
-      const snippet = (posts[i].text || "").replace(/\s+/g, " ").slice(0, 40);
+      const feedKeys = new Set((posts[i].images || []).map(imageUrlKey).filter(Boolean));
+      const snippet = (posts[i].text || "").replace(/\s+/g, " ").slice(0, 48);
       const openPath = join(dir, `open-${i}.js`);
       const collectPath = join(dir, `collect-${i}.js`);
       writeFileSync(
@@ -287,18 +300,20 @@ end tell
         `(() => {
   const needles = [
     ${JSON.stringify(snippet)},
-    ${JSON.stringify(snippet.slice(0, 24))},
-    ${JSON.stringify((posts[i].text || "").match(/(?:CHO THUÊ|Cho thuê|House for rent|For rent|NCC)[^.]{0,40}/i)?.[0] || "")},
+    ${JSON.stringify(snippet.slice(0, 28))},
+    ${JSON.stringify((posts[i].text || "").match(/(?:CHO THUÊ|Cho thuê|House for rent|For rent|VIP APARTMENT|CĂN HỘ|NCC)[^.]{0,40}/i)?.[0] || "")},
   ].filter(Boolean);
-  function tryOpen(el) {
-    const imgs = [...el.querySelectorAll("img")].filter((img) => {
+  function tryOpen(article) {
+    // Prefer photo tiles inside this article only — never the global feed.
+    const imgs = [...article.querySelectorAll("img")].filter((img) => {
       const s = img.currentSrc || img.src || "";
-      return /scontent|fbcdn/.test(s) && (img.naturalWidth || 0) >= 100;
+      return /scontent|fbcdn/.test(s) && (img.naturalWidth || 0) >= 120;
     });
     if (imgs.length) {
-      try { imgs.sort((a,b)=>(b.naturalWidth*b.naturalHeight)-(a.naturalWidth*a.naturalHeight))[0].click(); return true; } catch (e) {}
+      imgs.sort((a,b)=>(b.naturalWidth*b.naturalHeight)-(a.naturalWidth*a.naturalHeight));
+      try { imgs[0].click(); return true; } catch (e) {}
     }
-    const plus = [...el.querySelectorAll("span, div, a")].find((n) =>
+    const plus = [...article.querySelectorAll("span, div, a")].find((n) =>
       /^\\+\\d+$/.test((n.innerText || "").trim())
     );
     if (plus) {
@@ -306,25 +321,32 @@ end tell
     }
     return false;
   }
+  function articleForNode(node) {
+    let el = node.parentElement;
+    for (let d = 0; d < 25 && el; d++) {
+      if (el.getAttribute && el.getAttribute("role") === "article") return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
   for (const needle of needles) {
+    if (!needle || needle.length < 10) continue;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const v = (walker.currentNode.nodeValue || "").replace(/\\s+/g, " ");
-      if (!v.includes(needle.slice(0, Math.min(16, needle.length)))) continue;
+      if (!v.includes(needle.slice(0, Math.min(18, needle.length)))) continue;
+      const article = articleForNode(walker.currentNode);
+      if (article && tryOpen(article)) return "opened:" + needle.slice(0, 24);
+      // Last resort: walk up from the text node, still not global nth-image.
       let el = walker.currentNode.parentElement;
-      for (let d = 0; d < 20 && el; d++) {
-        if (tryOpen(el)) return "opened:" + needle.slice(0, 20);
+      for (let d = 0; d < 16 && el; d++) {
+        if (tryOpen(el)) return "opened-ancestor:" + needle.slice(0, 20);
         el = el.parentElement;
       }
     }
   }
-  // Fallback: open Nth large listing image on page
-  const big = [...document.querySelectorAll("img")]
-    .filter((img) => /scontent|fbcdn/.test(img.currentSrc || img.src || "") && (img.naturalWidth || 0) >= 280)
-    .slice(0, 40);
-  if (big[${i}]) {
-    try { big[${i}].click(); return "opened-nth"; } catch (e) {}
-  }
+  // Do NOT fall back to "Nth large image on page" — that reopens the same album
+  // for every post and contaminates listings with identical photos.
   return "miss";
 })();`,
         "utf8"
@@ -339,40 +361,36 @@ end tell
     const m = src.match(/\\/(\\d+_\\d+_\\d+_n)\\./);
     return m ? m[1] : src.split("?")[0];
   }
-  const roots = [
-    document.querySelector('[role="dialog"]'),
-    document.querySelector('[aria-label*="Photo"]'),
-    document.querySelector('[aria-label*="photo"]'),
-    ...document.querySelectorAll('div[style*="z-index"]'),
-    document.body,
-  ].filter(Boolean);
+  // ONLY the open photo dialog — never document.body (that pulls every post's imgs).
+  const dialog =
+    document.querySelector('[role="dialog"]') ||
+    document.querySelector('[aria-label*="Photo viewer"]') ||
+    document.querySelector('[aria-label*="Photo"]');
+  if (!dialog) return JSON.stringify({ ok: false, reason: "no-dialog", urls: [] });
   const urls = [];
   const seen = new Set();
   function add(src) {
     src = upgrade(src);
     if (!src || !/scontent|fbcdn/.test(src)) return;
-    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|static\\.xx\\.fbcdn|ctp=p\\d+x\\d+/.test(src)) return;
+    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|static\\.xx\\.fbcdn|ctp=p\\d+x\\d+|s80x80|s64x64/.test(src)) return;
     const k = key(src);
     if (seen.has(k)) return;
     seen.add(k);
     urls.push(src);
   }
-  for (const root of roots) {
-    for (const img of root.querySelectorAll("img")) {
-      add(img.currentSrc || img.src || "");
-      const srcset = img.getAttribute("srcset") || "";
-      for (const part of srcset.split(",")) {
-        const u = part.trim().split(/\\s+/)[0];
-        if (u) add(u);
-      }
+  for (const img of dialog.querySelectorAll("img")) {
+    add(img.currentSrc || img.src || "");
+    const srcset = img.getAttribute("srcset") || "";
+    for (const part of srcset.split(",")) {
+      const u = part.trim().split(/\\s+/)[0];
+      if (u) add(u);
     }
-    const html = root.innerHTML || "";
-    const re = /https:\\/\\/[^"'\\\\\\s<>]+(?:scontent|fbcdn\\.net)[^"'\\\\\\s<>]*/g;
-    let m;
-    while ((m = re.exec(html)) !== null) add(m[0]);
-    if (urls.length >= ${maxImages}) break;
   }
-  return JSON.stringify(urls.slice(0, ${maxImages}));
+  const html = dialog.innerHTML || "";
+  const re = /https:\\/\\/[^"'\\\\\\s<>]+(?:scontent|fbcdn\\.net)[^"'\\\\\\s<>]*/g;
+  let m;
+  while ((m = re.exec(html)) !== null) add(m[0]);
+  return JSON.stringify({ ok: true, urls: urls.slice(0, ${maxImages}) });
 })();`,
         "utf8"
       );
@@ -387,7 +405,10 @@ tell application "Google Chrome"
 end tell
 `);
         if (!openResult || openResult === "miss") {
-          console.warn(`  lightbox post ${i + 1}: could not open album`);
+          console.warn(
+            `  lightbox post ${i + 1}: could not open album — keeping feed images only`
+          );
+          for (const k of feedKeys) claimedKeys.add(k);
           continue;
         }
         execFileSync("sleep", ["1.0"]);
@@ -402,26 +423,44 @@ tell application "Google Chrome"
   return execute t javascript jsCode
 end tell
 `);
-          if (!collectedRaw || collectedRaw === "missing value") return;
+          if (!collectedRaw || collectedRaw === "missing value") return false;
           try {
-            const batch = JSON.parse(collectedRaw);
-            if (!Array.isArray(batch)) return;
+            const parsed = JSON.parse(collectedRaw);
+            const batch = Array.isArray(parsed) ? parsed : parsed?.urls;
+            if (!Array.isArray(batch) || (parsed?.ok === false && !batch.length)) {
+              return false;
+            }
             for (const u of batch) {
-              const k = u.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || u.split("?")[0];
-              if (seenExtra.has(k)) continue;
+              const k = imageUrlKey(u);
+              if (!k || seenExtra.has(k)) continue;
               seenExtra.add(k);
               allExtra.push(u);
             }
+            return true;
           } catch {
-            /* ignore */
+            return false;
           }
         };
-        harvest();
+        const firstOk = harvest();
+        if (!firstOk) {
+          console.warn(
+            `  lightbox post ${i + 1}: no dialog after open (${openResult}) — keeping feed images`
+          );
+          runOsascript(`
+tell application "Google Chrome"
+  set t to active tab of front window
+  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;"
+end tell
+`);
+          for (const k of feedKeys) claimedKeys.add(k);
+          execFileSync("sleep", ["0.35"]);
+          continue;
+        }
         for (let step = 0; step < Math.min(18, maxImages); step++) {
           const stepped = runOsascript(`
 tell application "Google Chrome"
   set t to active tab of front window
-  return execute t javascript "(() => { const n = document.querySelector('[aria-label=\\"Next\\"], [aria-label=\\"Next photo\\"]'); if (n) { n.click(); return 'ok'; } return 'no'; })();"
+  return execute t javascript "(() => { const n = document.querySelector('[role=\\"dialog\\"] [aria-label=\\"Next\\"], [role=\\"dialog\\"] [aria-label=\\"Next photo\\"]'); if (n) { n.click(); return 'ok'; } return 'no'; })();"
 end tell
 `);
           if (stepped === "no") break;
@@ -436,28 +475,35 @@ tell application "Google Chrome"
 end tell
 `);
         execFileSync("sleep", ["0.35"]);
-        if (!allExtra.length) {
-          console.warn(`  lightbox post ${i + 1}: empty album (${openResult})`);
-          runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); window.scrollBy(0, 900); true;"
-end tell
-`);
-          execFileSync("sleep", ["0.5"]);
-          continue;
+
+        // Drop photos already used by an earlier listing in this scrape.
+        const freshExtra = allExtra.filter((u) => !claimedKeys.has(imageUrlKey(u)));
+        const overlap =
+          allExtra.length === 0
+            ? 0
+            : (allExtra.length - freshExtra.length) / allExtra.length;
+        if (allExtra.length >= 3 && overlap >= 0.5) {
+          console.warn(
+            `  lightbox post ${i + 1}: ${Math.round(overlap * 100)}% overlap with earlier posts — keeping feed images only (${openResult})`
+          );
+          for (const k of feedKeys) claimedKeys.add(k);
+        } else {
+          const merged = [];
+          const seen = new Set();
+          for (const u of [...(posts[i].images || []), ...freshExtra]) {
+            const k = imageUrlKey(u);
+            if (!k || seen.has(k) || claimedKeys.has(k)) continue;
+            seen.add(k);
+            merged.push(u);
+            if (merged.length >= maxImages) break;
+          }
+          for (const u of merged) claimedKeys.add(imageUrlKey(u));
+          posts[i].images = merged;
+          console.log(
+            `  lightbox post ${i + 1}: ${merged.length} images (${openResult}${overlap > 0 ? `, filtered ${Math.round(overlap * 100)}% reused` : ""})`
+          );
         }
-        const merged = [];
-        const seen = new Set();
-        for (const u of [...(posts[i].images || []), ...allExtra]) {
-          const k = u.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || u.split("?")[0];
-          if (seen.has(k)) continue;
-          seen.add(k);
-          merged.push(u);
-          if (merged.length >= maxImages) break;
-        }
-        posts[i].images = merged;
-        console.log(`  lightbox post ${i + 1}: ${merged.length} images (${openResult})`);
+
         runOsascript(`
 tell application "Google Chrome"
   set t to active tab of front window
@@ -465,7 +511,6 @@ tell application "Google Chrome"
 end tell
 `);
         execFileSync("sleep", ["0.45"]);
-        // Nudge feed so next post is findable again
         runOsascript(`
 tell application "Google Chrome"
   set t to active tab of front window
@@ -475,6 +520,7 @@ end tell
         execFileSync("sleep", ["0.35"]);
       } catch (e) {
         console.warn(`  lightbox post ${i + 1} skipped:`, (e.message || String(e)).slice(0, 120));
+        for (const k of feedKeys) claimedKeys.add(k);
       }
     }
   } finally {
@@ -580,7 +626,7 @@ If the post mentions a ward/area not listed, choose the closest match or use "ot
 
 FIELD RULES:
 - title: Short, clear English for expats. E.g. "3BR furnished house near Dragon Bridge" or "Studio near My Khe beach". Max 120 characters. Do not paste raw Vietnamese marketing headers like "NCC - CHO THUÊ…" — translate/summarize.
-- description: Clear English summary for expats. Keep location, price, rooms, key amenities, and contact (phone/Zalo/WhatsApp) if present. You may keep original Vietnamese phrases in parentheses when helpful.
+- description: Clear English summary for expats. Keep location, price, rooms, and key amenities. Do NOT include phone numbers, emails, Zalo, WhatsApp, or other contact details — those belong in contact_* fields only. You may keep original Vietnamese phrases in parentheses when helpful.
 - price: Monthly rent in USD. Convert from VND using ${vndToUsd} VND = 1 USD. Integer. Use 0 only if no price given.
 - price_display: e.g. "~$1000/month" or "Price on request".
 - bedrooms, bathrooms: Integers; bathrooms null if unknown.
@@ -691,8 +737,9 @@ async function extractWithLLM(content, areas) {
       return {
         area_id: areaIds.has(parsed.area_id) ? parsed.area_id : fallbackAreaId,
         title: String(parsed.title ?? "").slice(0, 500) || "Imported listing",
-        description:
-          parsed.description != null ? String(parsed.description).slice(0, 10000) : null,
+        description: sanitizeListingDescription(
+          parsed.description != null ? String(parsed.description).slice(0, 10000) : null
+        ),
         price: Math.max(0, Number(parsed.price) || 0),
         price_display:
           String(parsed.price_display ?? "").slice(0, 100) || "Price on request",
@@ -884,6 +931,8 @@ async function seed(data) {
   let inserted = 0;
   let skipped = 0;
   const posts = Array.isArray(data.posts) ? data.posts : [];
+  /** Content hashes already uploaded for this company in this run. */
+  const usedImageContentHashes = new Set();
   const contactHints = {
     phone: null,
     whatsapp: null,
@@ -932,11 +981,19 @@ async function seed(data) {
     for (let i = 0; i < imageUrls.length; i++) {
       try {
         const buf = await downloadImage(imageUrls[i]);
+        const contentHash = createHash("sha1").update(buf).digest("hex");
+        if (usedImageContentHashes.has(contentHash)) {
+          console.warn(
+            `  image skip ${i}: already used by an earlier listing in this scrape`
+          );
+          continue;
+        }
         const storagePath = `${facebookId}/${hash}/${i}.jpg`;
         const up = await supabase.storage
           .from("apartments")
           .upload(storagePath, buf, { contentType: "image/jpeg", upsert: true });
         if (up.error) throw up.error;
+        usedImageContentHashes.add(contentHash);
         stored.push(
           supabase.storage.from("apartments").getPublicUrl(storagePath).data.publicUrl
         );
@@ -987,7 +1044,9 @@ async function seed(data) {
       source_url: permalink,
       source_post_id: sourcePostId,
       title: title.slice(0, 500),
-      description: extracted?.description ?? (content.slice(0, 10000) || null),
+      description: sanitizeListingDescription(
+        extracted?.description ?? (content.slice(0, 10000) || null)
+      ),
       price: Math.max(0, priceUsd),
       price_display: priceDisplay || "Price on request",
       price_usd: priceUsd > 0 ? priceUsd : null,

@@ -14,6 +14,7 @@ import { buildListingCaption } from "@/lib/post-composer";
 import { apartmentPublicUrl } from "@/lib/public-url";
 import { filterListingFeatures } from "@/lib/listing-features";
 import { parseCommissionFormData } from "@/lib/deal-commission";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export type ListingDealActionState = { error?: string; ok?: boolean };
 
@@ -201,6 +202,21 @@ export async function createListing(
     .single();
 
   if (error || !data) return { error: error?.message ?? "Could not create listing." };
+
+  const posthog = getPostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: session.user.id,
+      event: "listing_created",
+      properties: {
+        listing_id: data.id,
+        bedrooms: fields.bedrooms,
+        price_usd: fields.price_usd,
+        price_currency: fields.price_currency,
+      },
+    });
+    await posthog.flush();
+  }
 
   revalidateListingPaths(data.id);
   redirect(`/listings/${data.id}`);
@@ -631,6 +647,16 @@ export async function deleteListing(id: string): Promise<ListingFormState> {
     await supabase.storage.from("apartments").remove(storagePaths);
   }
 
+  const posthogDel = getPostHogClient();
+  if (posthogDel) {
+    posthogDel.capture({
+      distinctId: session.user.id,
+      event: "listing_deleted",
+      properties: { listing_id: id },
+    });
+    await posthogDel.flush();
+  }
+
   revalidatePath("/");
   revalidatePath("/listings");
   revalidatePath("/admin/approvals");
@@ -844,6 +870,16 @@ export async function connectContactToListing(
       }
       return { error: error.message };
     }
+  }
+
+  const posthogDeal = getPostHogClient();
+  if (posthogDeal) {
+    posthogDeal.capture({
+      distinctId: session.user.id,
+      event: "deal_contact_connected",
+      properties: { listing_id: listingId, contact_id: contactId },
+    });
+    await posthogDeal.flush();
   }
 
   revalidateListingPaths(listingId);

@@ -1,0 +1,32 @@
+[
+  {
+    "event_name": "lead_submitted",
+    "event_description": "User successfully submitted the concierge form to request apartment matches.",
+    "file": "app/components/ConciergeForm.tsx"
+  },
+  {
+    "event_name": "lead_submit_failed",
+    "event_description": "User's concierge form submission failed with a server or validation error.",
+    "file": "app/components/ConciergeForm.tsx"
+  },
+  {
+    "event_name": "lead_submitted_server",
+    "event_description": "Server-side confirmation that a lead was successfully saved to Supabase and notification sent.",
+    "file": "app/actions/lead.ts"
+  },
+  {
+    "event_name": "apartment_inquiry_clicked",
+    "event_description": "User clicked the 'Inquire about this apartment' button on an apartment detail page.",
+    "file": "app/components/area/ApartmentInquiryLink.tsx"
+  },
+  {
+    "event_name": "area_cta_clicked",
+    "event_description": "User clicked 'Get apartment matches' from the sticky area CTA bar on a neighbourhood guide page.",
+    "file": "app/components/area/StickyAreaCta.tsx"
+  },
+  {
+    "event_name": "whatsapp_cta_clicked",
+    "event_description": "User clicked the 'Chat on WhatsApp' button from the sticky area CTA bar.",
+    "file": "app/components/area/StickyAreaCta.tsx"
+  }
+]

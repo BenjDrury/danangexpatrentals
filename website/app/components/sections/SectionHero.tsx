@@ -51,7 +51,7 @@ export function SectionHero({
   }
 
   return (
-    <section className="relative flex min-h-[85svh] items-end overflow-hidden sm:min-h-[90svh]">
+    <section className="relative flex min-h-svh items-end overflow-hidden">
       <div className="absolute inset-0">
         <Image
           src="/danang-hero-bg.jpg"

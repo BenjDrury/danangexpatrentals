@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requirePartner } from "@/lib/auth";
 import { hasAnyCommission, parseCommissionFormData } from "@/lib/deal-commission";
 import { createClient } from "@/lib/supabase/server";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 export type ContactFormState = {
   error?: string;
@@ -90,6 +91,20 @@ export async function createContact(
     }
   }
 
+  const posthog = getPostHogClient();
+  if (posthog) {
+    posthog.capture({
+      distinctId: session.user.id,
+      event: "contact_created",
+      properties: {
+        contact_id: contact.id,
+        has_listing: Boolean(apartmentId),
+        has_commission: hasAnyCommission(commission),
+      },
+    });
+    await posthog.flush();
+  }
+
   revalidateDealPaths({ contactId: contact.id, apartmentId });
   return { ok: true, contactId: contact.id };
 }
@@ -158,6 +173,16 @@ export async function deleteContact(contactId: string): Promise<{ error?: string
     .eq("estate_company_id", session.estateCompanyId);
 
   if (error) return { error: error.message };
+
+  const posthogDel = getPostHogClient();
+  if (posthogDel) {
+    posthogDel.capture({
+      distinctId: session.user.id,
+      event: "contact_deleted",
+      properties: { contact_id: contactId },
+    });
+    await posthogDel.flush();
+  }
 
   revalidatePath("/contacts");
   redirect("/contacts");

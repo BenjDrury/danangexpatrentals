@@ -1,0 +1,72 @@
+[
+  {
+    "event_name": "listing_created",
+    "event_description": "A partner successfully creates a new property listing (server-side).",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "listing_submitted_for_review",
+    "event_description": "A partner submits a draft listing to go live for admin review (client-side).",
+    "file": "app/(studio)/listings/[id]/StatusToggle.tsx"
+  },
+  {
+    "event_name": "listing_approved",
+    "event_description": "An admin approves a pending-review listing to make it available (client-side).",
+    "file": "app/(studio)/listings/[id]/StatusToggle.tsx"
+  },
+  {
+    "event_name": "listing_deleted",
+    "event_description": "A partner hard-deletes a listing and its photos (server-side).",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "listing_bumped",
+    "event_description": "A partner bumps a listing to refresh its sort position (client-side).",
+    "file": "app/(studio)/listings/[id]/PostComposer.tsx"
+  },
+  {
+    "event_name": "listing_validity_confirmed",
+    "event_description": "A partner confirms whether a listing is still available, reserved, or rented (client-side).",
+    "file": "app/(studio)/HomeView.tsx"
+  },
+  {
+    "event_name": "contact_created",
+    "event_description": "A partner creates a new contact/lead record, optionally linked to a listing (server-side).",
+    "file": "app/(studio)/contacts/actions.ts"
+  },
+  {
+    "event_name": "contact_deleted",
+    "event_description": "A partner deletes a contact and unlinks their deals (server-side).",
+    "file": "app/(studio)/contacts/actions.ts"
+  },
+  {
+    "event_name": "deal_contact_connected",
+    "event_description": "A partner links a contact to a listing, creating a deal pipeline entry (server-side).",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "post_draft_saved",
+    "event_description": "A partner saves a social-media post draft caption for a listing (client-side).",
+    "file": "app/(studio)/listings/[id]/PostComposer.tsx"
+  },
+  {
+    "event_name": "team_member_invited",
+    "event_description": "A partner or admin generates an invite link for a new team member (client-side).",
+    "file": "app/(studio)/settings/SettingsView.tsx"
+  },
+  {
+    "event_name": "team_invite_accepted",
+    "event_description": "A new team member accepts their invite and joins the studio (client-side).",
+    "file": "app/invite/[token]/InviteAcceptView.tsx"
+  },
+  {
+    "event_name": "facebook_integration_connected",
+    "event_description": "A partner successfully completes the Facebook OAuth flow and connects their Page (server-side).",
+    "file": "app/api/integrations/facebook/callback/route.ts"
+  },
+  {
+    "event_name": "facebook_integration_disconnected",
+    "event_description": "A partner disconnects their Facebook Page integration from the studio (client-side).",
+    "file": "app/(studio)/settings/SettingsView.tsx"
+  }
+]

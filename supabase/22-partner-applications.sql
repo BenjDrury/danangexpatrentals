@@ -10,6 +10,7 @@ create table if not exists public.partner_applications (
   role text,
   areas text,
   inventory_note text,
+  facebook_page text,
   source text not null default 'website'
 );
 

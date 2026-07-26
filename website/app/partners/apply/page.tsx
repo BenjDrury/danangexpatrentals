@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PartnerApplyForm } from "./PartnerApplyForm";
 import { Section, SectionHero } from "@/app/components/sections";
 import { TrackedLink } from "@/app/components/TrackedLink";
+import { getAreas } from "@/lib/data";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -12,7 +13,14 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/partners/apply",
 });
 
-export default function PartnerApplyPage() {
+export const revalidate = 300;
+
+export default async function PartnerApplyPage() {
+  const areas = await getAreas();
+  const areaOptions = areas
+    .map((a) => ({ id: a.id, name: a.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <div className="min-h-screen bg-foam">
       <SectionHero
@@ -34,7 +42,7 @@ export default function PartnerApplyPage() {
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ocean" aria-hidden />
-                <span>Clear pricing, honest photos, and English-friendly communication.</span>
+                <span>Clear pricing and honest photos.</span>
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-ocean" aria-hidden />
@@ -70,7 +78,7 @@ export default function PartnerApplyPage() {
             </h2>
             <p className="mt-3 text-muted">Takes about two minutes. We’ll reply if it’s a fit.</p>
             <div className="mt-8">
-              <PartnerApplyForm />
+              <PartnerApplyForm areas={areaOptions} />
             </div>
           </div>
         </div>

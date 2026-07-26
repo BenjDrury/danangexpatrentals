@@ -14,15 +14,23 @@ const initialState: PartnerApplicationState = { ok: false, error: "" };
 const inputClass =
   "w-full rounded-quieter border border-line bg-foam px-4 py-3 text-charcoal placeholder:text-muted/60 focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15 transition";
 
-export function PartnerApplyForm() {
+export type PartnerApplyAreaOption = { id: string; name: string };
+
+export function PartnerApplyForm({ areas }: { areas: PartnerApplyAreaOption[] }) {
   const [state, formAction, isPending] = useActionState(
     async (_: PartnerApplicationState, formData: FormData) => {
       const result = await submitPartnerApplication(formData);
       if (result.ok) {
+        const selectedAreas = formData
+          .getAll("areas")
+          .map((v) => String(v).trim())
+          .filter(Boolean);
         capture("partner_application_submitted", {
           has_company: !!String(formData.get("company_name") || "").trim(),
+          has_facebook_page: !!String(formData.get("facebook_page") || "").trim(),
           has_role: !!String(formData.get("role") || "").trim(),
-          has_areas: !!String(formData.get("areas") || "").trim(),
+          has_areas: selectedAreas.length > 0,
+          areas_count: selectedAreas.length,
           has_inventory_note: !!String(formData.get("inventory_note") || "").trim(),
           source: "partner_apply_form",
         });
@@ -113,6 +121,20 @@ export function PartnerApplyForm() {
         />
       </div>
       <div>
+        <label htmlFor="facebook_page" className="mb-1.5 block text-sm font-medium text-charcoal">
+          Facebook page <span className="text-muted">(optional)</span>
+        </label>
+        <input
+          type="text"
+          id="facebook_page"
+          name="facebook_page"
+          inputMode="url"
+          autoComplete="url"
+          placeholder="https://www.facebook.com/your-page"
+          className={inputClass}
+        />
+      </div>
+      <div>
         <label htmlFor="role" className="mb-1.5 block text-sm font-medium text-charcoal">
           You are <span className="text-muted">(optional)</span>
         </label>
@@ -126,18 +148,31 @@ export function PartnerApplyForm() {
           <option value="other">Other</option>
         </select>
       </div>
-      <div>
-        <label htmlFor="areas" className="mb-1.5 block text-sm font-medium text-charcoal">
-          Areas you cover <span className="text-muted">(optional)</span>
-        </label>
-        <input
-          type="text"
-          id="areas"
-          name="areas"
-          placeholder="e.g. An Thuong, My Khe, Son Tra"
-          className={inputClass}
-        />
-      </div>
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-charcoal">
+          Areas you cover <span className="font-normal text-muted">(optional)</span>
+        </legend>
+        {areas.length === 0 ? (
+          <p className="text-sm text-muted">Area list unavailable — you can mention areas in the note below.</p>
+        ) : (
+          <div className="mt-1 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {areas.map((area) => (
+              <label
+                key={area.id}
+                className="flex cursor-pointer items-center gap-2.5 rounded-quieter border border-line bg-foam px-3 py-2.5 transition hover:border-ocean/40"
+              >
+                <input
+                  type="checkbox"
+                  name="areas"
+                  value={area.name}
+                  className="h-4 w-4 rounded border-line text-ocean focus:ring-ocean/30"
+                />
+                <span className="text-sm text-charcoal">{area.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </fieldset>
       <div>
         <label htmlFor="inventory_note" className="mb-1.5 block text-sm font-medium text-charcoal">
           Tell us about your inventory <span className="text-muted">(optional)</span>

@@ -17,8 +17,13 @@ export async function submitPartnerApplication(
   const email = (formData.get("email") as string)?.trim() || "";
   const whatsapp = (formData.get("whatsapp") as string)?.trim() || "";
   const companyName = (formData.get("company_name") as string)?.trim() || null;
+  const facebookPage = (formData.get("facebook_page") as string)?.trim() || null;
   const role = (formData.get("role") as string)?.trim() || null;
-  const areas = (formData.get("areas") as string)?.trim() || null;
+  const selectedAreas = formData
+    .getAll("areas")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
+  const areas = selectedAreas.length > 0 ? selectedAreas.join(", ") : null;
   const inventoryNote = (formData.get("inventory_note") as string)?.trim() || null;
 
   if (!name) {
@@ -36,6 +41,7 @@ export async function submitPartnerApplication(
     email,
     whatsapp,
     company_name: companyName,
+    facebook_page: facebookPage,
     role,
     areas,
     inventory_note: inventoryNote,
@@ -66,6 +72,7 @@ export async function submitPartnerApplication(
           `Email: ${email}`,
           `WhatsApp: ${whatsapp}`,
           companyName ? `Company: ${companyName}` : null,
+          facebookPage ? `Facebook page: ${facebookPage}` : null,
           role ? `Role: ${role}` : null,
           areas ? `Areas: ${areas}` : null,
           inventoryNote ? `Inventory: ${inventoryNote}` : null,
@@ -80,8 +87,10 @@ export async function submitPartnerApplication(
 
   await captureServer("partner_application_submitted_server", {
     has_company: !!companyName,
+    has_facebook_page: !!facebookPage,
     has_role: !!role,
     has_areas: !!areas,
+    areas_count: selectedAreas.length,
     has_inventory_note: !!inventoryNote,
     source: "website",
   });

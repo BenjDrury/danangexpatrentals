@@ -25,15 +25,46 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-function readStoredLocale(): Locale {
-  if (typeof window === "undefined") return "en";
+const VIETNAM_TIMEZONES = new Set(["Asia/Ho_Chi_Minh", "Asia/Saigon"]);
+
+function readStoredLocale(): Locale | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(LOCALE_STORAGE_KEY);
     if (raw === "vi" || raw === "en") return raw;
   } catch {
     /* ignore */
   }
+  return null;
+}
+
+/** Infer Vietnamese when the device looks Vietnam-based (tz or browser language). */
+function detectDefaultLocale(): Locale {
+  if (typeof window === "undefined") return "en";
+
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timeZone && VIETNAM_TIMEZONES.has(timeZone)) return "vi";
+  } catch {
+    /* ignore */
+  }
+
+  const languages =
+    typeof navigator !== "undefined"
+      ? navigator.languages?.length
+        ? navigator.languages
+        : navigator.language
+          ? [navigator.language]
+          : []
+      : [];
+
+  if (languages.some((lang) => lang.toLowerCase().startsWith("vi"))) return "vi";
+
   return "en";
+}
+
+function resolveInitialLocale(): Locale {
+  return readStoredLocale() ?? detectDefaultLocale();
 }
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
@@ -41,7 +72,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setLocaleState(readStoredLocale());
+    setLocaleState(resolveInitialLocale());
     setReady(true);
   }, []);
 

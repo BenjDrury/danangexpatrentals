@@ -14,7 +14,7 @@ import { buildListingCaption } from "@/lib/post-composer";
 import { apartmentPublicUrl } from "@/lib/public-url";
 import { filterListingFeatures } from "@/lib/listing-features";
 import { parseCommissionFormData } from "@/lib/deal-commission";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { captureServer } from "@/lib/analytics-server";
 
 export type ListingDealActionState = { error?: string; ok?: boolean };
 
@@ -203,20 +203,16 @@ export async function createListing(
 
   if (error || !data) return { error: error?.message ?? "Could not create listing." };
 
-  const posthog = getPostHogClient();
-  if (posthog) {
-    posthog.capture({
-      distinctId: session.user.id,
-      event: "listing_created",
-      properties: {
-        listing_id: data.id,
-        bedrooms: fields.bedrooms,
-        price_usd: fields.price_usd,
-        price_currency: fields.price_currency,
-      },
-    });
-    await posthog.flush();
-  }
+  await captureServer(
+    "listing_created",
+    {
+      listing_id: data.id,
+      bedrooms: fields.bedrooms,
+      price_usd: fields.price_usd,
+      price_currency: fields.price_currency,
+    },
+    session,
+  );
 
   revalidateListingPaths(data.id);
   redirect(`/listings/${data.id}`);
@@ -276,6 +272,8 @@ export async function updateListing(
     return { error: "Status could not be updated." };
   }
 
+  await captureServer("listing_updated", { listing_id: id }, session);
+
   revalidateListingPaths(id);
   return { ok: true };
 }
@@ -320,6 +318,12 @@ export async function updateListingStatus(id: string, status: string): Promise<L
     return { error: "Status could not be updated." };
   }
 
+  await captureServer(
+    "listing_status_changed",
+    { listing_id: id, status },
+    session,
+  );
+
   revalidateListingPaths(id);
   return { ok: true };
 }
@@ -356,6 +360,12 @@ export async function requestListingLive(id: string): Promise<ListingFormState> 
 
   if (error) return { error: error.message };
 
+  await captureServer(
+    "listing_submitted_for_review",
+    { listing_id: id },
+    session,
+  );
+
   revalidateListingPaths(id);
   return { ok: true };
 }
@@ -385,6 +395,8 @@ export async function approveListingLive(id: string): Promise<ListingFormState> 
 
   if (error) return { error: error.message };
   if (!data) return { error: "Listing is not pending review." };
+
+  await captureServer("listing_approved", { listing_id: id });
 
   revalidateListingPaths(id);
   return { ok: true };
@@ -418,6 +430,8 @@ export async function rejectListingLive(
 
   if (error) return { error: error.message };
   if (!data) return { error: "Listing is not pending review." };
+
+  await captureServer("listing_rejected", { listing_id: id });
 
   revalidateListingPaths(id);
   return { ok: true };
@@ -473,6 +487,12 @@ export async function confirmListingValidity(
 
   if (error) return { error: error.message };
 
+  await captureServer(
+    "listing_validity_confirmed",
+    { listing_id: id, outcome },
+    session,
+  );
+
   revalidateListingPaths(id);
   return { ok: true };
 }
@@ -492,6 +512,8 @@ export async function bumpListing(id: string): Promise<ListingFormState> {
     .eq("estate_company_id", session.estateCompanyId);
 
   if (error) return { error: error.message };
+
+  await captureServer("listing_bumped", { listing_id: id }, session);
 
   revalidatePath("/");
   revalidatePath(`/listings/${id}`);
@@ -560,6 +582,8 @@ export async function setListingMainImage(
 
   if (error) return { error: error.message };
 
+  await captureServer("listing_main_image_set", { listing_id: id }, session);
+
   revalidateListingPaths(id);
   return { ok: true };
 }
@@ -600,6 +624,15 @@ export async function saveListingPhotos(
     .eq("estate_company_id", session.estateCompanyId);
 
   if (error) return { error: error.message };
+
+  await captureServer(
+    "listing_photos_saved",
+    {
+      listing_id: id,
+      photo_count: gallery.length + (main ? 1 : 0),
+    },
+    session,
+  );
 
   revalidateListingPaths(id);
   return { ok: true };
@@ -647,15 +680,7 @@ export async function deleteListing(id: string): Promise<ListingFormState> {
     await supabase.storage.from("apartments").remove(storagePaths);
   }
 
-  const posthogDel = getPostHogClient();
-  if (posthogDel) {
-    posthogDel.capture({
-      distinctId: session.user.id,
-      event: "listing_deleted",
-      properties: { listing_id: id },
-    });
-    await posthogDel.flush();
-  }
+  await captureServer("listing_deleted", { listing_id: id }, session);
 
   revalidatePath("/");
   revalidatePath("/listings");
@@ -704,6 +729,12 @@ export async function savePostDraft(
       return { error: error.message };
     }
   }
+
+  await captureServer(
+    "post_draft_saved",
+    { listing_id: apartmentId },
+    session,
+  );
 
   revalidatePath(`/listings/${apartmentId}`);
   return { ok: true };
@@ -798,6 +829,12 @@ export async function saveListingExpectedCommission(
     }
   }
 
+  await captureServer(
+    "listing_commission_saved",
+    { listing_id: listingId },
+    session,
+  );
+
   revalidateListingPaths(listingId);
   revalidatePath("/contacts");
   return { ok: true };
@@ -872,15 +909,11 @@ export async function connectContactToListing(
     }
   }
 
-  const posthogDeal = getPostHogClient();
-  if (posthogDeal) {
-    posthogDeal.capture({
-      distinctId: session.user.id,
-      event: "deal_contact_connected",
-      properties: { listing_id: listingId, contact_id: contactId },
-    });
-    await posthogDeal.flush();
-  }
+  await captureServer(
+    "deal_contact_connected",
+    { listing_id: listingId, contact_id: contactId },
+    session,
+  );
 
   revalidateListingPaths(listingId);
   revalidatePath("/contacts");

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PARTNERS_WHATSAPP_URL } from "@/app/lib/contact-links";
 import { CtaButton } from "@/app/components/CtaButton";
 import { Section, SectionHero } from "@/app/components/sections";
+import { capture } from "@/lib/analytics";
 
 type Locale = "en" | "vi";
 const STORAGE_KEY = "partners-page-locale";
@@ -72,6 +73,7 @@ export function PartnersPageContent() {
 
   const setLocale = useCallback((next: Locale) => {
     setLocaleState(next);
+    capture("partners_locale_changed", { locale: next });
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
@@ -124,13 +126,21 @@ export function PartnersPageContent() {
           </ul>
 
           <div className="mt-12 flex flex-wrap gap-3">
-            <CtaButton href={PARTNERS_WHATSAPP_URL} variant="primary">
+            <CtaButton
+              href={PARTNERS_WHATSAPP_URL}
+              variant="primary"
+              event="partners_whatsapp_clicked"
+            >
               {t.whatsapp}
             </CtaButton>
-            <CtaButton href={partnerStudioUrl()} variant="secondary">
+            <CtaButton
+              href={partnerStudioUrl()}
+              variant="secondary"
+              event="partner_studio_clicked"
+            >
               {t.studioLogin}
             </CtaButton>
-            <CtaButton href="/contact" variant="secondary">
+            <CtaButton href="/contact" variant="secondary" event="contact_cta_clicked" eventProps={{ source: "partners_page" }}>
               {t.rentInstead}
             </CtaButton>
           </div>

@@ -4,6 +4,7 @@ import { PARTNER_GUIDE_LINKS } from "@/lib/guides";
 import { guidePublicUrl } from "@/lib/public-url";
 import { CopyButton } from "@/components/CopyButton";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { capture } from "@/lib/analytics";
 
 export function GuidesView() {
   const { locale, t } = useLocale();
@@ -33,6 +34,9 @@ export function GuidesView() {
                   href={url}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() =>
+                    capture("guide_link_opened", { path: guide.path })
+                  }
                   className="mt-2 inline-block truncate text-xs font-medium text-ocean hover:underline"
                 >
                   {url}
@@ -42,6 +46,8 @@ export function GuidesView() {
                 text={url}
                 label={t("guides.copyLink")}
                 copiedLabel={t("guides.copied")}
+                event="guide_link_copied"
+                eventProps={{ path: guide.path }}
               />
             </li>
           );

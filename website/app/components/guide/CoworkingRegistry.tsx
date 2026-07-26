@@ -15,6 +15,7 @@ import {
   filterCoworkingSpaces,
   type CoworkingFilters,
 } from "@/lib/registry-filters";
+import { capture } from "@/lib/analytics";
 
 const selectClass =
   "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-charcoal focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15";
@@ -32,16 +33,37 @@ export function CoworkingRegistry({ spaces }: { spaces: CoworkingSpace[] }) {
   const active = coworkingFiltersActive(filters);
 
   const update = (patch: Partial<CoworkingFilters>) => {
-    setFilters((prev) => ({ ...prev, ...patch }));
+    setFilters((prev) => {
+      const next = { ...prev, ...patch };
+      capture("coworking_filters_changed", {
+        changed: Object.keys(patch).join(","),
+        area_id: next.areaId,
+        price_band: next.priceBand,
+        pass_type: next.passType,
+      });
+      return next;
+    });
   };
 
   const toggleFeature = (tag: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      features: prev.features.includes(tag)
-        ? prev.features.filter((t) => t !== tag)
-        : [...prev.features, tag],
-    }));
+    setFilters((prev) => {
+      const next = {
+        ...prev,
+        features: prev.features.includes(tag)
+          ? prev.features.filter((t) => t !== tag)
+          : [...prev.features, tag],
+      };
+      capture("coworking_filters_changed", {
+        changed: "features",
+        features: next.features.join(","),
+      });
+      return next;
+    });
+  };
+
+  const resetFilters = () => {
+    setFilters(DEFAULT_COWORKING_FILTERS);
+    capture("coworking_filters_reset");
   };
 
   return (
@@ -52,7 +74,7 @@ export function CoworkingRegistry({ spaces }: { spaces: CoworkingSpace[] }) {
           {active && (
             <button
               type="button"
-              onClick={() => setFilters(DEFAULT_COWORKING_FILTERS)}
+              onClick={resetFilters}
               className="text-sm font-medium text-muted transition hover:text-ocean"
             >
               Reset filters
@@ -157,7 +179,7 @@ export function CoworkingRegistry({ spaces }: { spaces: CoworkingSpace[] }) {
             No spaces match these filters. Try a wider cost band, or{" "}
             <button
               type="button"
-              onClick={() => setFilters(DEFAULT_COWORKING_FILTERS)}
+              onClick={resetFilters}
               className="font-medium text-ocean transition hover:text-ocean-deep"
             >
               reset filters

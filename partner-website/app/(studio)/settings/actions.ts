@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requirePartner } from "@/lib/auth";
+import { captureServer } from "@/lib/analytics-server";
 import {
   addCompanyFacebookGroupUrl,
   removeCompanyFacebookGroup,
@@ -16,6 +17,8 @@ export async function disconnectFacebook(): Promise<{ error?: string; ok?: boole
   const result = await disconnectCompanyIntegration(session.estateCompanyId, "facebook");
   if (result.error) return { error: result.error };
 
+  await captureServer("facebook_integration_disconnected", {}, session);
+
   revalidatePath("/settings");
   return { ok: true };
 }
@@ -23,8 +26,14 @@ export async function disconnectFacebook(): Promise<{ error?: string; ok?: boole
 export async function addFacebookGroup(
   url: string,
 ): Promise<{ error?: string; ok?: boolean }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
   const result = await addCompanyFacebookGroupUrl(url);
   if (result.error) return { error: result.error };
+
+  await captureServer("facebook_group_added", {}, session);
+
   revalidatePath("/settings");
   return { ok: true };
 }
@@ -32,8 +41,14 @@ export async function addFacebookGroup(
 export async function removeFacebookGroup(
   linkId: string,
 ): Promise<{ error?: string; ok?: boolean }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
   const result = await removeCompanyFacebookGroup(linkId);
   if (result.error) return { error: result.error };
+
+  await captureServer("facebook_group_removed", {}, session);
+
   revalidatePath("/settings");
   return { ok: true };
 }
@@ -41,8 +56,13 @@ export async function removeFacebookGroup(
 export async function inviteTeamMember(
   email: string,
 ): Promise<{ error?: string; inviteUrl?: string; token?: string }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
   const result = await createPartnerInvite(email);
   if (result.error) return { error: result.error };
+
+  await captureServer("team_member_invited", {}, session);
 
   revalidatePath("/settings");
   return {
@@ -54,8 +74,14 @@ export async function inviteTeamMember(
 export async function revokeTeamInvite(
   inviteId: string,
 ): Promise<{ error?: string; ok?: boolean }> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
   const result = await revokePartnerInvite(inviteId);
   if (result.error) return { error: result.error };
+
+  await captureServer("team_invite_revoked", {}, session);
+
   revalidatePath("/settings");
   return { ok: true };
 }

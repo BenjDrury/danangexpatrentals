@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { Section, SectionHero } from "../components/sections";
+import { TrackedLink } from "../components/TrackedLink";
 import { getAreas } from "@/lib/data";
 import { formatAliases } from "@/lib/area-utils";
 
@@ -74,18 +75,22 @@ export default async function AreasPage() {
                     </p>
                   )}
                   <div className="mt-8 flex flex-wrap gap-3">
-                    <Link
+                    <TrackedLink
                       href={`/areas/${area.id}`}
+                      event="area_guide_clicked"
+                      eventProps={{ area_id: area.id, area_name: area.name, source: "areas_index" }}
                       className="inline-flex rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
                     >
                       Read the guide
-                    </Link>
-                    <Link
+                    </TrackedLink>
+                    <TrackedLink
                       href={`/contact?preferred_area=${encodeURIComponent(area.name)}&areaId=${area.id}`}
+                      event="area_find_home_clicked"
+                      eventProps={{ area_id: area.id, area_name: area.name }}
                       className="inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
                     >
                       Find a home here
-                    </Link>
+                    </TrackedLink>
                   </div>
                 </div>
               </article>

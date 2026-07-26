@@ -8,7 +8,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { PartnerInviteStatus } from "types";
 import { acceptInviteAction, createAccountFromInviteAction } from "./actions";
-import posthog from "posthog-js";
+import { capture, identifyUser } from "@/lib/analytics";
 
 export function InviteAcceptView({
   token,
@@ -115,7 +115,7 @@ export function InviteAcceptView({
         setError(result.error);
         return;
       }
-      posthog.capture("team_invite_accepted", { method: "existing_account" });
+      capture("team_invite_accepted", { method: "existing_account" });
       setDone(true);
     });
   }
@@ -125,7 +125,7 @@ export function InviteAcceptView({
     setError(null);
     startTransition(async () => {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: invite!.email,
         password,
       });
@@ -138,7 +138,17 @@ export function InviteAcceptView({
         setError(result.error);
         return;
       }
-      posthog.capture("team_invite_accepted", { method: "existing_account" });
+      if (signInData.user) {
+        identifyUser({
+          id: signInData.user.id,
+          email: signInData.user.email,
+          name: null,
+          role: "partner",
+          companyName: invite?.companyName ?? null,
+          isAdmin: false,
+        });
+      }
+      capture("team_invite_accepted", { method: "existing_account" });
       setDone(true);
       router.refresh();
     });
@@ -159,7 +169,7 @@ export function InviteAcceptView({
         return;
       }
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: invite!.email,
         password,
       });
@@ -167,7 +177,17 @@ export function InviteAcceptView({
         setError(signInError.message);
         return;
       }
-      posthog.capture("team_invite_accepted", { method: "new_account" });
+      if (signInData.user) {
+        identifyUser({
+          id: signInData.user.id,
+          email: signInData.user.email,
+          name: displayName.trim() || null,
+          role: "partner",
+          companyName: invite?.companyName ?? null,
+          isAdmin: false,
+        });
+      }
+      capture("team_invite_accepted", { method: "new_account" });
       setDone(true);
       router.refresh();
     });

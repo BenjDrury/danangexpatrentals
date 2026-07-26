@@ -18,7 +18,8 @@
     "make-partner": "node scripts/run/make-partner.mjs",
     "setup-supabase": "node scripts/run/setup-supabase.mjs",
     "seed-areas": "node scripts/run/seed-areas-from-csv.mjs scripts/data/areas.csv",
-    "import-facebook-posts": "node scripts/run/import-facebook-posts.mjs"
+    "import-facebook-posts": "node scripts/run/import-facebook-posts.mjs",
+    "extract-facebook": "node scripts/run/extract-facebook-chrome.mjs"
   },
   "devDependencies": {
     "pg": "^8.13.0"

@@ -8,6 +8,7 @@ import { CtaButton } from "@/app/components/CtaButton";
 import { ApartmentCard } from "./ApartmentCard";
 import { FilterBar, type AreaListFilters } from "./FilterBar";
 import { useAreaApartments } from "@/app/hooks/useAreaApartments";
+import { capture } from "@/lib/analytics";
 
 const DEFAULT_FILTERS: AreaListFilters = {
   unitType: "all",
@@ -63,6 +64,12 @@ export function AreaApartmentsSection({
         {hasAnyListings && (
           <Link
             href="/apartments"
+            onClick={() =>
+              capture("browse_apartments_clicked", {
+                source: "area_section",
+                area_id: areaId,
+              })
+            }
             className="text-sm font-semibold text-ocean transition hover:text-ocean-deep"
           >
             Browse all →

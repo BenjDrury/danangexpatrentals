@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import posthog from "posthog-js";
+import { capture } from "@/lib/analytics";
 import { submitLead, type LeadState } from "@/app/actions/lead";
 
 const initialState: LeadState = { ok: false, error: "" };
@@ -24,16 +24,16 @@ export function ConciergeForm({
     async (_: LeadState, formData: FormData) => {
       const result = await submitLead(formData);
       if (result.ok) {
-        posthog.capture("lead_submitted", {
-          budget_range: formData.get("budget_range") || null,
-          length_of_stay: formData.get("length_of_stay") || null,
-          preferred_area: formData.get("preferred_area") || null,
+        capture("lead_submitted", {
+          budget_range: String(formData.get("budget_range") || "") || null,
+          length_of_stay: String(formData.get("length_of_stay") || "") || null,
+          preferred_area: String(formData.get("preferred_area") || "") || null,
           has_move_date: !!formData.get("move_date"),
           has_email: !!formData.get("email"),
           source: "concierge_form",
         });
       } else {
-        posthog.capture("lead_submit_failed", {
+        capture("lead_submit_failed", {
           error: result.error,
           source: "concierge_form",
         });

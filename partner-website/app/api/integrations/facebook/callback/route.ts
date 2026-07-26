@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { requirePartner } from "@/lib/auth";
 import { upsertFacebookConnection } from "@/lib/data/integrations";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { captureServer } from "@/lib/analytics-server";
 import {
   FACEBOOK_OAUTH_STATE_COOKIE,
   exchangeFacebookCode,
@@ -117,15 +117,11 @@ export async function GET(request: Request) {
       return settingsRedirect(request, "error");
     }
 
-    const posthog = getPostHogClient();
-    if (posthog) {
-      posthog.capture({
-        distinctId: session.user.id,
-        event: "facebook_integration_connected",
-        properties: { page_name: page.name, page_count: pages.length },
-      });
-      await posthog.flush();
-    }
+    await captureServer(
+      "facebook_integration_connected",
+      { page_name: page.name, page_count: pages.length },
+      session,
+    );
 
     return settingsRedirect(request, "connected");
   } catch (err) {

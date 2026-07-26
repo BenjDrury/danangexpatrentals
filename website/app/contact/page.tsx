@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ConciergeForm } from "../components/ConciergeForm";
+import { TrackedLink } from "../components/TrackedLink";
 import { Section, SectionHero } from "../components/sections";
 import { WHATSAPP_URL } from "../lib/contact-links";
 
@@ -44,14 +44,14 @@ export default async function ContactPage({ searchParams }: Props) {
                 <p className="mt-2 text-muted leading-relaxed">
                   Fastest if you’re already in Da Nang or working to a tight timeline.
                 </p>
-                <Link
+                <TrackedLink
                   href={WHATSAPP_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  event="whatsapp_cta_clicked"
+                  eventProps={{ source: "contact_page" }}
                   className="mt-4 inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
                 >
                   Message on WhatsApp
-                </Link>
+                </TrackedLink>
               </li>
               <li>
                 <h3 className="font-display text-lg font-semibold text-charcoal">After you write</h3>
@@ -63,9 +63,14 @@ export default async function ContactPage({ searchParams }: Props) {
 
             <p className="mt-12 border-t border-line pt-6 text-sm text-muted">
               Agent or property owner?{" "}
-              <Link href="/partners" className="font-medium text-ocean transition hover:text-ocean-deep">
+              <TrackedLink
+                href="/partners"
+                event="partners_cta_clicked"
+                eventProps={{ source: "contact_page" }}
+                className="font-medium text-ocean transition hover:text-ocean-deep"
+              >
                 See how we work with partners →
-              </Link>
+              </TrackedLink>
             </p>
           </div>
 

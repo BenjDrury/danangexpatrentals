@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-import posthog from "posthog-js";
+import { disableAnalyticsForAdmin, identifyUser, capture } from "@/lib/analytics";
 
 function safeNext(next: string | null): string {
   if (!next) return "/";
@@ -43,7 +43,25 @@ function LoginForm() {
     }
 
     if (signInData.user) {
-      posthog.identify(signInData.user.id, { email: signInData.user.email });
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, display_name, estate_company_id")
+        .eq("id", signInData.user.id)
+        .maybeSingle();
+
+      if (profile?.role === "admin") {
+        disableAnalyticsForAdmin();
+      } else {
+        identifyUser({
+          id: signInData.user.id,
+          email: signInData.user.email,
+          name: profile?.display_name ?? null,
+          role: profile?.role ?? null,
+          companyId: profile?.estate_company_id ?? null,
+          isAdmin: false,
+        });
+        capture("user_signed_in");
+      }
     }
 
     router.push(nextPath);

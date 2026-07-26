@@ -37,7 +37,7 @@ export default async function ApartmentPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-foam">
-      <TrackListingView apartmentId={apartment.id} />
+      <TrackListingView apartmentId={apartment.id} areaId={apartment.area_id} />
       <section className={`w-full ${SECTION_PADDING} bg-white pt-28 sm:pt-36`}>
         <div className={CONTENT_CONTAINER}>
         <Link

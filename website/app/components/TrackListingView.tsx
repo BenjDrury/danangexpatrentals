@@ -1,17 +1,24 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { capture } from "@/lib/analytics";
 
 type Props = {
   apartmentId: string;
+  areaId?: string;
 };
 
-export function TrackListingView({ apartmentId }: Props) {
+export function TrackListingView({ apartmentId, areaId }: Props) {
   const sent = useRef(false);
 
   useEffect(() => {
     if (!apartmentId || sent.current) return;
     sent.current = true;
+
+    capture("listing_viewed", {
+      apartment_id: apartmentId,
+      area_id: areaId ?? null,
+    });
 
     void fetch("/api/track", {
       method: "POST",
@@ -21,7 +28,7 @@ export function TrackListingView({ apartmentId }: Props) {
     }).catch(() => {
       /* ignore — analytics must not affect UX */
     });
-  }, [apartmentId]);
+  }, [apartmentId, areaId]);
 
   return null;
 }

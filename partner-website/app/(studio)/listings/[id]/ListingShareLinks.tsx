@@ -5,6 +5,7 @@ import { Section } from "@/components/ui";
 import { getListingRelevantGuides } from "@/lib/guides";
 import { guidePublicUrl } from "@/lib/public-url";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import { capture } from "@/lib/analytics";
 
 export type ShareLinkItem = {
   id: string;
@@ -48,6 +49,12 @@ function LinkRow({
           href={item.url}
           target="_blank"
           rel="noreferrer"
+          onClick={() =>
+            capture("share_link_opened", {
+              link_type: item.id,
+              accent: item.accent ?? null,
+            })
+          }
           className="mt-0.5 block truncate text-xs font-medium text-ocean underline-offset-2 hover:underline"
         >
           {item.url}
@@ -57,6 +64,8 @@ function LinkRow({
         text={item.url}
         label={copyLabel}
         copiedLabel={copiedLabel}
+        event="share_link_copied"
+        eventProps={{ link_type: item.id, accent: item.accent ?? null }}
         className="shrink-0 rounded-md border border-line bg-white px-2.5 py-1.5 text-xs font-medium text-charcoal transition hover:border-ocean/40 hover:text-ocean"
       />
     </li>

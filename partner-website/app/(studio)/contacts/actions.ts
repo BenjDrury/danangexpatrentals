@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requirePartner } from "@/lib/auth";
 import { hasAnyCommission, parseCommissionFormData } from "@/lib/deal-commission";
 import { createClient } from "@/lib/supabase/server";
-import { getPostHogClient } from "@/lib/posthog-server";
+import { captureServer } from "@/lib/analytics-server";
 
 export type ContactFormState = {
   error?: string;
@@ -91,19 +91,15 @@ export async function createContact(
     }
   }
 
-  const posthog = getPostHogClient();
-  if (posthog) {
-    posthog.capture({
-      distinctId: session.user.id,
-      event: "contact_created",
-      properties: {
-        contact_id: contact.id,
-        has_listing: Boolean(apartmentId),
-        has_commission: hasAnyCommission(commission),
-      },
-    });
-    await posthog.flush();
-  }
+  await captureServer(
+    "contact_created",
+    {
+      contact_id: contact.id,
+      has_listing: Boolean(apartmentId),
+      has_commission: hasAnyCommission(commission),
+    },
+    session,
+  );
 
   revalidateDealPaths({ contactId: contact.id, apartmentId });
   return { ok: true, contactId: contact.id };
@@ -145,6 +141,8 @@ export async function updateContact(
 
   if (error) return { error: error.message };
 
+  await captureServer("contact_updated", { contact_id: contactId }, session);
+
   revalidatePath("/contacts");
   revalidatePath(`/contacts/${contactId}`);
   return { ok: true, contactId };
@@ -174,15 +172,7 @@ export async function deleteContact(contactId: string): Promise<{ error?: string
 
   if (error) return { error: error.message };
 
-  const posthogDel = getPostHogClient();
-  if (posthogDel) {
-    posthogDel.capture({
-      distinctId: session.user.id,
-      event: "contact_deleted",
-      properties: { contact_id: contactId },
-    });
-    await posthogDel.flush();
-  }
+  await captureServer("contact_deleted", { contact_id: contactId }, session);
 
   revalidatePath("/contacts");
   redirect("/contacts");
@@ -235,6 +225,17 @@ export async function connectListing(
       })
       .eq("id", existing.id);
     if (error) return { error: error.message };
+
+    await captureServer(
+      "deal_contact_connected",
+      {
+        listing_id: apartmentId,
+        contact_id: contactId,
+        source: "contact_page",
+      },
+      session,
+    );
+
     revalidateDealPaths({ contactId, apartmentId });
     return { ok: true };
   }
@@ -255,6 +256,16 @@ export async function connectListing(
     }
     return { error: error.message };
   }
+
+  await captureServer(
+    "deal_contact_connected",
+    {
+      listing_id: apartmentId,
+      contact_id: contactId,
+      source: "contact_page",
+    },
+    session,
+  );
 
   revalidateDealPaths({ contactId, apartmentId });
   return { ok: true };
@@ -296,6 +307,16 @@ export async function updateDealCommission(
 
   if (error) return { error: error.message };
 
+  await captureServer(
+    "deal_commission_updated",
+    {
+      deal_id: dealId,
+      contact_id: deal.contact_id,
+      listing_id: deal.apartment_id,
+    },
+    session,
+  );
+
   revalidateDealPaths({
     contactId: deal.contact_id,
     apartmentId: deal.apartment_id,
@@ -331,6 +352,16 @@ export async function disconnectDeal(
     .eq("estate_company_id", session.estateCompanyId);
 
   if (error) return { error: error.message };
+
+  await captureServer(
+    "deal_disconnected",
+    {
+      deal_id: dealId,
+      contact_id: contactId,
+      listing_id: deal?.apartment_id ?? null,
+    },
+    session,
+  );
 
   revalidateDealPaths({
     contactId,

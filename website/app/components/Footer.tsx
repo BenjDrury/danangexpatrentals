@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { capture } from "@/lib/analytics";
+import { TrackedLink } from "./TrackedLink";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -33,24 +37,44 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
             </h3>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
-                <Link href="/apartments" className={linkClass}>
+                <TrackedLink
+                  href="/apartments"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "Apartments" }}
+                  className={linkClass}
+                >
                   Apartments
-                </Link>
+                </TrackedLink>
               </li>
               <li>
-                <Link href="/areas" className={linkClass}>
+                <TrackedLink
+                  href="/areas"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "Neighbourhoods" }}
+                  className={linkClass}
+                >
                   Neighbourhoods
-                </Link>
+                </TrackedLink>
               </li>
               <li>
-                <Link href="/moving-guide" className={linkClass}>
+                <TrackedLink
+                  href="/moving-guide"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "Living in Da Nang" }}
+                  className={linkClass}
+                >
                   Living in Da Nang
-                </Link>
+                </TrackedLink>
               </li>
               <li>
-                <Link href="/contact" className={linkClass}>
+                <TrackedLink
+                  href="/contact"
+                  event="contact_cta_clicked"
+                  eventProps={{ source: "footer_get_matched" }}
+                  className={linkClass}
+                >
                   Get matched
-                </Link>
+                </TrackedLink>
               </li>
             </ul>
           </div>
@@ -61,24 +85,44 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
             </h3>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
-                <Link href="/how-it-works" className={linkClass}>
+                <TrackedLink
+                  href="/how-it-works"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "How it works" }}
+                  className={linkClass}
+                >
                   How it works
-                </Link>
+                </TrackedLink>
               </li>
               <li>
-                <Link href="/why-us" className={linkClass}>
+                <TrackedLink
+                  href="/why-us"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "Why trust us" }}
+                  className={linkClass}
+                >
                   Why trust us
-                </Link>
+                </TrackedLink>
               </li>
               <li>
-                <Link href="/avoid-scams" className={linkClass}>
+                <TrackedLink
+                  href="/avoid-scams"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "Avoid scams" }}
+                  className={linkClass}
+                >
                   Avoid scams
-                </Link>
+                </TrackedLink>
               </li>
               <li>
-                <Link href="/faq" className={linkClass}>
+                <TrackedLink
+                  href="/faq"
+                  event="footer_link_clicked"
+                  eventProps={{ label: "FAQ" }}
+                  className={linkClass}
+                >
                   FAQ
-                </Link>
+                </TrackedLink>
               </li>
             </ul>
           </div>
@@ -89,15 +133,23 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
             </h3>
             <ul className="mt-5 flex flex-col gap-3 text-sm">
               <li>
-                <Link href="/contact" className={linkClass}>
+                <TrackedLink
+                  href="/contact"
+                  event="contact_cta_clicked"
+                  eventProps={{ source: "footer_concierge" }}
+                  className={linkClass}
+                >
                   Concierge form
-                </Link>
+                </TrackedLink>
               </li>
               <li>
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() =>
+                    capture("whatsapp_cta_clicked", { source: "footer" })
+                  }
                   className="inline-flex items-center gap-2 text-muted transition hover:text-charcoal"
                 >
                   <WhatsAppIcon className="h-4 w-4 shrink-0" />
@@ -105,9 +157,14 @@ export function Footer({ whatsappUrl }: { whatsappUrl: string }) {
                 </a>
               </li>
               <li>
-                <Link href="/partners" className={linkClass}>
+                <TrackedLink
+                  href="/partners"
+                  event="partners_cta_clicked"
+                  eventProps={{ source: "footer" }}
+                  className={linkClass}
+                >
                   For agents & owners
-                </Link>
+                </TrackedLink>
               </li>
             </ul>
           </div>

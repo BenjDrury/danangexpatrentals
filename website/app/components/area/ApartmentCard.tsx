@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { listingPriceLabel, type Apartment } from "types";
+import { capture } from "@/lib/analytics";
 
 type ApartmentCardProps = {
   apartment: Apartment;
@@ -34,10 +35,19 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
         })
       : null;
 
+  const listingProps = {
+    apartment_id: apartment.id,
+    area_id: apartment.area_id,
+    area_name: areaName,
+  };
+
   return (
     <article className="group flex flex-col">
       <Link
         href={`/apartments/${apartment.id}`}
+        onClick={() =>
+          capture("listing_card_clicked", { ...listingProps, target: "image" })
+        }
         className="relative block aspect-[4/3] overflow-hidden rounded-2xl bg-sand"
       >
         <Image
@@ -58,6 +68,9 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
         </div>
         <Link
           href={`/apartments/${apartment.id}`}
+          onClick={() =>
+            capture("listing_card_clicked", { ...listingProps, target: "title" })
+          }
           className="mt-2 font-display text-xl font-semibold tracking-tight text-charcoal transition group-hover:text-ocean"
         >
           {apartment.title}
@@ -76,6 +89,9 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
             href={contactHref}
+            onClick={() =>
+              capture("apartment_request_clicked", listingProps)
+            }
             className="inline-flex flex-1 justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
             style={{ backgroundColor: "#2f6f7e" }}
           >
@@ -83,6 +99,9 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
           </Link>
           <Link
             href={`/apartments/${apartment.id}`}
+            onClick={() =>
+              capture("listing_card_clicked", { ...listingProps, target: "details" })
+            }
             className="inline-flex justify-center rounded-xl border border-line px-4 py-2.5 text-sm font-medium text-charcoal transition hover:bg-sand"
           >
             Details

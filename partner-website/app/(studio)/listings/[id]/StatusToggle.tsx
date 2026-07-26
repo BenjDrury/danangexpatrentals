@@ -13,7 +13,7 @@ import {
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { statusMessageKey } from "@/lib/i18n/messages";
 import { StatusChip } from "@/components/StatusChip";
-import posthog from "posthog-js";
+import { capture } from "@/lib/analytics";
 import type { Apartment } from "types";
 
 type Props = {
@@ -107,7 +107,7 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
                 setError(result.error);
                 return;
               }
-              posthog.capture("listing_submitted_for_review", { listing_id: listingId });
+              capture("listing_submitted_for_review", { listing_id: listingId });
               setValue("pending_review");
               router.refresh();
             });
@@ -134,7 +134,7 @@ export function StatusToggle({ listingId, status, isAdmin, rejectionNote }: Prop
                 setError(result.error);
                 return;
               }
-              posthog.capture("listing_approved", { listing_id: listingId });
+              capture("listing_approved", { listing_id: listingId });
               setValue("available");
               router.refresh();
             });

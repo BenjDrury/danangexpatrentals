@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { Activity, CoworkingSpace } from "types";
+import { capture } from "@/lib/analytics";
 
 function formatUsd(n: number): string {
   return `$${Math.round(n)}`;
@@ -45,7 +48,17 @@ export function CoworkingCard({ spot }: { spot: CoworkingSpace }) {
       )}
       <div className="mt-4 flex flex-wrap gap-4 text-sm">
         {spot.area_id && (
-          <Link href={`/areas/${spot.area_id}`} className="font-medium text-ocean hover:text-ocean-deep">
+          <Link
+            href={`/areas/${spot.area_id}`}
+            onClick={() =>
+              capture("registry_area_guide_clicked", {
+                registry: "coworking",
+                item_id: spot.id,
+                area_id: spot.area_id,
+              })
+            }
+            className="font-medium text-ocean hover:text-ocean-deep"
+          >
             Area guide →
           </Link>
         )}
@@ -54,6 +67,13 @@ export function CoworkingCard({ spot }: { spot: CoworkingSpace }) {
             href={spot.website_url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              capture("coworking_outbound_clicked", {
+                item_id: spot.id,
+                name: spot.name,
+                url: spot.website_url,
+              })
+            }
             className="font-medium text-ocean hover:text-ocean-deep"
           >
             Website ↗
@@ -64,6 +84,12 @@ export function CoworkingCard({ spot }: { spot: CoworkingSpace }) {
             href={spot.maps_url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              capture("registry_map_clicked", {
+                registry: "coworking",
+                item_id: spot.id,
+              })
+            }
             className="font-medium text-muted hover:text-charcoal"
           >
             Map ↗
@@ -101,6 +127,13 @@ export function ActivityCard({ activity }: { activity: Activity }) {
         {activity.area_id && (
           <Link
             href={`/areas/${activity.area_id}`}
+            onClick={() =>
+              capture("registry_area_guide_clicked", {
+                registry: "activities",
+                item_id: activity.id,
+                area_id: activity.area_id,
+              })
+            }
             className="font-medium text-ocean hover:text-ocean-deep"
           >
             Area guide →
@@ -111,6 +144,13 @@ export function ActivityCard({ activity }: { activity: Activity }) {
             href={(activity.booking_url || activity.website_url)!}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              capture("activity_outbound_clicked", {
+                item_id: activity.id,
+                name: activity.name,
+                kind: activity.booking_url ? "booking" : "website",
+              })
+            }
             className="font-medium text-ocean hover:text-ocean-deep"
           >
             {activity.booking_url ? "Book / info ↗" : "Website ↗"}
@@ -121,6 +161,12 @@ export function ActivityCard({ activity }: { activity: Activity }) {
             href={activity.maps_url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              capture("registry_map_clicked", {
+                registry: "activities",
+                item_id: activity.id,
+              })
+            }
             className="font-medium text-muted hover:text-charcoal"
           >
             Map ↗

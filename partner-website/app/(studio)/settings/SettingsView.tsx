@@ -14,7 +14,7 @@ import {
   removeFacebookGroup,
   revokeTeamInvite,
 } from "./actions";
-import posthog from "posthog-js";
+import { capture } from "@/lib/analytics";
 
 export type FacebookIntegrationView = {
   status: "connected" | "disconnected";
@@ -167,7 +167,7 @@ export function SettingsView({
                   setLastInviteUrl(absoluteInviteUrl(path));
                   setMessage(t("settings.team.inviteCreated"));
                   setInviteEmail("");
-                  posthog.capture("team_member_invited");
+                  capture("team_member_invited");
                 }
                 router.refresh();
               });
@@ -210,6 +210,7 @@ export function SettingsView({
                     try {
                       await navigator.clipboard.writeText(lastInviteUrl);
                       setCopied(true);
+                      capture("team_invite_link_copied");
                       window.setTimeout(() => setCopied(false), 1800);
                     } catch {
                       setCopied(false);
@@ -435,7 +436,7 @@ export function SettingsView({
                         result.error ?? t("settings.fb.flash.disconnected"),
                       );
                       if (!result.error) {
-                        posthog.capture("facebook_integration_disconnected");
+                        capture("facebook_integration_disconnected");
                         router.refresh();
                       }
                     });
@@ -447,6 +448,7 @@ export function SettingsView({
               ) : oauthConfigured ? (
                 <a
                   href="/api/integrations/facebook/connect"
+                  onClick={() => capture("facebook_oauth_started")}
                   className="rounded-quieter bg-ocean px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
                 >
                   {t("settings.fb.connect")}

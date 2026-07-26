@@ -3,7 +3,7 @@
 import { LEAD_NOTIFY_EMAIL, RESEND_FROM_EMAIL } from "backend";
 import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
-import { getPostHogClient } from "@/app/lib/posthog-server";
+import { captureServer } from "@/lib/analytics-server";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -61,20 +61,14 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     }
   }
 
-  const posthog = getPostHogClient();
-  posthog.capture({
-    distinctId: "anonymous",
-    event: "lead_submitted_server",
-    properties: {
-      budget_range: budgetRange || null,
-      length_of_stay: lengthOfStay || null,
-      preferred_area: preferredArea,
-      has_move_date: !!moveDate,
-      has_email: !!email,
-      source: "website",
-    },
+  await captureServer("lead_submitted_server", {
+    budget_range: budgetRange || null,
+    length_of_stay: lengthOfStay || null,
+    preferred_area: preferredArea,
+    has_move_date: !!moveDate,
+    has_email: !!email,
+    source: "website",
   });
-  await posthog.shutdown();
 
   return { ok: true };
 }

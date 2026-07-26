@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { capture } from "@/lib/analytics";
 
 const NAV_LINKS = [
   { label: "Apartments", href: "/apartments" },
@@ -67,6 +68,9 @@ export function Nav() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={() =>
+                capture("nav_link_clicked", { href: link.href, label: link.label, source: "desktop" })
+              }
               className="text-sm font-medium text-muted transition hover:text-charcoal"
             >
               {link.label}
@@ -77,7 +81,10 @@ export function Nav() {
         <div className="flex items-center gap-3">
           <Link
             href="/apartments"
-            onClick={closeMenu}
+            onClick={() => {
+              closeMenu();
+              capture("explore_apartments_clicked", { source: "nav_desktop" });
+            }}
             className="hidden rounded-xl px-5 py-2.5 text-sm font-semibold transition sm:inline-flex"
             style={{ backgroundColor: "#2f6f7e", color: "#ffffff" }}
           >
@@ -107,7 +114,14 @@ export function Nav() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  onClick={closeMenu}
+                  onClick={() => {
+                    closeMenu();
+                    capture("nav_link_clicked", {
+                      href: link.href,
+                      label: link.label,
+                      source: "mobile",
+                    });
+                  }}
                   className="block rounded-xl px-4 py-3 text-base font-medium text-charcoal hover:bg-sand"
                 >
                   {link.label}
@@ -117,7 +131,10 @@ export function Nav() {
             <li className="mt-2 border-t border-line pt-3">
               <Link
                 href="/apartments"
-                onClick={closeMenu}
+                onClick={() => {
+                  closeMenu();
+                  capture("explore_apartments_clicked", { source: "nav_mobile" });
+                }}
                 className="block rounded-xl px-4 py-3 text-center text-base font-semibold"
                 style={{ backgroundColor: "#2f6f7e", color: "#ffffff" }}
               >

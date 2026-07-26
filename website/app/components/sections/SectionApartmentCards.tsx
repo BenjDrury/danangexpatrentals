@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { capture } from "@/lib/analytics";
 import { CtaButton } from "../CtaButton";
 import { Section } from "./Section";
 
@@ -95,6 +98,14 @@ export function SectionApartmentCards({
             <Link
               key={i}
               href={card.href}
+              onClick={() =>
+                capture("listing_card_clicked", {
+                  href: card.href,
+                  title: card.title,
+                  location: card.location,
+                  source: "home_featured",
+                })
+              }
               className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-[0_8px_30px_rgba(42,42,40,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(42,42,40,0.08)]"
             >
               {content}

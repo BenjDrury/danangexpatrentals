@@ -44,9 +44,46 @@ npm run make-admin -- a1b2c3d4-e5f6-7890-abcd-ef1234567890
 
 ---
 
+## extract-facebook (Chrome tab → seed)
+
+Local **macOS** helper: reads a logged-in Google Chrome Facebook tab, writes JSON under `tmp_fb/`, then upserts an `estate_companies` row and inserts **draft** apartments (photos uploaded to the `apartments` Storage bucket).
+
+**Preconditions**
+- Google Chrome open, logged into Facebook
+- Target group-user or profile page open in a tab (or pass `--url=`)
+- Allow Chrome automation if macOS prompts (System Settings → Privacy)
+- Areas already seeded in Supabase
+
+**Required in .secret.local** (unless `--dry-run`): `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) and `SUPABASE_SERVICE_ROLE_KEY`.
+
+**Usage** (from repo root):
+
+```bash
+# Page already open in Chrome — extract + seed
+npm run extract-facebook
+
+# Navigate Chrome to a URL first
+npm run extract-facebook -- --url='https://www.facebook.com/groups/203559903815711/user/100054892217906'
+
+# Extract JSON only (no DB writes)
+npm run extract-facebook -- --dry-run --limit=5
+
+# Options
+#   --limit=5          max posts (default 5)
+#   --scrolls=12       feed scroll passes before extract
+#   --out=tmp_fb/x.json
+#   --area=my-khe      fallback area_id
+#   --status=draft     listing status (default draft)
+#   --match=<substr>   Chrome tab URL match (default: facebook.com or id from --url)
+```
+
+Duplicates are skipped by `source_url` / `source_post_id`. No partner auth user is created — use Admin → Become company to view.
+
+---
+
 ## import-facebook-posts
 
-Imports Facebook post JSON into `estate_companies` and `apartments`. Run **supabase/10-estate-companies.sql** first.
+Imports Facebook post JSON into `estate_companies` and `apartments`. Run **supabase/10-estate-companies.sql** first. Prefer **extract-facebook** when you already have the seller page open in Chrome.
 
 **Required in .secret.local:** `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) and `SUPABASE_SERVICE_ROLE_KEY`.
 

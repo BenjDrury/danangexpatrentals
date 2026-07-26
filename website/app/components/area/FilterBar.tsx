@@ -1,5 +1,7 @@
 "use client";
 
+import { capture } from "@/lib/analytics";
+
 export type UnitFilter = "all" | "studio" | "1br" | "2br" | "3br";
 export type SortOption = "recommended" | "price_asc" | "price_desc" | "newest";
 
@@ -40,7 +42,17 @@ export function FilterBar({
   currencyLabel = "USD",
 }: FilterBarProps) {
   const update = (patch: Partial<AreaListFilters>) => {
-    onChange({ ...filters, ...patch });
+    const next = { ...filters, ...patch };
+    onChange(next);
+    capture("apartment_filters_changed", {
+      unit_type: next.unitType,
+      min_price: next.minPrice,
+      max_price: next.maxPrice,
+      furnished_only: next.furnishedOnly,
+      min_lease_months: next.minLeaseMonths,
+      sort: next.sort,
+      changed: Object.keys(patch).join(","),
+    });
   };
 
   return (

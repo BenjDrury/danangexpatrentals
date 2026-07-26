@@ -16,6 +16,7 @@ import {
   filterActivities,
   type ActivityFilters,
 } from "@/lib/registry-filters";
+import { capture } from "@/lib/analytics";
 
 const selectClass =
   "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-charcoal focus:border-ocean focus:outline-none focus:ring-2 focus:ring-ocean/15";
@@ -44,16 +45,37 @@ export function ActivitiesRegistry({ activities }: { activities: Activity[] }) {
   }, [filtered]);
 
   const update = (patch: Partial<ActivityFilters>) => {
-    setFilters((prev) => ({ ...prev, ...patch }));
+    setFilters((prev) => {
+      const next = { ...prev, ...patch };
+      capture("activity_filters_changed", {
+        changed: Object.keys(patch).join(","),
+        category: next.category,
+        area_id: next.areaId,
+        price_band: next.priceBand,
+      });
+      return next;
+    });
   };
 
   const toggleFeature = (tag: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      features: prev.features.includes(tag)
-        ? prev.features.filter((t) => t !== tag)
-        : [...prev.features, tag],
-    }));
+    setFilters((prev) => {
+      const next = {
+        ...prev,
+        features: prev.features.includes(tag)
+          ? prev.features.filter((t) => t !== tag)
+          : [...prev.features, tag],
+      };
+      capture("activity_filters_changed", {
+        changed: "features",
+        features: next.features.join(","),
+      });
+      return next;
+    });
+  };
+
+  const resetFilters = () => {
+    setFilters(DEFAULT_ACTIVITY_FILTERS);
+    capture("activity_filters_reset");
   };
 
   return (
@@ -64,7 +86,7 @@ export function ActivitiesRegistry({ activities }: { activities: Activity[] }) {
           {active && (
             <button
               type="button"
-              onClick={() => setFilters(DEFAULT_ACTIVITY_FILTERS)}
+              onClick={resetFilters}
               className="text-sm font-medium text-muted transition hover:text-ocean"
             >
               Reset filters
@@ -177,7 +199,7 @@ export function ActivitiesRegistry({ activities }: { activities: Activity[] }) {
             No activities match these filters. Try a wider cost band or category, or{" "}
             <button
               type="button"
-              onClick={() => setFilters(DEFAULT_ACTIVITY_FILTERS)}
+              onClick={resetFilters}
               className="font-medium text-ocean transition hover:text-ocean-deep"
             >
               reset filters

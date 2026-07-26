@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Section, SectionHero } from "../components/sections";
+import { TrackedLink } from "../components/TrackedLink";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../lib/constants";
 import { getAreas, getApartmentTypes, getApartmentsPaginated } from "@/lib/data";
 import { ApartmentCard } from "../components/area/ApartmentCard";
@@ -82,23 +82,27 @@ export default async function ApartmentsPage({ searchParams }: Props) {
                   aria-label="Pagination"
                 >
                   {page > 1 && (
-                    <Link
+                    <TrackedLink
                       href={page === 2 ? "/apartments" : `/apartments?page=${page - 1}`}
+                      event="apartments_pagination_clicked"
+                      eventProps={{ direction: "previous", page: page - 1 }}
                       className="rounded-quieter border border-line px-4 py-2.5 text-sm font-medium text-charcoal transition hover:bg-sand"
                     >
                       ← Previous
-                    </Link>
+                    </TrackedLink>
                   )}
                   <span className="px-4 py-2.5 text-sm text-muted">
                     Page {page} of {paginated.totalPages}
                   </span>
                   {page < paginated.totalPages && (
-                    <Link
+                    <TrackedLink
                       href={`/apartments?page=${page + 1}`}
+                      event="apartments_pagination_clicked"
+                      eventProps={{ direction: "next", page: page + 1 }}
                       className="rounded-quieter border border-line px-4 py-2.5 text-sm font-medium text-charcoal transition hover:bg-sand"
                     >
                       Next →
-                    </Link>
+                    </TrackedLink>
                   )}
                 </nav>
               )}
@@ -109,12 +113,14 @@ export default async function ApartmentsPage({ searchParams }: Props) {
                 No public listings yet. Tell us your budget and dates — we’ll send
                 verified options within 24 hours.
               </p>
-              <Link
+              <TrackedLink
                 href="/contact"
+                event="contact_cta_clicked"
+                eventProps={{ source: "apartments_empty" }}
                 className="mt-8 inline-flex rounded-quieter bg-ocean px-6 py-3.5 text-base font-semibold text-white transition hover:bg-ocean-deep"
               >
                 Get matched
-              </Link>
+              </TrackedLink>
             </div>
           )}
         </div>
@@ -132,12 +138,14 @@ export default async function ApartmentsPage({ searchParams }: Props) {
             </div>
           ))}
         </div>
-        <Link
+        <TrackedLink
           href="/contact"
+          event="contact_cta_clicked"
+          eventProps={{ source: "apartments_types" }}
           className="mt-12 inline-flex text-sm font-semibold text-ocean transition hover:text-ocean-deep"
         >
           Tell us your budget — get matched →
-        </Link>
+        </TrackedLink>
       </Section>
     </div>
   );

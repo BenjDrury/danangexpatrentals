@@ -121,6 +121,11 @@ const en = {
   "login.magicLinkCompleting": "Signing you in…",
   "login.magicLinkFailed":
     "This sign-in link is invalid or expired. Request a new one, or sign in with your password.",
+  "login.magicLinkTimedOut":
+    "Sign-in is taking too long. Try your password, or request a fresh login link.",
+  "login.showSignInForm": "Show email & password sign-in",
+  "login.rateLimited":
+    "Too many sign-in attempts. Wait a few minutes, then try once with your password — or email yourself a login link.",
   "login.inviteNote":
     "Partner accounts are invited. Need access? Ask the Da Nang Expat Rentals team.",
   "login.applyPrompt": "Want to become a partner?",
@@ -770,6 +775,11 @@ const vi: Record<MessageKey, string> = {
   "login.magicLinkCompleting": "Đang đăng nhập…",
   "login.magicLinkFailed":
     "Liên kết đăng nhập không hợp lệ hoặc đã hết hạn. Yêu cầu liên kết mới, hoặc đăng nhập bằng mật khẩu.",
+  "login.magicLinkTimedOut":
+    "Đăng nhập mất quá nhiều thời gian. Thử mật khẩu, hoặc yêu cầu link mới.",
+  "login.showSignInForm": "Hiện form email & mật khẩu",
+  "login.rateLimited":
+    "Quá nhiều lần đăng nhập. Đợi vài phút rồi thử lại bằng mật khẩu — hoặc gửi link đăng nhập qua email.",
   "login.inviteNote":
     "Tài khoản đối tác được mời. Cần quyền truy cập? Liên hệ đội ngũ Da Nang Expat Rentals.",
   "login.applyPrompt": "Muốn trở thành đối tác?",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +10,21 @@ import { capture } from "@/lib/analytics";
 import { syncPostHogIdentity } from "@/lib/analytics-identity";
 import { requestMagicLink } from "./actions";
 import { getPublicSiteUrl } from "@/lib/public-url";
+import {
+  AUTH_RATE_LIMITED,
+  isAuthRateLimitError,
+} from "@/lib/auth-errors";
+
+function mapLoginError(
+  message: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!message) return t("login.magicLinkFailed");
+  if (message === AUTH_RATE_LIMITED || isAuthRateLimitError(message)) {
+    return t("login.rateLimited");
+  }
+  return message;
+}
 
 function safeNext(next: string | null): string {
   if (!next) return "/";
@@ -56,10 +71,35 @@ function LoginForm() {
       Boolean(hashAuth?.accessToken && hashAuth?.refreshToken) ||
       hasAuthCodeInSearch(),
   );
+  const completingRef = useRef(completingMagicLink);
+  completingRef.current = completingMagicLink;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLocale();
   const nextPath = safeNext(searchParams.get("next"));
+
+  const clearAuthParamsFromUrl = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    url.hash = "";
+    url.searchParams.delete("code");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
+    url.searchParams.delete("error_code");
+    if (nextPath && nextPath !== "/") {
+      url.searchParams.set("next", nextPath);
+    }
+    window.history.replaceState(null, "", url.pathname + url.search);
+  }, [nextPath]);
+
+  const abortMagicLinkCompletion = useCallback(
+    (message?: string) => {
+      setCompletingMagicLink(false);
+      setError(mapLoginError(message ?? t("login.magicLinkFailed"), t));
+      clearAuthParamsFromUrl();
+    },
+    [clearAuthParamsFromUrl, t],
+  );
 
   // Supabase magic links redirect with tokens in the URL hash (implicit) or
   // ?code= (PKCE). Hash fragments never reach the server, so complete the
@@ -82,19 +122,7 @@ function LoginForm() {
 
       if (authError) {
         if (cancelled) return;
-        setCompletingMagicLink(false);
-        setError(
-          authError === "magic_link"
-            ? t("login.magicLinkFailed")
-            : authError,
-        );
-        if (window.location.hash) {
-          window.history.replaceState(
-            null,
-            "",
-            window.location.pathname + window.location.search,
-          );
-        }
+        abortMagicLinkCompletion(authError);
         return;
       }
 
@@ -110,13 +138,14 @@ function LoginForm() {
           await supabase.auth.exchangeCodeForSession(code);
         if (exchangeError || !data.session) {
           if (!cancelled) {
-            setCompletingMagicLink(false);
-            setError(exchangeError?.message ?? t("login.magicLinkFailed"));
+            abortMagicLinkCompletion(
+              exchangeError?.message ?? t("login.magicLinkFailed"),
+            );
           }
           return;
         }
         if (cancelled) return;
-        window.history.replaceState(null, "", window.location.pathname);
+        clearAuthParamsFromUrl();
         await finishSignIn(data.session.user);
         return;
       }
@@ -126,7 +155,7 @@ function LoginForm() {
       const { data: existing } = await supabase.auth.getSession();
       if (existing.session?.user) {
         if (cancelled) return;
-        window.history.replaceState(null, "", window.location.pathname);
+        clearAuthParamsFromUrl();
         await finishSignIn(existing.session.user);
         return;
       }
@@ -138,22 +167,41 @@ function LoginForm() {
         });
         if (sessionError || !data.session) {
           if (!cancelled) {
-            setCompletingMagicLink(false);
-            setError(sessionError?.message ?? t("login.magicLinkFailed"));
+            abortMagicLinkCompletion(
+              sessionError?.message ?? t("login.magicLinkFailed"),
+            );
           }
           return;
         }
         if (cancelled) return;
-        window.history.replaceState(null, "", window.location.pathname);
+        clearAuthParamsFromUrl();
         await finishSignIn(data.session.user);
       }
     }
 
     void completeFromUrl();
+
+    // Never leave the user stuck on "Signing you in…" with no form.
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled || !completingRef.current) return;
+      setCompletingMagicLink(false);
+      setError(t("login.magicLinkTimedOut"));
+      clearAuthParamsFromUrl();
+    }, 12_000);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
     };
-  }, [hashAuth, nextPath, router, searchParams, t]);
+  }, [
+    abortMagicLinkCompletion,
+    clearAuthParamsFromUrl,
+    hashAuth,
+    nextPath,
+    router,
+    searchParams,
+    t,
+  ]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -169,7 +217,7 @@ function LoginForm() {
 
     setLoading(false);
     if (signInError) {
-      setError(signInError.message);
+      setError(mapLoginError(signInError.message, t));
       return;
     }
 
@@ -197,7 +245,7 @@ function LoginForm() {
     setMagicLoading(false);
 
     if (result.error) {
-      setError(result.error);
+      setError(mapLoginError(result.error, t));
       return;
     }
 
@@ -207,18 +255,28 @@ function LoginForm() {
 
   if (completingMagicLink) {
     return (
-      <div className="mt-8 rounded-soft border border-line/80 bg-white/80 p-7 text-center shadow-[0_18px_50px_rgba(42,42,40,0.06)] backdrop-blur-sm">
+      <div className="mt-8 rounded-soft border border-line/80 bg-white p-7 text-center shadow-[0_18px_50px_rgba(42,42,40,0.06)]">
         <p className="text-sm font-medium text-charcoal">
           {t("login.magicLinkCompleting")}
         </p>
+        <button
+          type="button"
+          onClick={() => abortMagicLinkCompletion(t("login.magicLinkFailed"))}
+          className="mt-5 text-sm font-semibold text-ocean transition hover:text-ocean-deep"
+        >
+          {t("login.showSignInForm")}
+        </button>
       </div>
     );
   }
 
+  const inputClass =
+    "mt-1.5 block w-full rounded-quieter border border-line bg-white px-3.5 py-2.5 text-charcoal shadow-sm outline-none transition placeholder:text-muted/70 focus:border-ocean focus:ring-2 focus:ring-ocean/20";
+
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-8 space-y-5 rounded-soft border border-line/80 bg-white/80 p-7 shadow-[0_18px_50px_rgba(42,42,40,0.06)] backdrop-blur-sm"
+      className="mt-8 space-y-5 rounded-soft border border-line/80 bg-white p-7 shadow-[0_18px_50px_rgba(42,42,40,0.06)]"
     >
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-charcoal">
@@ -231,7 +289,7 @@ function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          className="mt-1.5 block w-full rounded-quieter border border-line bg-foam/60 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
+          className={inputClass}
         />
       </div>
       <div>
@@ -245,7 +303,7 @@ function LoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="mt-1.5 block w-full rounded-quieter border border-line bg-foam/60 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
+          className={inputClass}
         />
       </div>
       {error && (
@@ -266,7 +324,7 @@ function LoginForm() {
         {loading ? t("login.submitting") : t("login.submit")}
       </button>
       <div className="relative py-1 text-center">
-        <span className="relative z-10 bg-white/80 px-3 text-xs font-medium uppercase tracking-wide text-muted">
+        <span className="relative z-10 bg-white px-3 text-xs font-medium uppercase tracking-wide text-muted">
           {t("login.or")}
         </span>
         <span
@@ -278,7 +336,7 @@ function LoginForm() {
         type="button"
         disabled={loading || magicLoading}
         onClick={() => void handleMagicLink()}
-        className="w-full rounded-quieter border border-line bg-foam/50 px-4 py-3 text-sm font-semibold text-charcoal transition hover:border-ocean/40 hover:bg-foam focus:outline-none focus:ring-2 focus:ring-ocean/30 focus:ring-offset-2 focus:ring-offset-foam disabled:opacity-50"
+        className="w-full rounded-quieter border border-line bg-foam px-4 py-3 text-sm font-semibold text-charcoal transition hover:border-ocean/40 hover:bg-sand focus:outline-none focus:ring-2 focus:ring-ocean/30 focus:ring-offset-2 focus:ring-offset-foam disabled:opacity-50"
       >
         {magicLoading ? t("login.magicLinkSending") : t("login.magicLinkSubmit")}
       </button>

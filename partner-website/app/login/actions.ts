@@ -6,6 +6,7 @@ import {
   getPartnerAppUrl,
   sendMagicLoginEmail,
 } from "@/lib/email/auth-links";
+import { AUTH_RATE_LIMITED } from "@/lib/auth-errors";
 
 function safeNext(next: string | null | undefined): string {
   if (!next) return "/";
@@ -50,6 +51,10 @@ export async function requestMagicLink(input: {
     existingOnly: true,
   });
 
+  if (generated.error === AUTH_RATE_LIMITED) {
+    return { error: AUTH_RATE_LIMITED };
+  }
+
   if (generated.link) {
     const sent = await sendMagicLoginEmail({
       to: email,
@@ -59,6 +64,6 @@ export async function requestMagicLink(input: {
     if (sent.error) return { error: sent.error };
   }
 
-  // Generic success whether or not the account exists.
+  // Generic success whether or not the account exists (not_found → ok).
   return { ok: true };
 }

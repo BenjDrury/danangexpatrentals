@@ -1,6 +1,9 @@
 import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendTransactionalEmail } from "@/lib/email/resend";
+import { AUTH_RATE_LIMITED, isAuthRateLimitError } from "@/lib/auth-errors";
+
+export { AUTH_RATE_LIMITED, isAuthRateLimitError } from "@/lib/auth-errors";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -54,6 +57,11 @@ export async function generateAuthLoginLink(
     return { link: { actionLink: magicLink, type: "magiclink" } };
   }
 
+  // Never hide rate limits behind "account not found" — callers must back off.
+  if (isAuthRateLimitError(magic.error)) {
+    return { error: AUTH_RATE_LIMITED };
+  }
+
   if (opts?.existingOnly) {
     // Don't reveal whether the account exists.
     return { error: "not_found" };
@@ -68,6 +76,10 @@ export async function generateAuthLoginLink(
   const inviteLink = invite.data?.properties?.action_link;
   if (!invite.error && inviteLink) {
     return { link: { actionLink: inviteLink, type: "invite" } };
+  }
+
+  if (isAuthRateLimitError(invite.error)) {
+    return { error: AUTH_RATE_LIMITED };
   }
 
   return {

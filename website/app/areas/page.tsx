@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     "Editorial guides to Da Nang neighbourhoods for expats: My An, An Thuong, Son Tra, Hai Chau, and quieter coastal areas.",
 };
 
+export const revalidate = 60;
+
 export default async function AreasPage() {
   const areas = await getAreas();
 

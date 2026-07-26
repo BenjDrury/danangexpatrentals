@@ -1,8 +1,11 @@
-import { getApartments, getAreas } from "@/lib/data";
+import { getApartments, getAreaNames } from "@/lib/data";
 import { ApartmentsList } from "./ApartmentsList";
 
 export default async function AdminApartmentsPage() {
-  const [apartments, areas] = await Promise.all([getApartments(), getAreas()]);
+  const [apartments, areas] = await Promise.all([
+    getApartments(),
+    getAreaNames(),
+  ]);
 
   const areaNames: Record<string, string> = {};
   for (const a of areas) {

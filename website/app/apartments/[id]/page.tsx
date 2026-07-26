@@ -6,6 +6,8 @@ import { listingPriceLabel } from "types";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
 
+export const revalidate = 60;
+
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

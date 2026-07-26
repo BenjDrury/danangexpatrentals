@@ -1,4 +1,4 @@
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User, UserRole } from "types";
@@ -7,8 +7,10 @@ import { createClient } from "@/lib/supabase/server";
 /** httpOnly cookie: admin “view as” estate company. */
 export const IMPERSONATE_COOKIE = "partner_impersonate_company_id";
 
+export type AuthUser = { id: string; email: string | undefined };
+
 export type PartnerSession = {
-  user: SupabaseUser;
+  user: AuthUser;
   profile: User;
   estateCompanyId: string;
   isAdmin: boolean;
@@ -16,7 +18,7 @@ export type PartnerSession = {
 };
 
 export type StudioUser = {
-  user: SupabaseUser;
+  user: AuthUser;
   profile: User;
   /** Active company for studio data — partner’s own, or admin cookie / profile default. */
   estateCompanyId: string | null;
@@ -25,11 +27,11 @@ export type StudioUser = {
 };
 
 export type AdminSession = {
-  user: SupabaseUser;
+  user: AuthUser;
   profile: User;
 };
 
-export async function getProfile(userId: string): Promise<{
+export const getProfile = cache(async function getProfile(userId: string): Promise<{
   role: UserRole;
   estate_company_id: string | null;
   display_name: string | null;
@@ -46,20 +48,28 @@ export async function getProfile(userId: string): Promise<{
     estate_company_id: data.estate_company_id ?? null,
     display_name: data.display_name ?? null,
   };
-}
+});
 
-export async function getImpersonationCompanyId(): Promise<string | null> {
+export const getImpersonationCompanyId = cache(async function getImpersonationCompanyId(): Promise<string | null> {
   const jar = await cookies();
   const value = jar.get(IMPERSONATE_COOKIE)?.value?.trim();
   return value || null;
+});
+
+async function claimsUser(): Promise<AuthUser | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub) return null;
+  return {
+    id: String(claims.sub),
+    email: typeof claims.email === "string" ? claims.email : undefined,
+  };
 }
 
-/** Any signed-in partner or admin (admin may have no company yet). */
-export async function getStudioUser(): Promise<StudioUser | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+/** Any signed-in partner or admin (admin may have no company yet). Deduped per request. */
+export const getStudioUser = cache(async function getStudioUser(): Promise<StudioUser | null> {
+  const user = await claimsUser();
   if (!user) return null;
 
   const profileRow = await getProfile(user.id);
@@ -89,13 +99,10 @@ export async function getStudioUser(): Promise<StudioUser | null> {
     isAdmin,
     isImpersonating: Boolean(isAdmin && impersonatedId),
   };
-}
+});
 
-export async function requireAdmin(): Promise<AdminSession | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export const requireAdmin = cache(async function requireAdmin(): Promise<AdminSession | null> {
+  const user = await claimsUser();
   if (!user) return null;
 
   const profileRow = await getProfile(user.id);
@@ -110,7 +117,7 @@ export async function requireAdmin(): Promise<AdminSession | null> {
       display_name: profileRow.display_name,
     },
   };
-}
+});
 
 /**
  * Soft check for studio data routes.

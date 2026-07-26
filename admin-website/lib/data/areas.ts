@@ -1,5 +1,16 @@
 import { getAnonClient } from "./client";
 
+export async function getAreaNames(): Promise<{ id: string; name: string }[]> {
+  const supabase = getAnonClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("areas")
+    .select("id, name")
+    .order("id");
+  if (error) return [];
+  return data ?? [];
+}
+
 export async function getAreas() {
   const supabase = getAnonClient();
   if (!supabase) return [];

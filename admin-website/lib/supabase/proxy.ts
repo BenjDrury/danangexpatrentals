@@ -32,22 +32,22 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getClaims();
+  // Prefer getClaims() alone: with asymmetric JWT keys this verifies locally
+  // (cached JWKS) and refreshes the session when needed. Calling getUser()
+  // afterward adds a sequential Auth-server RTT on every navigation.
+  const { data } = await supabase.auth.getClaims();
+  const isAuthenticated = Boolean(data?.claims);
 
   const url = request.nextUrl.clone();
   const isLogin = url.pathname === "/login";
   const isUnauthorized = url.pathname === "/unauthorized";
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (isLogin && user) {
+  if (isLogin && isAuthenticated) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  if (!isLogin && !isUnauthorized && !user) {
+  if (!isLogin && !isUnauthorized && !isAuthenticated) {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }

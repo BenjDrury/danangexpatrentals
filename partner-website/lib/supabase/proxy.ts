@@ -41,31 +41,30 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getClaims();
+  // Prefer getClaims() alone: local JWT verify when possible. Calling getUser()
+  // afterward adds a sequential Auth-server RTT on every navigation.
+  const { data } = await supabase.auth.getClaims();
+  const isAuthenticated = Boolean(data?.claims);
 
   const url = request.nextUrl.clone();
   const isLogin = url.pathname === "/login";
   const isUnauthorized = url.pathname === "/unauthorized";
   const isInvite = url.pathname.startsWith("/invite/");
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   // Drop impersonation when signed out
-  if (!user && request.cookies.get(IMPERSONATE_COOKIE)) {
+  if (!isAuthenticated && request.cookies.get(IMPERSONATE_COOKIE)) {
     supabaseResponse.cookies.delete(IMPERSONATE_COOKIE);
   }
 
   // Authenticated users never see /login (avoids bounce with /unauthorized).
-  if (isLogin && user) {
+  if (isLogin && isAuthenticated) {
     const next = safeRelativePath(url.searchParams.get("next"));
     return NextResponse.redirect(new URL(next, request.url));
   }
 
   // Invite accept is public (logged-out users create/sign in on the page).
   // /unauthorized stays reachable while signed in (non-partners land here).
-  if (!isLogin && !isUnauthorized && !isInvite && !user) {
+  if (!isLogin && !isUnauthorized && !isInvite && !isAuthenticated) {
     url.pathname = "/login";
     url.search = "";
     const nextPath = request.nextUrl.pathname + request.nextUrl.search;

@@ -10,6 +10,8 @@ import {
 import { getAreaBySlugOrId, getApartments } from "@/lib/data";
 import { formatAreaPriceDisplay } from "@/lib/area-utils";
 
+export const revalidate = 60;
+
 type Props = { params: Promise<{ id: string }> };
 
 function buildMetaDescription(area: {

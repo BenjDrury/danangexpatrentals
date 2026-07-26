@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     "Curated, verified apartments in Da Nang for expats and remote workers. Transparent prices, real photos, honest neighbourhood guidance.",
 };
 
+/** Revalidate listing pages so soft nav can hit a warm cache. */
+export const revalidate = 60;
+
 const PER_PAGE = 9;
 
 type Props = { searchParams: Promise<{ page?: string }> };

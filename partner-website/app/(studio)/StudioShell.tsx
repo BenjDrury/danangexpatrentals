@@ -25,20 +25,20 @@ export function StudioShell({
 
   return (
     <div className="studio-atmosphere relative min-h-screen">
-      <div className="studio-grain pointer-events-none absolute inset-0 opacity-40" aria-hidden />
-      <header className="relative border-b border-line/70 bg-white/55 backdrop-blur-md">
+      <div className="studio-grain pointer-events-none absolute inset-0 opacity-30" aria-hidden />
+      <header className="relative border-b border-line/70 bg-white/65 backdrop-blur-md">
         {isAdmin ? (
-          <div className="admin-stripe h-1 w-full" aria-hidden />
+          <div className="admin-stripe h-0.5 w-full" aria-hidden />
         ) : null}
-        <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
+        <div className="mx-auto flex max-w-6xl flex-col gap-2.5 px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-display text-xs font-semibold uppercase tracking-[0.14em] text-ocean">
+                <p className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ocean">
                   {t("brand.studio")}
                 </p>
                 {isAdmin ? (
-                  <span className="rounded-quieter bg-admin-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-admin-deep">
+                  <span className="rounded bg-admin-soft px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-admin-deep">
                     {t("admin.badge")}
                   </span>
                 ) : null}
@@ -48,21 +48,23 @@ export function StudioShell({
                   </Suspense>
                 ) : null}
               </div>
-              <p className="mt-1 font-display text-lg font-semibold text-charcoal sm:text-xl">
+              <p className="mt-0.5 truncate font-display text-base font-semibold text-charcoal sm:text-lg">
                 {companyName ||
                   (isAdmin ? t("admin.headerTitle") : t("home.partnerFallback"))}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-2 text-right">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <LangToggle />
-              <span className="max-w-[14rem] truncate text-xs text-muted sm:text-sm">{email}</span>
+              <span className="hidden max-w-[12rem] truncate text-xs text-muted sm:inline">
+                {email}
+              </span>
               <SignOutButton />
             </div>
           </div>
           <StudioNav isAdmin={isAdmin} />
         </div>
       </header>
-      <main className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <main className="relative mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">{children}</main>
     </div>
   );
 }

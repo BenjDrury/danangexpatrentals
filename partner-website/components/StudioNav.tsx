@@ -18,7 +18,7 @@ export function StudioNav({ isAdmin }: { isAdmin?: boolean }) {
   const { t } = useLocale();
 
   return (
-    <nav className="flex gap-1 overflow-x-auto" aria-label={t("nav.aria")}>
+    <nav className="flex gap-0.5 overflow-x-auto" aria-label={t("nav.aria")}>
       {LINKS.map((link) => {
         const active =
           link.href === "/"
@@ -28,7 +28,7 @@ export function StudioNav({ isAdmin }: { isAdmin?: boolean }) {
           <Link
             key={link.href}
             href={link.href}
-            className={`relative rounded-quieter px-3.5 py-2 text-sm font-medium transition ${
+            className={`relative rounded-md px-2.5 py-1.5 text-sm font-medium transition ${
               active
                 ? "bg-white/90 text-ocean shadow-sm"
                 : "text-muted hover:bg-white/50 hover:text-charcoal"
@@ -37,7 +37,7 @@ export function StudioNav({ isAdmin }: { isAdmin?: boolean }) {
             {t(link.key)}
             {active && (
               <span
-                className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-ocean/70"
+                className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-ocean/70"
                 aria-hidden
               />
             )}
@@ -48,7 +48,7 @@ export function StudioNav({ isAdmin }: { isAdmin?: boolean }) {
         <>
           <Link
             href="/admin/approvals"
-            className={`relative rounded-quieter px-3.5 py-2 text-sm font-semibold transition ${
+            className={`relative rounded-md px-2.5 py-1.5 text-sm font-semibold transition ${
               pathname.startsWith("/admin/approvals")
                 ? "bg-admin-soft text-admin-deep shadow-sm"
                 : "text-admin/80 hover:bg-admin-soft/70 hover:text-admin-deep"
@@ -57,14 +57,14 @@ export function StudioNav({ isAdmin }: { isAdmin?: boolean }) {
             {t("nav.approvals")}
             {pathname.startsWith("/admin/approvals") && (
               <span
-                className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-admin"
+                className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-admin"
                 aria-hidden
               />
             )}
           </Link>
           <Link
             href="/admin/partners"
-            className={`relative rounded-quieter px-3.5 py-2 text-sm font-semibold transition ${
+            className={`relative rounded-md px-2.5 py-1.5 text-sm font-semibold transition ${
               pathname.startsWith("/admin/partners")
                 ? "bg-admin-soft text-admin-deep shadow-sm"
                 : "text-admin/80 hover:bg-admin-soft/70 hover:text-admin-deep"
@@ -73,7 +73,7 @@ export function StudioNav({ isAdmin }: { isAdmin?: boolean }) {
             {t("nav.admin")}
             {pathname.startsWith("/admin/partners") && (
               <span
-                className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-admin"
+                className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-admin"
                 aria-hidden
               />
             )}

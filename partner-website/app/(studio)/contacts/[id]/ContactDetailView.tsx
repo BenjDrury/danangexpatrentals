@@ -176,21 +176,21 @@ export function ContactDetailView({ contact, connected, availableListings }: Pro
   );
 
   return (
-    <div className="space-y-10 animate-fade-up">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-5 animate-fade-up">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/contacts" className="text-sm font-medium text-ocean hover:text-ocean-deep">
             {t("contacts.back")}
           </Link>
-          <h1 className="mt-3 font-display text-3xl font-semibold text-charcoal">{contact.name}</h1>
-          <p className="mt-2 text-muted">{t("contacts.detailSubtitle")}</p>
+          <h1 className="mt-2 font-display text-2xl font-semibold text-charcoal">{contact.name}</h1>
+          <p className="mt-1 text-sm text-muted">{t("contacts.detailSubtitle")}</p>
         </div>
         <DeleteContactButton contactId={contact.id} />
       </div>
 
-      <form action={saveAction} className="space-y-4 rounded-soft border border-line/80 bg-white/75 p-5 sm:p-6">
-        <h2 className="font-display text-xl font-semibold text-charcoal">{t("contacts.details")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <form action={saveAction} className="space-y-3 rounded-lg border border-line/80 bg-white/75 p-4">
+        <h2 className="font-display text-base font-semibold text-charcoal">{t("contacts.details")}</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-sm sm:col-span-2">
             <span className="font-medium text-charcoal">{t("contacts.name")}</span>
             <input name="name" required defaultValue={contact.name} className={inputClass} />

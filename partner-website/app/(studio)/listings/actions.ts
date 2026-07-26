@@ -548,6 +548,47 @@ export async function setListingMainImage(
   return { ok: true };
 }
 
+/** Replace main + gallery photos for a listing (Photos tab). */
+export async function saveListingPhotos(
+  id: string,
+  mainImage: string,
+  images: string[]
+): Promise<ListingFormState> {
+  const session = await requirePartner();
+  if (!session) return { error: "Unauthorized." };
+
+  const main = mainImage.trim();
+  const gallery = images.map((u) => u.trim()).filter(Boolean).filter((u) => u !== main);
+
+  const supabase = await createClient();
+  const { data: existing, error: fetchError } = await supabase
+    .from("apartments")
+    .select("id, estate_company_id")
+    .eq("id", id)
+    .eq("estate_company_id", session.estateCompanyId)
+    .maybeSingle();
+
+  if (fetchError) return { error: fetchError.message };
+  if (!existing) return { error: "Listing not found." };
+
+  const { error } = await supabase
+    .from("apartments")
+    .update({
+      main_image:
+        main ||
+        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",
+      images: gallery,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("estate_company_id", session.estateCompanyId);
+
+  if (error) return { error: error.message };
+
+  revalidateListingPaths(id);
+  return { ok: true };
+}
+
 /**
  * Hard-delete a listing scoped to the active studio company.
  * Drafts cascade; partner_deals.apartment_id is set null by FK.

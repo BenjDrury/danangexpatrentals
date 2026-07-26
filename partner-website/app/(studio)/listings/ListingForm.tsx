@@ -22,6 +22,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { statusMessageKey } from "@/lib/i18n/messages";
 import { FeaturesMultiSelect } from "@/components/FeaturesMultiSelect";
+import { Button, Field, inputClass } from "@/components/ui";
 
 type Props = {
   areas: Pick<Area, "id" | "name">[];
@@ -30,11 +31,12 @@ type Props = {
   isAdmin?: boolean;
   /** USD→VND rate for live preview (from env or app_settings). */
   usdVndRate: number;
+  /** When false (workspace Details tab), photos stay on the Photos tab. */
+  includePhotos?: boolean;
 };
 
 function toDateInputValue(iso: string | null | undefined): string {
   if (!iso) return "";
-  // Accept YYYY-MM-DD or full ISO
   return iso.slice(0, 10);
 }
 
@@ -61,6 +63,7 @@ export function ListingForm({
   listing,
   isAdmin,
   usdVndRate,
+  includePhotos = true,
 }: Props) {
   const isEdit = Boolean(listing);
   const action = isEdit
@@ -135,11 +138,11 @@ export function ListingForm({
   }
 
   return (
-    <form action={formAction} className="space-y-8">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="main_image" value={mainImage} />
       <input type="hidden" name="images" value={gallery.join("\n")} />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t("form.title")} htmlFor="title" className="sm:col-span-2">
           <input
             id="title"
@@ -151,16 +154,16 @@ export function ListingForm({
           />
         </Field>
 
-        <div className="sm:col-span-2 space-y-3">
+        <div className="space-y-2 sm:col-span-2">
           <div className="flex flex-wrap items-end gap-3">
             <Field label={t("form.priceCurrency")} htmlFor="price_currency">
-              <div className="mt-1.5 flex rounded-quieter border border-line bg-foam/70 p-0.5">
+              <div className="mt-1 flex rounded-md border border-line bg-foam/70 p-0.5">
                 {(["USD", "VND"] as const).map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => setCurrency(c)}
-                    className={`rounded-md px-3.5 py-2 text-sm font-semibold transition ${
+                    className={`rounded px-3 py-1.5 text-sm font-semibold transition ${
                       currency === c
                         ? "bg-ocean text-white"
                         : "text-muted hover:text-charcoal"
@@ -272,7 +275,7 @@ export function ListingForm({
         </Field>
 
         {isEdit && isAdmin ? (
-          <div className="rounded-quieter border border-admin/30 bg-admin-soft/50 p-3 sm:col-span-2">
+          <div className="rounded-md border border-admin/30 bg-admin-soft/50 p-3 sm:col-span-2">
             <label htmlFor="status" className="block text-sm font-medium text-admin-deep">
               {t("status.label")}
             </label>
@@ -281,7 +284,7 @@ export function ListingForm({
               name="status"
               value={statusValue}
               onChange={(e) => setStatusValue(e.target.value as ListingStatus)}
-              className="mt-1.5 w-full rounded-quieter border border-admin/35 bg-white px-3 py-2.5 text-sm text-charcoal outline-none focus:border-admin focus:ring-2 focus:ring-admin/25"
+              className="mt-1 w-full rounded-md border border-admin/35 bg-white px-3 py-2 text-sm text-charcoal outline-none focus:border-admin focus:ring-2 focus:ring-admin/25"
             >
               {statusOptions.map((s) => (
                 <option key={s} value={s}>
@@ -296,7 +299,7 @@ export function ListingForm({
         ) : isEdit ? (
           <div>
             <p className="block text-sm font-medium text-charcoal">{t("status.label")}</p>
-            <p className="mt-1.5 text-sm text-charcoal">
+            <p className="mt-1 text-sm text-charcoal">
               {t(statusMessageKey(currentStatus))}
             </p>
             <p className="mt-1 text-xs text-muted">{t("status.partnerReadOnlyHint")}</p>
@@ -308,7 +311,7 @@ export function ListingForm({
         ) : (
           <div>
             <p className="block text-sm font-medium text-charcoal">{t("status.label")}</p>
-            <p className="mt-1.5 text-sm text-muted">{t("status.newListingDraft")}</p>
+            <p className="mt-1 text-sm text-muted">{t("status.newListingDraft")}</p>
             <input type="hidden" name="status" value="draft" />
           </div>
         )}
@@ -350,56 +353,58 @@ export function ListingForm({
         </Field>
       </div>
 
-      <div className="space-y-4 rounded-soft border border-line/80 bg-white/70 p-5">
-        <div>
-          <p className="text-sm font-medium text-charcoal">{t("form.photos")}</p>
-          <p className="mt-1 text-sm text-muted">{t("form.photosHint")}</p>
+      {includePhotos ? (
+        <div className="space-y-3 rounded-lg border border-line/80 bg-white/70 p-4">
+          <div>
+            <p className="text-sm font-medium text-charcoal">{t("form.photos")}</p>
+            <p className="mt-0.5 text-xs text-muted">{t("form.photosHint")}</p>
+          </div>
+
+          {mainImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={mainImage}
+              alt="Main listing"
+              className="h-36 w-full rounded-md object-cover sm:h-44"
+            />
+          ) : (
+            <div className="flex h-28 items-center justify-center rounded-md bg-sand text-sm text-muted">
+              {t("form.noMainPhoto")}
+            </div>
+          )}
+
+          <label className="inline-flex cursor-pointer rounded-md border border-line bg-foam px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-ocean/40">
+            {uploading ? t("form.uploading") : t("form.uploadMain")}
+            <input type="file" accept="image/*" className="hidden" onChange={onMainFile} />
+          </label>
+
+          {gallery.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {gallery.map((url) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={url} src={url} alt="" className="aspect-square rounded-md object-cover" />
+              ))}
+            </div>
+          )}
+
+          <label className="inline-flex cursor-pointer rounded-md border border-line bg-foam px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-ocean/40">
+            {t("form.addGallery")}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={onGalleryFiles}
+            />
+          </label>
+
+          {uploadError && (
+            <p className="text-sm text-red-700" role="alert">
+              {uploadError}
+            </p>
+          )}
         </div>
-
-        {mainImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={mainImage}
-            alt="Main listing"
-            className="h-44 w-full rounded-quieter object-cover sm:h-56"
-          />
-        ) : (
-          <div className="flex h-44 items-center justify-center rounded-quieter bg-sand text-sm text-muted sm:h-56">
-            {t("form.noMainPhoto")}
-          </div>
-        )}
-
-        <label className="inline-flex cursor-pointer rounded-quieter border border-line bg-foam px-3.5 py-2 text-sm font-medium text-charcoal transition hover:border-ocean/40">
-          {uploading ? t("form.uploading") : t("form.uploadMain")}
-          <input type="file" accept="image/*" className="hidden" onChange={onMainFile} />
-        </label>
-
-        {gallery.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {gallery.map((url) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={url} src={url} alt="" className="aspect-square rounded-md object-cover" />
-            ))}
-          </div>
-        )}
-
-        <label className="inline-flex cursor-pointer rounded-quieter border border-line bg-foam px-3.5 py-2 text-sm font-medium text-charcoal transition hover:border-ocean/40">
-          {t("form.addGallery")}
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={onGalleryFiles}
-          />
-        </label>
-
-        {uploadError && (
-          <p className="text-sm text-red-700" role="alert">
-            {uploadError}
-          </p>
-        )}
-      </div>
+      ) : null}
 
       {(state.error || state.ok) && (
         <p className={`text-sm ${state.error ? "text-red-700" : "text-palm"}`} role="status">
@@ -407,44 +412,13 @@ export function ListingForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending || uploading}
-        className="rounded-quieter bg-ocean px-6 py-3 text-sm font-semibold text-white transition hover:bg-ocean-deep disabled:opacity-50"
-      >
+      <Button type="submit" disabled={pending || uploading}>
         {pending
           ? t("form.saving")
           : isEdit
             ? t("form.saveChanges")
             : t("form.createListing")}
-      </button>
+      </Button>
     </form>
-  );
-}
-
-const inputClass =
-  "mt-1.5 block w-full rounded-quieter border border-line bg-foam/70 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20";
-
-function Field({
-  label,
-  htmlFor,
-  hint,
-  className = "",
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  hint?: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={className}>
-      <label htmlFor={htmlFor} className="block text-sm font-medium text-charcoal">
-        {label}
-      </label>
-      {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
-      {children}
-    </div>
   );
 }

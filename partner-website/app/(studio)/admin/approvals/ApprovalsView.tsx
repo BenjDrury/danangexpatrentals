@@ -143,15 +143,15 @@ export function ApprovalsView({
   const { t } = useLocale();
 
   return (
-    <div className="animate-fade-up space-y-8">
-      <header className="space-y-2">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.14em] text-admin-deep">
+    <div className="animate-fade-up space-y-5">
+      <header className="space-y-1">
+        <p className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-admin-deep">
           {t("admin.badge")}
         </p>
-        <h1 className="font-display text-2xl font-semibold text-charcoal sm:text-3xl">
+        <h1 className="font-display text-2xl font-semibold text-charcoal">
           {t("approvals.title")}
         </h1>
-        <p className="max-w-xl text-sm text-muted sm:text-base">{t("approvals.subtitle")}</p>
+        <p className="max-w-xl text-sm text-muted">{t("approvals.subtitle")}</p>
       </header>
 
       {missingServiceRole ? (

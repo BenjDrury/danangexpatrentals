@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
 import { CommissionFields } from "@/components/CommissionFields";
+import { Button, Section, inputClass } from "@/components/ui";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { MessageKey } from "@/lib/i18n/messages";
 import type { ListingDealRow, PartnerContact } from "@/lib/data/listings";
@@ -16,9 +17,6 @@ import {
   updateDealCommission,
   type DealActionState,
 } from "../../contacts/actions";
-
-const inputClass =
-  "mt-1.5 block w-full rounded-quieter border border-line bg-foam/70 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20";
 
 const STAGE_KEYS: Record<string, MessageKey> = {
   inquiry: "contacts.stage.inquiry",
@@ -46,26 +44,28 @@ function DealCommissionEditor({ deal }: { deal: ListingDealRow }) {
   const [disconnectError, setDisconnectError] = useState<string | null>(null);
 
   return (
-    <li className="space-y-3 py-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <li className="space-y-2.5 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           {deal.contact_id && deal.contact_name ? (
             <Link
               href={`/contacts/${deal.contact_id}`}
-              className="font-display text-lg font-semibold text-charcoal transition hover:text-ocean"
+              className="font-display text-base font-semibold text-charcoal transition hover:text-ocean"
             >
               {deal.contact_name}
             </Link>
           ) : (
-            <p className="font-display text-lg font-semibold text-charcoal">
+            <p className="font-display text-base font-semibold text-charcoal">
               {t("commission.listingDefault")}
             </p>
           )}
-          <p className="mt-1 text-sm text-muted">{t(stageKey(deal.stage))}</p>
+          <p className="mt-0.5 text-xs text-muted">{t(stageKey(deal.stage))}</p>
         </div>
         {deal.contact_id ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             disabled={disconnectPending}
             onClick={() => {
               setDisconnectError(null);
@@ -74,14 +74,13 @@ function DealCommissionEditor({ deal }: { deal: ListingDealRow }) {
                 if (result?.error) setDisconnectError(result.error);
               });
             }}
-            className="rounded-quieter border border-line bg-white px-3.5 py-2 text-sm font-medium text-muted transition hover:border-coral/40 hover:text-coral-deep disabled:opacity-50"
           >
             {t("contacts.disconnect")}
-          </button>
+          </Button>
         ) : null}
       </div>
 
-      <form action={action} className="space-y-3">
+      <form action={action} className="space-y-2.5">
         <CommissionFields
           compact
           usd={deal.expected_commission_usd}
@@ -103,13 +102,9 @@ function DealCommissionEditor({ deal }: { deal: ListingDealRow }) {
             {disconnectError}
           </p>
         )}
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-quieter bg-ocean px-4 py-2 text-sm font-semibold text-white transition hover:bg-ocean-deep disabled:opacity-50"
-        >
+        <Button type="submit" size="sm" disabled={pending}>
           {pending ? t("commission.saving") : t("commission.save")}
-        </button>
+        </Button>
       </form>
     </li>
   );
@@ -133,14 +128,7 @@ export function ListingDealsPanel({ listingId, deals, availableContacts }: Props
   >(boundConnect, {});
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="font-display text-xl font-semibold text-charcoal">
-          {t("commission.sectionTitle")}
-        </h2>
-        <p className="mt-1 text-sm text-muted">{t("commission.sectionHint")}</p>
-      </div>
-
+    <Section title={t("commission.sectionTitle")} description={t("commission.sectionHint")} bare>
       {contactDeals.length > 0 || listingDefault ? (
         <ul className="divide-y divide-line/80 border-y border-line/80">
           {listingDefault ? <DealCommissionEditor deal={listingDefault} /> : null}
@@ -149,7 +137,7 @@ export function ListingDealsPanel({ listingId, deals, availableContacts }: Props
           ))}
         </ul>
       ) : (
-        <p className="rounded-soft border border-dashed border-line bg-white/50 px-5 py-6 text-sm text-muted">
+        <p className="rounded-lg border border-dashed border-line bg-white/50 px-4 py-5 text-sm text-muted">
           {t("commission.empty")}
         </p>
       )}
@@ -157,10 +145,10 @@ export function ListingDealsPanel({ listingId, deals, availableContacts }: Props
       {!listingDefault ? (
         <form
           action={defaultAction}
-          className="space-y-3 rounded-soft border border-line/70 bg-foam/40 p-4 sm:p-5"
+          className="mt-4 space-y-2.5 rounded-lg border border-line/70 bg-foam/40 p-3.5"
         >
           <p className="text-sm font-medium text-charcoal">{t("commission.setDefault")}</p>
-          <p className="text-sm text-muted">{t("commission.setDefaultHint")}</p>
+          <p className="text-xs text-muted">{t("commission.setDefaultHint")}</p>
           <CommissionFields compact />
           {defaultState.error && (
             <p className="text-sm text-red-700" role="alert">
@@ -172,20 +160,16 @@ export function ListingDealsPanel({ listingId, deals, availableContacts }: Props
               {t("commission.saved")}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={defaultPending}
-            className="rounded-quieter border border-ocean/30 bg-white px-4 py-2.5 text-sm font-semibold text-ocean transition hover:border-ocean hover:bg-ocean/5 disabled:opacity-50"
-          >
+          <Button type="submit" variant="secondary" size="sm" disabled={defaultPending}>
             {defaultPending ? t("commission.saving") : t("commission.save")}
-          </button>
+          </Button>
         </form>
       ) : null}
 
       {availableContacts.length > 0 ? (
         <form
           action={connectAction}
-          className="space-y-3 rounded-soft border border-line/70 bg-foam/40 p-4 sm:p-5"
+          className="mt-4 space-y-2.5 rounded-lg border border-line/70 bg-foam/40 p-3.5"
         >
           <p className="text-sm font-medium text-charcoal">{t("commission.connectContact")}</p>
           <label className="block text-sm">
@@ -212,15 +196,11 @@ export function ListingDealsPanel({ listingId, deals, availableContacts }: Props
               {t("commission.connected")}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={connecting}
-            className="rounded-quieter border border-ocean/30 bg-white px-4 py-2.5 text-sm font-semibold text-ocean transition hover:border-ocean hover:bg-ocean/5 disabled:opacity-50"
-          >
+          <Button type="submit" variant="secondary" size="sm" disabled={connecting}>
             {connecting ? t("contacts.connecting") : t("contacts.connect")}
-          </button>
+          </Button>
         </form>
       ) : null}
-    </section>
+    </Section>
   );
 }

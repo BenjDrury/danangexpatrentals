@@ -106,15 +106,15 @@ export function PartnersView({
   }, [partners, query]);
 
   return (
-    <div className="animate-fade-up space-y-8">
-      <header className="space-y-2">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.14em] text-admin-deep">
+    <div className="animate-fade-up space-y-5">
+      <header className="space-y-1">
+        <p className="font-display text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-admin-deep">
           {t("admin.badge")}
         </p>
-        <h1 className="font-display text-2xl font-semibold text-charcoal sm:text-3xl">
+        <h1 className="font-display text-2xl font-semibold text-charcoal">
           {t("admin.partnersTitle")}
         </h1>
-        <p className="max-w-xl text-sm text-muted sm:text-base">{t("admin.partnersSubtitle")}</p>
+        <p className="max-w-xl text-sm text-muted">{t("admin.partnersSubtitle")}</p>
       </header>
 
       <FxRateCard

@@ -6,6 +6,9 @@ import type { Apartment } from "types";
 import { createContact, type ContactFormState } from "./actions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { CommissionFields } from "@/components/CommissionFields";
+import { inputClass } from "@/components/ui";
+
+export { inputClass } from "@/components/ui";
 
 const initial: ContactFormState = {};
 
@@ -110,6 +113,3 @@ export function ContactForm({ listings, onCancel }: Props) {
     </form>
   );
 }
-
-export const inputClass =
-  "mt-1.5 block w-full rounded-quieter border border-line bg-foam/70 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20";

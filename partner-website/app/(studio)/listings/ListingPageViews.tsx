@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Apartment, Area } from "types";
 import { ListingForm } from "./ListingForm";
+import { PageHeader } from "@/components/ui";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export function NewListingView({
@@ -19,16 +20,16 @@ export function NewListingView({
   const { t } = useLocale();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 animate-fade-up">
-      <div>
-        <Link href="/listings" className="text-sm font-medium text-ocean hover:text-ocean-deep">
-          {t("listings.back")}
-        </Link>
-        <h1 className="mt-3 font-display text-3xl font-semibold text-charcoal">
-          {t("listings.newTitle")}
-        </h1>
-        <p className="mt-2 text-muted">{t("listings.newSubtitle")}</p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-5 animate-fade-up">
+      <PageHeader
+        back={
+          <Link href="/listings" className="mb-1 inline-block text-sm font-medium text-ocean hover:text-ocean-deep">
+            {t("listings.back")}
+          </Link>
+        }
+        title={t("listings.newTitle")}
+        subtitle={t("listings.newSubtitle")}
+      />
       <ListingForm
         areas={areas}
         estateCompanyId={estateCompanyId}
@@ -39,6 +40,7 @@ export function NewListingView({
   );
 }
 
+/** @deprecated Edit is now `/listings/[id]?tab=details` — kept for any residual imports. */
 export function EditListingView({
   areas,
   estateCompanyId,
@@ -55,19 +57,19 @@ export function EditListingView({
   const { t } = useLocale();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 animate-fade-up">
-      <div>
-        <Link
-          href={`/listings/${listing.id}`}
-          className="text-sm font-medium text-ocean hover:text-ocean-deep"
-        >
-          {t("listings.backToListing")}
-        </Link>
-        <h1 className="mt-3 font-display text-3xl font-semibold text-charcoal">
-          {t("listings.editTitle")}
-        </h1>
-        <p className="mt-2 text-muted">{listing.title}</p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-5 animate-fade-up">
+      <PageHeader
+        back={
+          <Link
+            href={`/listings/${listing.id}`}
+            className="mb-1 inline-block text-sm font-medium text-ocean hover:text-ocean-deep"
+          >
+            {t("listings.backToListing")}
+          </Link>
+        }
+        title={t("listings.editTitle")}
+        subtitle={listing.title}
+      />
       <ListingForm
         areas={areas}
         estateCompanyId={estateCompanyId}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button } from "@/components/ui";
 import { deleteListing } from "../actions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -12,36 +13,40 @@ export function DeleteListingButton({ listingId }: { listingId: string }) {
 
   if (!confirming) {
     return (
-      <button
+      <Button
         type="button"
+        variant="danger"
+        size="sm"
         onClick={() => {
           setError(null);
           setConfirming(true);
         }}
-        className="rounded-quieter border border-coral/35 bg-coral-soft/50 px-4 py-2 text-sm font-semibold text-coral-deep transition hover:border-coral hover:bg-coral-soft"
       >
         {t("listings.delete")}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <p className="max-w-xs text-right text-sm text-muted">{t("listings.deleteConfirm")}</p>
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        <button
+    <div className="flex flex-col items-end gap-1.5">
+      <p className="max-w-xs text-right text-xs text-muted">{t("listings.deleteConfirm")}</p>
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           disabled={pending}
           onClick={() => {
             setConfirming(false);
             setError(null);
           }}
-          className="rounded-quieter border border-line bg-white px-4 py-2 text-sm font-medium text-charcoal transition hover:border-ocean/40 hover:text-ocean disabled:opacity-50"
         >
           {t("listings.deleteCancel")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="dangerSolid"
+          size="sm"
           disabled={pending}
           onClick={() => {
             setError(null);
@@ -52,10 +57,9 @@ export function DeleteListingButton({ listingId }: { listingId: string }) {
               }
             });
           }}
-          className="rounded-quieter bg-coral px-4 py-2 text-sm font-semibold text-white transition hover:bg-coral-deep disabled:opacity-50"
         >
           {pending ? t("listings.deleting") : t("listings.deletePermanent")}
-        </button>
+        </Button>
       </div>
       {error ? (
         <p className="max-w-xs text-right text-sm text-coral-deep" role="alert">

@@ -1,29 +1,37 @@
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import type { Apartment } from "types";
 import { requireStudioCompany } from "@/lib/auth";
 import {
+  getAreasForSelect,
   getListingDeals,
   getPartnerContacts,
   getPartnerListing,
 } from "@/lib/data/listings";
+import { getUsdVndRate } from "@/lib/fx";
 import { createClient } from "@/lib/supabase/server";
 import { isValidityStale } from "@/lib/listing-validity";
 import { buildListingCaption, needsBump } from "@/lib/post-composer";
 import { apartmentPublicUrl, areaPublicUrl } from "@/lib/public-url";
-import { ListingDetailView } from "./ListingDetailView";
+import { ListingWorkspace } from "./ListingWorkspace";
 
 export default async function ListingDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const session = await requireStudioCompany();
 
   const { id } = await params;
-  const [listing, deals, contacts] = await Promise.all([
+  const { tab } = await searchParams;
+  const [listing, deals, contacts, areas, usdVndRate] = await Promise.all([
     getPartnerListing(session.estateCompanyId, id),
     getListingDeals(session.estateCompanyId, id),
     getPartnerContacts(session.estateCompanyId),
+    getAreasForSelect(),
+    getUsdVndRate(),
   ]);
   if (!listing) notFound();
 
@@ -52,17 +60,23 @@ export default async function ListingDetailPage({
     .map((c) => ({ id: c.id, name: c.name }));
 
   return (
-    <ListingDetailView
-      listing={listing}
-      areaName={area?.name ?? null}
-      publicUrl={publicUrl}
-      areaPublicUrl={areaUrl}
-      caption={caption}
-      bump={bump}
-      stale={stale}
-      isAdmin={session.isAdmin}
-      deals={deals}
-      availableContacts={availableContacts}
-    />
+    <Suspense fallback={null}>
+      <ListingWorkspace
+        listing={listing}
+        areaName={area?.name ?? null}
+        publicUrl={publicUrl}
+        areaPublicUrl={areaUrl}
+        caption={caption}
+        bump={bump}
+        stale={stale}
+        isAdmin={session.isAdmin}
+        deals={deals}
+        availableContacts={availableContacts}
+        areas={areas}
+        estateCompanyId={session.estateCompanyId}
+        usdVndRate={usdVndRate}
+        initialTab={tab}
+      />
+    </Suspense>
   );
 }

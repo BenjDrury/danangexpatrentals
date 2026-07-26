@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { listingPriceLabel } from "types";
 import type { HomeFeedItem } from "@/lib/listing-validity";
 import { confirmListingValidity } from "./listings/actions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { ListingImage } from "@/components/ListingImage";
+import { Button, PageHeader } from "@/components/ui";
 
 type Props = {
   displayName: string | null;
@@ -17,9 +18,11 @@ type Props = {
 function ValidityCard({ item }: { item: Extract<HomeFeedItem, { type: "validity" }> }) {
   const { t } = useLocale();
   const [pending, startTransition] = useTransition();
+  const [menuOpen, setMenuOpen] = useState(false);
   const { listing, daysSinceCheck, stale } = item;
 
   function act(outcome: "available" | "reserved" | "rented") {
+    setMenuOpen(false);
     startTransition(async () => {
       await confirmListingValidity(listing.id, outcome);
     });
@@ -32,82 +35,95 @@ function ValidityCard({ item }: { item: Extract<HomeFeedItem, { type: "validity"
 
   return (
     <article
-      className={`overflow-hidden rounded-soft border bg-white/80 shadow-[0_10px_36px_rgba(42,42,40,0.04)] transition ${
+      className={`flex gap-3 overflow-hidden rounded-lg border bg-white/80 transition ${
         stale ? "border-coral/35" : "border-line/80"
       }`}
     >
-      <div className="flex flex-col sm:flex-row">
-        <div className="relative aspect-[16/10] shrink-0 bg-sand sm:aspect-auto sm:w-40 sm:self-stretch">
-          {listing.main_image ? (
-            <ListingImage
-              src={listing.main_image}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, 160px"
-            />
-          ) : null}
+      <div className="relative hidden h-auto w-20 shrink-0 bg-sand sm:block">
+        {listing.main_image ? (
+          <ListingImage
+            src={listing.main_image}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="80px"
+          />
+        ) : null}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-3 py-3 sm:pr-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {stale ? (
+            <span className="rounded bg-coral-soft px-1.5 py-0.5 text-[0.65rem] font-semibold text-coral">
+              {t("feed.validity.staleBadge")}
+            </span>
+          ) : (
+            <span className="rounded bg-palm-soft px-1.5 py-0.5 text-[0.65rem] font-semibold text-palm">
+              {t("feed.validity.needsCheckBadge")}
+            </span>
+          )}
+          <span className="text-xs text-muted">{daysLabel}</span>
         </div>
-        <div className="flex flex-1 flex-col gap-4 p-5">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              {stale ? (
-                <span className="rounded-md bg-coral-soft px-2 py-0.5 text-xs font-semibold text-coral">
-                  {t("feed.validity.staleBadge")}
-                </span>
-              ) : (
-                <span className="rounded-md bg-palm-soft px-2 py-0.5 text-xs font-semibold text-palm">
-                  {t("feed.validity.needsCheckBadge")}
-                </span>
-              )}
-              <span className="text-xs text-muted">{daysLabel}</span>
-            </div>
-            <h3 className="mt-2 font-display text-lg font-semibold text-charcoal">
-              <Link href={`/listings/${listing.id}`} className="hover:text-ocean">
-                {listing.title}
-              </Link>
-            </h3>
-            <p className="mt-1 text-sm text-muted">
-              {listingPriceLabel(listing)}
-              {listing.bedrooms != null ? ` · ${listing.bedrooms} BR` : ""}
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-charcoal/90">
-              {stale ? t("feed.validity.stalePrompt") : t("feed.validity.prompt")}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => act("available")}
-              className="rounded-quieter bg-ocean px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-ocean-deep disabled:opacity-60"
-            >
-              {t("feed.validity.confirmAvailable")}
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => act("reserved")}
-              className="rounded-quieter border border-line bg-white px-3.5 py-2 text-sm font-semibold text-charcoal transition hover:border-ocean/40 hover:text-ocean disabled:opacity-60"
-            >
-              {t("feed.validity.markReserved")}
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => act("rented")}
-              className="rounded-quieter border border-line bg-white px-3.5 py-2 text-sm font-semibold text-charcoal transition hover:border-coral/40 hover:text-coral disabled:opacity-60"
-            >
-              {t("feed.validity.markRented")}
-            </button>
-            <Link
-              href={`/listings/${listing.id}`}
-              className="rounded-quieter px-3 py-2 text-sm font-medium text-muted transition hover:text-ocean"
-            >
-              {t("feed.validity.openListing")}
+        <div>
+          <h3 className="font-display text-base font-semibold text-charcoal">
+            <Link href={`/listings/${listing.id}`} className="hover:text-ocean">
+              {listing.title}
             </Link>
+          </h3>
+          <p className="mt-0.5 text-sm text-muted">
+            {listingPriceLabel(listing)}
+            {listing.bedrooms != null ? ` · ${listing.bedrooms} BR` : ""}
+          </p>
+          <p className="mt-1.5 text-sm text-charcoal/90">
+            {stale ? t("feed.validity.stalePrompt") : t("feed.validity.prompt")}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => act("available")}
+            className="rounded-md bg-ocean px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-ocean-deep disabled:opacity-60"
+          >
+            {t("feed.validity.confirmAvailable")}
+          </button>
+          <div className="relative">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setMenuOpen((o) => !o)}
+              className="rounded-md border border-line bg-white px-2.5 py-1.5 text-xs font-semibold text-muted transition hover:border-ocean/40 hover:text-ocean disabled:opacity-60"
+              aria-expanded={menuOpen}
+            >
+              {t("feed.validity.moreActions")}
+            </button>
+            {menuOpen ? (
+              <div className="absolute left-0 z-10 mt-1 min-w-[10rem] rounded-md border border-line bg-white py-1 shadow-md">
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => act("reserved")}
+                  className="block w-full px-3 py-1.5 text-left text-xs font-medium text-charcoal hover:bg-foam"
+                >
+                  {t("feed.validity.markReserved")}
+                </button>
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => act("rented")}
+                  className="block w-full px-3 py-1.5 text-left text-xs font-medium text-coral hover:bg-foam"
+                >
+                  {t("feed.validity.markRented")}
+                </button>
+              </div>
+            ) : null}
           </div>
+          <Link
+            href={`/listings/${listing.id}`}
+            className="px-2 py-1.5 text-xs font-medium text-muted transition hover:text-ocean"
+          >
+            {t("feed.validity.openListing")}
+          </Link>
         </div>
       </div>
     </article>
@@ -120,17 +136,24 @@ export function HomeView({ displayName, feed, listingsEmpty }: Props) {
   const caughtUp = !listingsEmpty && feed.length === 0;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <section className="animate-fade-up">
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-charcoal sm:text-4xl">
-          {t("home.welcome", { name })}
-        </h1>
-        <p className="mt-3 max-w-xl text-base leading-relaxed text-muted">{t("home.intro")}</p>
+        <PageHeader
+          title={t("home.welcome", { name })}
+          subtitle={t("home.intro")}
+          actions={
+            !listingsEmpty ? (
+              <Button href="/listings" variant="secondary" size="sm">
+                {t("home.viewListings")}
+              </Button>
+            ) : null
+          }
+        />
       </section>
 
-      <section className="animate-fade-up-delay space-y-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="font-display text-xl font-semibold text-charcoal">
+      <section className="animate-fade-up-delay space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-semibold text-charcoal">
             {t("feed.title")}
           </h2>
           {feed.length > 0 ? (
@@ -141,33 +164,27 @@ export function HomeView({ displayName, feed, listingsEmpty }: Props) {
         </div>
 
         {listingsEmpty ? (
-          <div className="rounded-soft border border-dashed border-line bg-white/50 px-6 py-10 text-center">
-            <h3 className="font-display text-xl font-semibold text-charcoal">
+          <div className="rounded-lg border border-dashed border-line bg-white/50 px-5 py-8 text-center">
+            <h3 className="font-display text-lg font-semibold text-charcoal">
               {t("home.emptyTitle")}
             </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted">{t("home.emptyBody")}</p>
-            <Link
-              href="/listings/new"
-              className="mt-6 inline-flex rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
-            >
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">{t("home.emptyBody")}</p>
+            <Button href="/listings/new" size="sm" className="mt-4">
               {t("home.createFirst")}
-            </Link>
+            </Button>
           </div>
         ) : caughtUp ? (
-          <div className="rounded-soft border border-palm/20 bg-palm-soft/40 px-6 py-10 text-center">
-            <h3 className="font-display text-xl font-semibold text-charcoal">
+          <div className="rounded-lg border border-palm/20 bg-palm-soft/40 px-5 py-8 text-center">
+            <h3 className="font-display text-lg font-semibold text-charcoal">
               {t("feed.caughtUpTitle")}
             </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted">{t("feed.caughtUpBody")}</p>
-            <Link
-              href="/listings"
-              className="mt-6 inline-flex rounded-quieter border border-line bg-white/80 px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:border-ocean/35 hover:text-ocean"
-            >
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">{t("feed.caughtUpBody")}</p>
+            <Button href="/listings" variant="secondary" size="sm" className="mt-4">
               {t("feed.caughtUpCta")}
-            </Link>
+            </Button>
           </div>
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-2.5">
             {feed.map((item) => {
               if (item.type === "validity") {
                 return (

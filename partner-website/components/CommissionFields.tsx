@@ -1,9 +1,7 @@
 "use client";
 
 import { useLocale } from "@/lib/i18n/LocaleProvider";
-
-const inputClass =
-  "mt-1.5 block w-full rounded-quieter border border-line bg-foam/70 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20";
+import { inputClass } from "@/components/ui";
 
 type Props = {
   usd?: number | null;
@@ -23,7 +21,7 @@ export function CommissionFields({ usd, pct, notes, compact }: Props) {
   const { t } = useLocale();
 
   return (
-    <div className={compact ? "grid gap-3 sm:grid-cols-2" : "grid gap-4 sm:grid-cols-2"}>
+    <div className={compact ? "grid gap-2.5 sm:grid-cols-2" : "grid gap-3 sm:grid-cols-2"}>
       <label className="block text-sm">
         <span className="font-medium text-charcoal">{t("commission.usd")}</span>
         <input

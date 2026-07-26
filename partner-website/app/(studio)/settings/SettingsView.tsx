@@ -69,12 +69,12 @@ export function SettingsView({
   }
 
   return (
-    <div className="space-y-10 animate-fade-up">
+    <div className="space-y-6 animate-fade-up">
       <div>
-        <h1 className="font-display text-3xl font-semibold text-charcoal">
+        <h1 className="font-display text-2xl font-semibold text-charcoal">
           {t("settings.title")}
         </h1>
-        <p className="mt-2 max-w-xl text-muted">{t("settings.subtitle")}</p>
+        <p className="mt-1 max-w-xl text-sm text-muted">{t("settings.subtitle")}</p>
       </div>
 
       {(flashText || message) && (

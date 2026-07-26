@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { CopyButton } from "@/components/CopyButton";
+import { Button, Section, inputClass } from "@/components/ui";
 import { bumpListing, savePostDraft } from "../actions";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -18,27 +19,24 @@ export function PostComposer({
   const { t } = useLocale();
 
   return (
-    <section className="space-y-4 rounded-soft border border-line/80 bg-white/75 p-5 sm:p-6">
-      <div>
-        <h2 className="font-display text-xl font-semibold text-charcoal">{t("composer.title")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("composer.subtitle")}</p>
-      </div>
-
+    <Section title={t("composer.title")} description={t("composer.subtitle")}>
       <textarea
         value={caption}
         onChange={(e) => setCaption(e.target.value)}
-        rows={12}
-        className="w-full rounded-quieter border border-line bg-foam/60 px-3.5 py-3 font-sans text-sm leading-relaxed text-charcoal outline-none focus:border-ocean focus:ring-2 focus:ring-ocean/20"
+        rows={10}
+        className={`${inputClass} font-sans leading-relaxed`}
       />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <CopyButton
           text={caption}
           label={t("composer.copyCaption")}
           copiedLabel={t("composer.copied")}
         />
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           disabled={pending}
           onClick={() => {
             startTransition(async () => {
@@ -46,10 +44,9 @@ export function PostComposer({
               setMessage(result.error ?? t("composer.draftSaved"));
             });
           }}
-          className="rounded-quieter border border-line bg-white px-3.5 py-2 text-sm font-medium text-charcoal transition hover:border-ocean/40 hover:text-ocean disabled:opacity-50"
         >
           {t("composer.saveDraft")}
-        </button>
+        </Button>
         <button
           type="button"
           disabled={pending}
@@ -59,17 +56,17 @@ export function PostComposer({
               setMessage(result.error ?? t("composer.markedBumped"));
             });
           }}
-          className="rounded-quieter bg-palm px-3.5 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+          className="rounded-md bg-palm px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
         >
           {t("composer.markBumped")}
         </button>
       </div>
 
       {message && (
-        <p className="text-sm text-palm" role="status">
+        <p className="mt-2 text-sm text-palm" role="status">
           {message}
         </p>
       )}
-    </section>
+    </Section>
   );
 }

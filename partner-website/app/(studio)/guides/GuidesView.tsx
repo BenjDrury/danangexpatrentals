@@ -9,13 +9,13 @@ export function GuidesView() {
   const { locale, t } = useLocale();
 
   return (
-    <div className="space-y-8 animate-fade-up">
+    <div className="space-y-5 animate-fade-up">
       <div>
-        <h1 className="font-display text-3xl font-semibold text-charcoal">{t("guides.title")}</h1>
-        <p className="mt-2 max-w-xl text-muted">{t("guides.subtitle")}</p>
+        <h1 className="font-display text-2xl font-semibold text-charcoal">{t("guides.title")}</h1>
+        <p className="mt-1 max-w-xl text-sm text-muted">{t("guides.subtitle")}</p>
       </div>
 
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {PARTNER_GUIDE_LINKS.map((guide, i) => {
           const url = guidePublicUrl(guide.path);
           const title = locale === "vi" ? guide.titleVi : guide.title;
@@ -23,11 +23,11 @@ export function GuidesView() {
           return (
             <li
               key={guide.path}
-              className="flex flex-col gap-3 rounded-soft border border-line/70 bg-white/70 px-4 py-4 transition hover:border-ocean/25 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+              className="flex flex-col gap-2 rounded-lg border border-line/70 bg-white/70 px-3.5 py-3 transition hover:border-ocean/25 sm:flex-row sm:items-center sm:justify-between"
               style={{ animationDelay: `${i * 40}ms` }}
             >
               <div className="min-w-0">
-                <p className="font-display text-lg font-semibold text-charcoal">{title}</p>
+                <p className="font-display text-base font-semibold text-charcoal">{title}</p>
                 <p className="mt-0.5 text-sm text-muted">{description}</p>
                 <a
                   href={url}

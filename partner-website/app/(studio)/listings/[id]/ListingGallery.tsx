@@ -75,11 +75,11 @@ export function ListingGallery({ listingId, mainImage, images }: Props) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-soft border border-line/70 bg-sand">
+      <div className="overflow-hidden rounded-lg border border-line/70 bg-sand">
         <button
           type="button"
           onClick={() => setOpenIndex(0)}
-          className="relative block aspect-[16/9] w-full cursor-zoom-in text-left"
+          className="relative block aspect-[16/9] w-full max-h-72 cursor-zoom-in text-left sm:max-h-80"
           aria-label={t("gallery.open")}
         >
           <ListingImage
@@ -98,13 +98,13 @@ export function ListingGallery({ listingId, mainImage, images }: Props) {
         </button>
 
         {gallery.length > 1 ? (
-          <div className="flex gap-2 overflow-x-auto border-t border-line/60 bg-white/60 p-3">
+          <div className="flex gap-1.5 overflow-x-auto border-t border-line/60 bg-white/60 p-2">
             {gallery.map((url, i) => (
               <button
                 key={`${url}-${i}`}
                 type="button"
                 onClick={() => setOpenIndex(i)}
-                className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-md ring-offset-2 transition hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean ${
+                className={`relative h-12 w-16 shrink-0 overflow-hidden rounded ring-offset-1 transition hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ocean ${
                   i === 0 ? "ring-2 ring-ocean" : "ring-1 ring-line/80"
                 }`}
                 aria-label={t("gallery.openAt", { n: String(i + 1) })}

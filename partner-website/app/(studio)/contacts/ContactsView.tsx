@@ -39,17 +39,17 @@ export function ContactsView({
   const [adding, setAdding] = useState(false);
 
   return (
-    <div className="space-y-10 animate-fade-up">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-5 animate-fade-up">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-charcoal">{t("contacts.title")}</h1>
-          <p className="mt-2 max-w-xl text-muted">{t("contacts.subtitle")}</p>
+          <h1 className="font-display text-2xl font-semibold text-charcoal">{t("contacts.title")}</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted">{t("contacts.subtitle")}</p>
         </div>
         {!adding && (
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
+            className="rounded-md bg-ocean px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-ocean-deep"
           >
             {t("contacts.add")}
           </button>

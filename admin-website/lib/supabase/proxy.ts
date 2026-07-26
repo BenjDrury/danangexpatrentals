@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
+import { hasSupabaseAuthCookie } from "@/lib/supabase/auth-cookies";
 
 function getSupabaseKey() {
   return (
@@ -9,7 +10,27 @@ function getSupabaseKey() {
   );
 }
 
+function isPublicPath(pathname: string): boolean {
+  return (
+    pathname === "/login" ||
+    pathname === "/auth/callback" ||
+    pathname === "/unauthorized"
+  );
+}
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const publicPath = isPublicPath(pathname);
+
+  // No session cookie → never call Supabase from middleware.
+  if (!hasSupabaseAuthCookie(request)) {
+    if (publicPath) return NextResponse.next({ request });
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -37,24 +58,25 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Prefer getClaims() alone: with asymmetric JWT keys this verifies locally
-  // (cached JWKS) and refreshes the session when needed. Calling getUser()
-  // afterward adds a sequential Auth-server RTT on every navigation.
-  const { data } = await supabase.auth.getClaims();
-  const isAuthenticated = Boolean(data?.claims);
+  let isAuthenticated = false;
+  try {
+    const { data } = await supabase.auth.getClaims();
+    isAuthenticated = Boolean(data?.claims?.sub);
+  } catch {
+    isAuthenticated = false;
+  }
 
-  const url = request.nextUrl.clone();
-  const isLogin = url.pathname === "/login";
-  const isAuthCallback = url.pathname === "/auth/callback";
-  const isUnauthorized = url.pathname === "/unauthorized";
-
-  if (isLogin && isAuthenticated) {
+  if (pathname === "/login" && isAuthenticated) {
+    const url = request.nextUrl.clone();
     url.pathname = "/";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
-  if (!isLogin && !isAuthCallback && !isUnauthorized && !isAuthenticated) {
+  if (!publicPath && !isAuthenticated) {
+    const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

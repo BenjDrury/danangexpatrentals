@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { ANALYTICS_OPT_OUT_COOKIE } from "@/lib/analytics-constants";
 import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
+import { hasSupabaseAuthCookie } from "@/lib/supabase/auth-cookies";
+import {
+  AUTH_ROLE_CACHE_COOKIE,
+  clearCachedAuthRole,
+  readCachedAuthRole,
+  writeCachedAuthRole,
+} from "@/lib/supabase/auth-role-cache";
 
 const IMPERSONATE_COOKIE = "partner_impersonate_company_id";
 
@@ -32,7 +39,6 @@ function setAnalyticsOptOut(response: NextResponse, optedOut: boolean) {
       maxAge: 60 * 60 * 24 * 365,
     });
   } else {
-    // Must set maxAge 0 with the same Domain, or the parent-domain cookie sticks.
     response.cookies.set(ANALYTICS_OPT_OUT_COOKIE, "", {
       ...base,
       maxAge: 0,
@@ -40,7 +46,51 @@ function setAnalyticsOptOut(response: NextResponse, optedOut: boolean) {
   }
 }
 
+function isPublicPath(pathname: string): boolean {
+  return (
+    pathname === "/login" ||
+    pathname === "/auth/callback" ||
+    pathname === "/unauthorized" ||
+    pathname.startsWith("/invite/") ||
+    pathname === "/terms" ||
+    pathname === "/privacy"
+  );
+}
+
+function redirectToLogin(request: NextRequest): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.search = "";
+  const nextPath = request.nextUrl.pathname + request.nextUrl.search;
+  if (nextPath && nextPath !== "/") {
+    url.searchParams.set("next", nextPath);
+  }
+  return NextResponse.redirect(url);
+}
+
 export async function updateSession(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const publicPath = isPublicPath(pathname);
+  const hasAuthCookie = hasSupabaseAuthCookie(request);
+
+  // No session cookie → never call Supabase Auth/DB from middleware.
+  if (!hasAuthCookie) {
+    let response = publicPath
+      ? NextResponse.next({ request })
+      : redirectToLogin(request);
+
+    if (request.cookies.get(IMPERSONATE_COOKIE)) {
+      response.cookies.delete(IMPERSONATE_COOKIE);
+    }
+    if (request.cookies.get(ANALYTICS_OPT_OUT_COOKIE)) {
+      setAnalyticsOptOut(response, false);
+    }
+    if (request.cookies.get(AUTH_ROLE_CACHE_COOKIE)) {
+      clearCachedAuthRole(response);
+    }
+    return response;
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -66,62 +116,52 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Prefer getClaims() alone: local JWT verify when possible. Calling getUser()
-  // afterward adds a sequential Auth-server RTT on every navigation.
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
-  const isAuthenticated = Boolean(claims?.sub);
+  // Local JWT verify when possible (ES256 JWKS). Avoid getUser() here.
+  let sub: string | null = null;
+  try {
+    const { data } = await supabase.auth.getClaims();
+    sub = data?.claims?.sub ? String(data.claims.sub) : null;
+  } catch {
+    sub = null;
+  }
+  const isAuthenticated = Boolean(sub);
 
-  const url = request.nextUrl.clone();
-  const isLogin = url.pathname === "/login";
-  const isAuthCallback = url.pathname === "/auth/callback";
-  const isUnauthorized = url.pathname === "/unauthorized";
-  const isInvite = url.pathname.startsWith("/invite/");
-  const isLegal =
-    url.pathname === "/terms" || url.pathname === "/privacy";
-
-  // Drop impersonation when signed out
   if (!isAuthenticated && request.cookies.get(IMPERSONATE_COOKIE)) {
     supabaseResponse.cookies.delete(IMPERSONATE_COOKIE);
   }
 
-  // Admins never send PostHog events — cookie is read at client init (all hosts).
-  if (isAuthenticated && claims?.sub) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", String(claims.sub))
-      .maybeSingle();
-    setAnalyticsOptOut(supabaseResponse, profile?.role === "admin");
+  if (isAuthenticated && sub) {
+    let role = readCachedAuthRole(request, sub);
+    if (!role) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", sub)
+        .maybeSingle();
+      role = profile?.role === "admin" ? "admin" : "user";
+      writeCachedAuthRole(supabaseResponse, sub, role);
+    }
+    const wantsOptOut = role === "admin";
+    const hasOptOut = Boolean(request.cookies.get(ANALYTICS_OPT_OUT_COOKIE));
+    if (wantsOptOut !== hasOptOut) {
+      setAnalyticsOptOut(supabaseResponse, wantsOptOut);
+    }
   } else {
-    setAnalyticsOptOut(supabaseResponse, false);
+    if (request.cookies.get(ANALYTICS_OPT_OUT_COOKIE)) {
+      setAnalyticsOptOut(supabaseResponse, false);
+    }
+    if (request.cookies.get(AUTH_ROLE_CACHE_COOKIE)) {
+      clearCachedAuthRole(supabaseResponse);
+    }
   }
 
-  // Authenticated users never see /login (avoids bounce with /unauthorized).
-  if (isLogin && isAuthenticated) {
-    const next = safeRelativePath(url.searchParams.get("next"));
+  if (pathname === "/login" && isAuthenticated) {
+    const next = safeRelativePath(request.nextUrl.searchParams.get("next"));
     return NextResponse.redirect(new URL(next, request.url));
   }
 
-  // Invite accept is public (logged-out users create/sign in on the page).
-  // /auth/callback exchanges PKCE codes before cookies exist.
-  // Legal pages stay public for imprint / terms disclosure.
-  // /unauthorized stays reachable while signed in (non-partners land here).
-  if (
-    !isLogin &&
-    !isAuthCallback &&
-    !isUnauthorized &&
-    !isInvite &&
-    !isLegal &&
-    !isAuthenticated
-  ) {
-    url.pathname = "/login";
-    url.search = "";
-    const nextPath = request.nextUrl.pathname + request.nextUrl.search;
-    if (nextPath && nextPath !== "/") {
-      url.searchParams.set("next", nextPath);
-    }
-    return NextResponse.redirect(url);
+  if (!publicPath && !isAuthenticated) {
+    return redirectToLogin(request);
   }
 
   return supabaseResponse;

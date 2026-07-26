@@ -2,6 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { ANALYTICS_OPT_OUT_COOKIE } from "@/lib/analytics-constants";
 import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
+import { hasSupabaseAuthCookie } from "@/lib/supabase/auth-cookies";
+import {
+  AUTH_ROLE_CACHE_COOKIE,
+  clearCachedAuthRole,
+  readCachedAuthRole,
+  writeCachedAuthRole,
+} from "@/lib/supabase/auth-role-cache";
 
 function getSupabaseKey() {
   return (
@@ -21,7 +28,6 @@ function setAnalyticsOptOut(response: NextResponse, optedOut: boolean) {
       maxAge: 60 * 60 * 24 * 365,
     });
   } else {
-    // Must set maxAge 0 with the same Domain, or the parent-domain cookie sticks.
     response.cookies.set(ANALYTICS_OPT_OUT_COOKIE, "", {
       ...base,
       maxAge: 0,
@@ -31,10 +37,21 @@ function setAnalyticsOptOut(response: NextResponse, optedOut: boolean) {
 
 /**
  * Refresh shared Supabase auth cookies and mirror admin analytics opt-out.
- * Does not gate public pages — visitors stay anonymous when signed out.
+ * Anonymous visitors (no auth cookie) skip Supabase entirely.
  */
 export async function syncSharedAuth(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  if (!hasSupabaseAuthCookie(request)) {
+    // Only clear sticky cookies when present — avoid Set-Cookie on every hit.
+    if (request.cookies.get(ANALYTICS_OPT_OUT_COOKIE)) {
+      setAnalyticsOptOut(response, false);
+    }
+    if (request.cookies.get(AUTH_ROLE_CACHE_COOKIE)) {
+      clearCachedAuthRole(response);
+    }
+    return response;
+  }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = getSupabaseKey();
@@ -59,20 +76,37 @@ export async function syncSharedAuth(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
-  const sub = data?.claims?.sub;
+  let sub: string | null = null;
+  try {
+    const { data } = await supabase.auth.getClaims();
+    sub = data?.claims?.sub ? String(data.claims.sub) : null;
+  } catch {
+    sub = null;
+  }
 
   if (sub) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", String(sub))
-      .maybeSingle();
-    setAnalyticsOptOut(response, profile?.role === "admin");
+    let role = readCachedAuthRole(request, sub);
+    if (!role) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", sub)
+        .maybeSingle();
+      role = profile?.role === "admin" ? "admin" : "user";
+      writeCachedAuthRole(response, sub, role);
+    }
+    const wantsOptOut = role === "admin";
+    const hasOptOut = Boolean(request.cookies.get(ANALYTICS_OPT_OUT_COOKIE));
+    if (wantsOptOut !== hasOptOut) {
+      setAnalyticsOptOut(response, wantsOptOut);
+    }
   } else {
-    // Signed out on this host — clear opt-out so anonymous capture resumes.
-    // Partner studio middleware also clears when signed out there.
-    setAnalyticsOptOut(response, false);
+    if (request.cookies.get(ANALYTICS_OPT_OUT_COOKIE)) {
+      setAnalyticsOptOut(response, false);
+    }
+    if (request.cookies.get(AUTH_ROLE_CACHE_COOKIE)) {
+      clearCachedAuthRole(response);
+    }
   }
 
   return response;

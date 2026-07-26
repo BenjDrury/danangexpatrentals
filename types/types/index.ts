@@ -1,7 +1,11 @@
 // Shared types — add files (e.g. Lead.ts, ApiResponse.ts) and re-export below.
 export type JsonPrimitive = string | number | boolean | null;
 export type { Area } from "./Area";
-export type { Apartment } from "./Apartment";
+export type {
+  Apartment,
+  PropertyType,
+  UtilitiesIncluded,
+} from "./Apartment";
 export type { EstateCompany } from "./EstateCompany";
 export type { ApartmentType } from "./ApartmentType";
 export type { Feature } from "./Feature";
@@ -23,4 +27,10 @@ export {
   formatPriceBoth,
   listingPriceLabel,
 } from "../lib/price";
+export {
+  formatMonthsOfRent,
+  propertyTypeLabel,
+  utilitiesIncludedLabel,
+  agencyFeeLabel,
+} from "../lib/listing-terms";
 

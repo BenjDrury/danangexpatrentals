@@ -1,5 +1,11 @@
 import type { Feature } from "./Feature";
 
+/** Home type for renter filtering / display. */
+export type PropertyType = "apartment" | "house" | "villa" | "serviced";
+
+/** Whether utilities are included in monthly rent. */
+export type UtilitiesIncluded = "not_included" | "partial" | "included";
+
 /**
  * Apartment listing. area_id references public.areas(id).
  */
@@ -36,6 +42,17 @@ export interface Apartment {
   available_from: string | null;
   /** Minimum lease length in months. */
   min_lease_months: number | null;
+  /** apartment | house | villa | serviced — null if unspecified. */
+  property_type?: PropertyType | null;
+  /** Security deposit as months of rent (e.g. 1, 2). */
+  deposit_months?: number | null;
+  /**
+   * Tenant-facing agency/service fee as months of rent.
+   * 0 = no fee; null = unspecified.
+   */
+  agency_fee_months?: number | null;
+  /** Whether utilities are included in rent. */
+  utilities_included?: UtilitiesIncluded | null;
   /** Sort order for listing (lower = first). */
   sort_order: number;
   /** Reference to estate company / agent (e.g. Facebook page). */

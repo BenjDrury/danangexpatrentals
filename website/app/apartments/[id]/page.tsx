@@ -12,6 +12,7 @@ import {
   apartmentPath,
   areaDisplayName,
   areaPath,
+  listingSeoTitle,
 } from "@/lib/area-utils";
 import { absoluteUrl, breadcrumbJsonLd, buildPageMetadata } from "@/lib/seo";
 
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     null;
 
   return buildPageMetadata({
-    title: `${apartment.title} in ${areaName}`,
+    title: listingSeoTitle(apartment.title, areaName),
     description,
     path,
     image,
@@ -53,7 +54,7 @@ export default async function ApartmentPage({ params }: Props) {
   const apartment = await getApartmentById(id);
   if (!apartment) notFound();
 
-  const canonicalKey = apartment.public_slug || apartment.id;
+  const canonicalKey = apartment.public_slug?.trim() || apartmentPath(apartment).replace(/^\/apartments\//, "");
   if (id !== canonicalKey) {
     permanentRedirect(apartmentPath(apartment));
   }

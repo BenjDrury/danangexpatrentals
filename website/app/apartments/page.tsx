@@ -18,7 +18,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const params = await searchParams;
   const page = Math.max(1, parseInt(String(params?.page ?? "1"), 10) || 1);
   return buildPageMetadata({
-    title: "Apartments in Da Nang — Verified homes for expats",
+    title: "Verified apartments in Da Nang",
     description:
       "Curated, verified apartments in Da Nang for expats and remote workers. Transparent prices, real photos, honest neighbourhood guidance.",
     path: "/apartments",
@@ -154,6 +154,47 @@ export default async function ApartmentsPage({ searchParams }: Props) {
         >
           Tell us your budget — get matched →
         </TrackedLink>
+      </Section>
+
+      <Section bg="bg-foam">
+        <h2 className="font-display text-2xl font-semibold tracking-tight text-charcoal sm:text-3xl">
+          Useful next steps
+        </h2>
+        <ul className="mt-8 divide-y divide-line border-y border-line max-w-2xl">
+          <li>
+            <TrackedLink
+              href="/areas"
+              event="footer_link_clicked"
+              eventProps={{ label: "Neighbourhoods", source: "apartments_related" }}
+              className="flex justify-between gap-4 py-5 text-base font-semibold text-charcoal transition hover:text-ocean"
+            >
+              Neighbourhood guides
+              <span aria-hidden>→</span>
+            </TrackedLink>
+          </li>
+          <li>
+            <TrackedLink
+              href="/moving-guide/cost-of-living"
+              event="footer_link_clicked"
+              eventProps={{ label: "Cost of living", source: "apartments_related" }}
+              className="flex justify-between gap-4 py-5 text-base font-semibold text-charcoal transition hover:text-ocean"
+            >
+              Cost of living in Da Nang
+              <span aria-hidden>→</span>
+            </TrackedLink>
+          </li>
+          <li>
+            <TrackedLink
+              href="/avoid-scams"
+              event="footer_link_clicked"
+              eventProps={{ label: "Avoid scams", source: "apartments_related" }}
+              className="flex justify-between gap-4 py-5 text-base font-semibold text-charcoal transition hover:text-ocean"
+            >
+              How to avoid rental scams
+              <span aria-hidden>→</span>
+            </TrackedLink>
+          </li>
+        </ul>
       </Section>
     </div>
   );

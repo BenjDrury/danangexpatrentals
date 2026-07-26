@@ -38,6 +38,11 @@ function buildLinks(areaId?: string, areaName?: string, areaHref?: string): Guid
 
   links.push(
     {
+      href: "/apartments",
+      title: "All apartments",
+      body: "Browse verified homes across Da Nang — real photos and clear prices.",
+    },
+    {
       href: "/moving-guide/daily-life",
       title: "Daily life",
       body: "Beach mornings, café work days, example day tours, and settling-in logistics.",

@@ -12,6 +12,7 @@ export {
   ScoreMeter,
   TagChip,
 } from "./AreaMeters";
+export { AreaIntro } from "./AreaIntro";
 export { AreaOverview } from "./AreaOverview";
 export { AreaRentSnapshot } from "./AreaRentSnapshot";
 export { AreaRightForYou } from "./AreaRightForYou";

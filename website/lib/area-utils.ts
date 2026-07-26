@@ -75,12 +75,51 @@ export function areaPath(area: AreaPathFields): string {
   return `/areas/${slug}`;
 }
 
-/** Canonical public path for a listing (`/apartments/{slug|id}`). */
+/** Canonical public path for a listing (`/apartments/{slug}`). */
 export function apartmentPath(apartment: {
   id: string;
+  title?: string | null;
   public_slug?: string | null;
 }): string {
-  return `/apartments/${apartment.public_slug || apartment.id}`;
+  const stored = apartment.public_slug?.trim();
+  if (stored) return `/apartments/${stored}`;
+  if (apartment.title?.trim()) {
+    return `/apartments/${apartmentDerivedSlug(apartment.id, apartment.title)}`;
+  }
+  return `/apartments/${apartment.id}`;
+}
+
+/**
+ * Readable slug when `public_slug` is unset: `{title-slug}-{uuid-prefix}`.
+ * Example: modern-2br-apartment-near-my-khe-beach-dce12b3f
+ */
+export function apartmentDerivedSlug(id: string, title: string): string {
+  const base =
+    slugify(title).replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 48) ||
+    "apartment";
+  return `${base}-${id.slice(0, 8)}`;
+}
+
+/** Extract uuid prefix from a derived apartment slug, if present. */
+export function apartmentIdPrefixFromParam(param: string): string | null {
+  const m = param.trim().match(/-([0-9a-f]{8})$/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
+/**
+ * Compact listing title for SERPs (brand suffix added by layout template).
+ * Aims for ~50–55 chars before "| Da Nang Expat Rentals".
+ */
+export function listingSeoTitle(title: string, areaName: string): string {
+  const area = areaName.trim() || "Da Nang";
+  const sep = " · ";
+  const budget = Math.max(18, 52 - area.length - sep.length);
+  let head = title.replace(/\s+/g, " ").trim();
+  if (head.length > budget) {
+    const cut = head.slice(0, budget - 1);
+    head = `${cut.replace(/\s+\S*$/, "").trimEnd() || cut.trimEnd()}…`;
+  }
+  return `${head}${sep}${area}`;
 }
 
 /** Clamp number to [min, max]. */

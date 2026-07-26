@@ -12,6 +12,7 @@ import {
   type IntensityLevel,
 } from "@/lib/area-display";
 import {
+  areaDisplayName,
   formatAreaPriceDisplay,
   formatRentRange,
   getWhoTags,
@@ -74,6 +75,7 @@ function FactRow({
 }
 
 export function AreaOverview({ area }: AreaOverviewProps) {
+  const label = areaDisplayName(area);
   const whoTags = getWhoTags(area.who).map(titleCasePhrase);
   const profileLabel = formatTenantProfile(area.tenant_profile_tag);
   const community = parseIntensity(area.expat_community_presence);
@@ -140,7 +142,7 @@ export function AreaOverview({ area }: AreaOverviewProps) {
             >
               <Image
                 src={src}
-                alt=""
+                alt={`${label}, Da Nang — photo ${i + 1}`}
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 50vw, 24rem"

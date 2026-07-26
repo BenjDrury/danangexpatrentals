@@ -3,6 +3,7 @@ import { permanentRedirect, notFound } from "next/navigation";
 import {
   AreaApartmentsSection,
   AreaHero,
+  AreaIntro,
   AreaLocation,
   AreaOverview,
   StickyAreaCta,
@@ -83,6 +84,7 @@ export default async function AreaPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(crumbs) }}
       />
       <AreaHero area={area} />
+      <AreaIntro area={area} />
       <AreaOverview area={area} />
       <AreaLocation area={area} />
       <AreaApartmentsSection

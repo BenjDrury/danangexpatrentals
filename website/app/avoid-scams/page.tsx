@@ -4,7 +4,7 @@ import { CtaButton } from "../components/CtaButton";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "How to Avoid Apartment Scams in Da Nang",
+  title: "Avoid apartment scams in Da Nang",
   description:
     "Fake listings, deposit traps, agent markups, and remote booking risks in Da Nang. How we verify apartments and protect you.",
   path: "/avoid-scams",
@@ -61,6 +61,9 @@ export default function AvoidScamsPage() {
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <CtaButton href="/contact" variant="primary">
               Get verified apartment options
+            </CtaButton>
+            <CtaButton href="/apartments" variant="secondary">
+              Browse apartments
             </CtaButton>
             <CtaButton href="/why-us" variant="secondary">
               Why trust us

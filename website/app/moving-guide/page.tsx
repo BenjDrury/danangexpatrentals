@@ -127,9 +127,15 @@ export default function MovingGuidePage() {
             <p className="text-lg text-muted">
               Looking for a place to stay? We’ll help you find a verified home.
             </p>
-            <div className="mt-6 flex justify-center">
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
               <CtaButton href="/contact" variant="primary">
                 Get matched
+              </CtaButton>
+              <CtaButton href="/apartments" variant="secondary">
+                Browse apartments
+              </CtaButton>
+              <CtaButton href="/areas" variant="secondary">
+                Neighbourhoods
               </CtaButton>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Area, Apartment, ApartmentType, CoworkingSpace, Activity } from "types";
-import { slugify } from "./area-utils";
+import { slugify, apartmentIdPrefixFromParam } from "./area-utils";
 import { validityPublicCutoffIso } from "./listing-validity";
 
 let anonClient: SupabaseClient | null | undefined;
@@ -263,25 +263,34 @@ export const getApartmentById = cache(async function getApartmentById(
     if (!supabase) return null;
 
     const cutoff = validityPublicCutoffIso();
-
-    let { data, error } = await supabase
-      .from("apartments")
-      .select(APARTMENT_DETAIL_SELECT)
-      .eq("id", id)
-      .or("status.is.null,status.eq.available")
-      .gte("last_validity_check", cutoff)
-      .maybeSingle();
-
-    if ((!data || error) && id) {
-      const bySlug = await supabase
+    const available = () =>
+      supabase
         .from("apartments")
         .select(APARTMENT_DETAIL_SELECT)
-        .eq("public_slug", id)
         .or("status.is.null,status.eq.available")
-        .gte("last_validity_check", cutoff)
-        .maybeSingle();
+        .gte("last_validity_check", cutoff);
+
+    let { data, error } = await available().eq("id", id).maybeSingle();
+
+    if ((!data || error) && id) {
+      const bySlug = await available().eq("public_slug", id).maybeSingle();
       data = bySlug.data;
       error = bySlug.error;
+    }
+
+    // Derived SEO slug: {title-slug}-{uuid-prefix}
+    if ((!data || error) && id) {
+      const prefix = apartmentIdPrefixFromParam(id);
+      if (prefix) {
+        const byPrefix = await available().like("id", `${prefix}%`).limit(5);
+        const match = (byPrefix.data ?? []).find((row) =>
+          String(row.id).toLowerCase().startsWith(prefix)
+        );
+        if (match) {
+          data = match;
+          error = byPrefix.error;
+        }
+      }
     }
 
     if (error || !data) return null;

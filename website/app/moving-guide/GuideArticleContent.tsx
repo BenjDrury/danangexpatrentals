@@ -312,6 +312,9 @@ export function GuideArticleContent({
               <CtaButton href="/contact" variant="primary">
                 Get matched
               </CtaButton>
+              <CtaButton href="/apartments" variant="secondary">
+                Browse apartments
+              </CtaButton>
               <CtaButton href="/areas" variant="secondary">
                 Browse neighbourhoods
               </CtaButton>

@@ -44,14 +44,22 @@ async function seoRedirects(): Promise<
 
     const { data: apartments } = await supabase
       .from("apartments")
-      .select("id, public_slug")
-      .not("public_slug", "is", null);
+      .select("id, title, public_slug");
     for (const apt of apartments ?? []) {
-      const slug = apt.public_slug ? String(apt.public_slug).trim() : "";
-      if (slug && slug !== apt.id) {
+      const id = String(apt.id);
+      const stored = apt.public_slug ? String(apt.public_slug).trim() : "";
+      const derivedBase =
+        slugify(String(apt.title ?? ""))
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 48) || "apartment";
+      const destination = stored
+        ? `/apartments/${stored}`
+        : `/apartments/${derivedBase}-${id.slice(0, 8)}`;
+      if (destination !== `/apartments/${id}`) {
         redirects.push({
-          source: `/apartments/${apt.id}`,
-          destination: `/apartments/${slug}`,
+          source: `/apartments/${id}`,
+          destination,
           permanent: true,
         });
       }

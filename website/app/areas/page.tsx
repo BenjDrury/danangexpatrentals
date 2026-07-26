@@ -8,7 +8,7 @@ import { areaDisplayName, areaPath, formatAliases } from "@/lib/area-utils";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
-  title: "Neighbourhood guides — Where to live in Da Nang",
+  title: "Da Nang neighbourhood guides",
   description:
     "Editorial guides to Da Nang neighbourhoods for expats: My An, An Thuong, Son Tra, Hai Chau, and quieter coastal areas.",
   path: "/areas",
@@ -26,6 +26,24 @@ export default async function AreasPage() {
         title="Neighbourhoods"
         subtitle="A simple guide to the main areas expats live in — vibe, lifestyle fit, and who each place suits."
       />
+
+      <Section bg="bg-white" className="!py-10 sm:!py-12">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-base leading-relaxed text-muted sm:text-lg">
+            Start with the area that matches how you want to live, then browse apartments or
+            get matched. For budgets and day-to-day costs, see our{" "}
+            <TrackedLink
+              href="/moving-guide/cost-of-living"
+              event="footer_link_clicked"
+              eventProps={{ label: "Cost of living", source: "areas_intro" }}
+              className="font-semibold text-ocean transition hover:text-ocean-deep"
+            >
+              cost of living guide
+            </TrackedLink>
+            .
+          </p>
+        </div>
+      </Section>
 
       <Section bg="bg-foam">
         <div className="space-y-20">
@@ -100,6 +118,35 @@ export default async function AreasPage() {
               </article>
             );
           })}
+        </div>
+      </Section>
+
+      <Section bg="bg-white">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="font-display text-2xl font-semibold text-charcoal">
+            Ready to look at homes?
+          </h2>
+          <p className="mt-3 text-muted">
+            Browse verified apartments, or tell us your budget and we’ll shortlist options.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <TrackedLink
+              href="/apartments"
+              event="browse_apartments_clicked"
+              eventProps={{ source: "areas_footer" }}
+              className="inline-flex rounded-quieter bg-ocean px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-ocean-deep"
+            >
+              Browse apartments
+            </TrackedLink>
+            <TrackedLink
+              href="/contact"
+              event="contact_cta_clicked"
+              eventProps={{ source: "areas_footer" }}
+              className="inline-flex rounded-quieter border border-line px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-sand"
+            >
+              Get matched
+            </TrackedLink>
+          </div>
         </div>
       </Section>
     </div>

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { listingPriceLabel, type Apartment } from "types";
+import type { Apartment } from "types";
+import { listingPriceLabel } from "types";
 import { capture } from "@/lib/analytics";
+import { apartmentPath } from "@/lib/area-utils";
 
 type ApartmentCardProps = {
   apartment: Apartment;
@@ -41,7 +43,7 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
     area_name: areaName,
   };
 
-  const listingHref = `/apartments/${apartment.public_slug || apartment.id}`;
+  const listingHref = apartmentPath(apartment);
 
   return (
     <article className="group flex flex-col">

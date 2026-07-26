@@ -82,8 +82,11 @@ export default function WhyUsPage() {
           <CtaButton href="/contact" variant="primary">
             Get apartment matches
           </CtaButton>
-          <CtaButton href="/" variant="secondary">
-            Back to home
+          <CtaButton href="/apartments" variant="secondary">
+            Browse apartments
+          </CtaButton>
+          <CtaButton href="/areas" variant="secondary">
+            Neighbourhoods
           </CtaButton>
         </div>
       </Section>

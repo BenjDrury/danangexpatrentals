@@ -5,11 +5,52 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { IMPERSONATE_COOKIE, requireAdmin } from "@/lib/auth";
 import { setImpersonationCookie } from "@/lib/impersonation";
+import { createAdminPartnerInvite } from "@/lib/data/partners";
 import { createClient, getServiceRoleClient } from "@/lib/supabase/server";
 
 export type FxRateState = { error?: string; ok?: boolean };
 
 export type LanguageFeedbackState = { error?: string; ok?: boolean };
+
+export type AddPartnerState = {
+  error?: string;
+  inviteUrl?: string;
+  loginUrl?: string;
+  companyName?: string;
+  email?: string;
+  emailed?: boolean;
+  emailError?: string;
+};
+
+export async function addPartnerInvite(
+  _prev: AddPartnerState,
+  formData: FormData,
+): Promise<AddPartnerState> {
+  const admin = await requireAdmin();
+  if (!admin) return { error: "Unauthorized." };
+
+  const companyName = String(formData.get("company_name") ?? "");
+  const email = String(formData.get("email") ?? "");
+  const estateCompanyId = String(formData.get("estate_company_id") ?? "").trim();
+
+  const result = await createAdminPartnerInvite({
+    companyName,
+    email,
+    estateCompanyId: estateCompanyId || undefined,
+  });
+
+  if (result.error) return { error: result.error };
+
+  revalidatePath("/admin/partners");
+  return {
+    inviteUrl: result.inviteUrl,
+    loginUrl: result.loginUrl,
+    companyName: result.companyName,
+    email: result.email,
+    emailed: result.emailed,
+    emailError: result.emailError,
+  };
+}
 
 export async function updateUsdVndRate(
   _prev: FxRateState,

@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { convertPrice, type Apartment, type PriceCurrency } from "types";
+import {
+  convertPrice,
+  type Apartment,
+  type PriceCurrency,
+  type PropertyType,
+  type UtilitiesIncluded,
+} from "types";
 import { requireAdmin, requirePartner } from "@/lib/auth";
 import { getUsdVndRate } from "@/lib/fx";
 import { createClient, getServiceRoleClient } from "@/lib/supabase/server";
@@ -98,6 +104,53 @@ function parseAvailableFrom(formData: FormData): string | null | { error: string
   return raw;
 }
 
+const PROPERTY_TYPES: readonly PropertyType[] = [
+  "apartment",
+  "house",
+  "villa",
+  "serviced",
+];
+
+const UTILITIES_INCLUDED: readonly UtilitiesIncluded[] = [
+  "not_included",
+  "partial",
+  "included",
+];
+
+function parseOptionalMonths(
+  formData: FormData,
+  key: string,
+  label: string
+): number | null | { error: string } {
+  const raw = String(formData.get(key) ?? "").trim();
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) {
+    return { error: `${label} must be a number ≥ 0.` };
+  }
+  return n;
+}
+
+function parsePropertyType(formData: FormData): PropertyType | null | { error: string } {
+  const raw = String(formData.get("property_type") ?? "").trim();
+  if (!raw) return null;
+  if (!(PROPERTY_TYPES as readonly string[]).includes(raw)) {
+    return { error: "Invalid property type." };
+  }
+  return raw as PropertyType;
+}
+
+function parseUtilitiesIncluded(
+  formData: FormData
+): UtilitiesIncluded | null | { error: string } {
+  const raw = String(formData.get("utilities_included") ?? "").trim();
+  if (!raw) return null;
+  if (!(UTILITIES_INCLUDED as readonly string[]).includes(raw)) {
+    return { error: "Invalid utilities option." };
+  }
+  return raw as UtilitiesIncluded;
+}
+
 async function readListingFields(
   formData: FormData,
   opts: { isAdmin: boolean; isCreate: boolean; existingStatus?: string | null }
@@ -124,6 +177,41 @@ async function readListingFields(
     return availableFromResult;
   }
   const available_from = availableFromResult as string | null;
+
+  const propertyTypeResult = parsePropertyType(formData);
+  if (propertyTypeResult && typeof propertyTypeResult === "object" && "error" in propertyTypeResult) {
+    return propertyTypeResult;
+  }
+  const property_type = propertyTypeResult as PropertyType | null;
+
+  const minLeaseResult = parseOptionalMonths(formData, "min_lease_months", "Min. lease");
+  if (minLeaseResult && typeof minLeaseResult === "object" && "error" in minLeaseResult) {
+    return minLeaseResult;
+  }
+  const min_lease_months =
+    typeof minLeaseResult === "number" ? Math.round(minLeaseResult) : null;
+
+  const depositResult = parseOptionalMonths(formData, "deposit_months", "Deposit");
+  if (depositResult && typeof depositResult === "object" && "error" in depositResult) {
+    return depositResult;
+  }
+  const deposit_months = depositResult as number | null;
+
+  const agencyFeeResult = parseOptionalMonths(
+    formData,
+    "agency_fee_months",
+    "Agency fee"
+  );
+  if (agencyFeeResult && typeof agencyFeeResult === "object" && "error" in agencyFeeResult) {
+    return agencyFeeResult;
+  }
+  const agency_fee_months = agencyFeeResult as number | null;
+
+  const utilitiesResult = parseUtilitiesIncluded(formData);
+  if (utilitiesResult && typeof utilitiesResult === "object" && "error" in utilitiesResult) {
+    return utilitiesResult;
+  }
+  const utilities_included = utilitiesResult as UtilitiesIncluded | null;
 
   if (!title) return { error: "Title is required." } as const;
   if (!area_id) return { error: "Choose an area." } as const;
@@ -169,6 +257,11 @@ async function readListingFields(
     size_sqm: sizeRaw ? Number(sizeRaw) : null,
     features,
     available_from,
+    property_type,
+    min_lease_months,
+    deposit_months,
+    agency_fee_months,
+    utilities_included,
     status,
     partner_notes,
     main_image:
@@ -228,6 +321,11 @@ export async function createListing(
       bedrooms: fields.bedrooms,
       price_usd: fields.price_usd,
       price_currency: fields.price_currency,
+      has_min_lease: fields.min_lease_months != null,
+      has_deposit: fields.deposit_months != null,
+      has_agency_fee: fields.agency_fee_months != null,
+      has_utilities: fields.utilities_included != null,
+      property_type: fields.property_type,
     },
     session,
   );
@@ -290,7 +388,18 @@ export async function updateListing(
     return { error: "Status could not be updated." };
   }
 
-  await captureServer("listing_updated", { listing_id: id }, session);
+  await captureServer(
+    "listing_updated",
+    {
+      listing_id: id,
+      has_min_lease: fields.min_lease_months != null,
+      has_deposit: fields.deposit_months != null,
+      has_agency_fee: fields.agency_fee_months != null,
+      has_utilities: fields.utilities_included != null,
+      property_type: fields.property_type,
+    },
+    session,
+  );
 
   revalidateListingPaths(id);
   return { ok: true };

@@ -1,6 +1,10 @@
 "use server";
 
-import { LEAD_NOTIFY_EMAIL, RESEND_FROM_EMAIL } from "backend";
+import {
+  LEAD_NOTIFY_EMAIL,
+  RESEND_FROM_EMAIL,
+  RESEND_REPLY_TO_EMAIL,
+} from "backend";
 import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
 import { captureServer } from "@/lib/analytics-server";
@@ -73,6 +77,7 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     try {
       await resend.emails.send({
         from: RESEND_FROM_EMAIL,
+        replyTo: RESEND_REPLY_TO_EMAIL,
         to: LEAD_NOTIFY_EMAIL,
         subject: `New lead: ${whatsapp} – ${budgetRange || "no budget"} – ${moveDate || "no date"}`,
         text: [

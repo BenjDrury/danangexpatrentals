@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
 
 function getSupabaseKey() {
   return (
@@ -15,21 +16,25 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     getSupabaseKey(),
     {
+      cookieOptions: withSharedCookieDomain({
+        path: "/",
+        sameSite: "lax",
+      }),
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
+            request.cookies.set(name, value),
           );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, withSharedCookieDomain(options)),
           );
         },
       },
-    }
+    },
   );
 
   // Prefer getClaims() alone: with asymmetric JWT keys this verifies locally
@@ -40,6 +45,7 @@ export async function updateSession(request: NextRequest) {
 
   const url = request.nextUrl.clone();
   const isLogin = url.pathname === "/login";
+  const isAuthCallback = url.pathname === "/auth/callback";
   const isUnauthorized = url.pathname === "/unauthorized";
 
   if (isLogin && isAuthenticated) {
@@ -47,7 +53,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (!isLogin && !isUnauthorized && !isAuthenticated) {
+  if (!isLogin && !isAuthCallback && !isUnauthorized && !isAuthenticated) {
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }

@@ -1,4 +1,11 @@
-import { listingPriceLabel, type Apartment } from "types";
+import {
+  agencyFeeLabel,
+  formatMonthsOfRent,
+  listingPriceLabel,
+  propertyTypeLabel,
+  utilitiesIncludedLabel,
+  type Apartment,
+} from "types";
 
 type AreaBlurb = { name: string; vibe?: string | null };
 
@@ -13,7 +20,33 @@ export function buildListingCaption(
   const bits: string[] = [];
   bits.push(`🏠 ${apt.title}`);
   bits.push("");
-  bits.push(`${listingPriceLabel(apt)} · ${apt.bedrooms} BR${apt.bathrooms != null ? ` · ${apt.bathrooms} bath` : ""}${apt.size_sqm != null ? ` · ${apt.size_sqm} m²` : ""}`);
+  const typeBit = apt.property_type ? ` · ${propertyTypeLabel(apt.property_type)}` : "";
+  bits.push(
+    `${listingPriceLabel(apt)}${typeBit} · ${apt.bedrooms} BR${apt.bathrooms != null ? ` · ${apt.bathrooms} bath` : ""}${apt.size_sqm != null ? ` · ${apt.size_sqm} m²` : ""}`
+  );
+
+  const terms: string[] = [];
+  if (apt.min_lease_months != null) {
+    terms.push(`Min lease ${formatMonthsOfRent(apt.min_lease_months)}`);
+  }
+  if (apt.deposit_months != null) {
+    terms.push(`Deposit ${formatMonthsOfRent(apt.deposit_months)}`);
+  }
+  if (apt.agency_fee_months != null) {
+    terms.push(
+      apt.agency_fee_months === 0
+        ? "No agency fee"
+        : `Agency fee ${agencyFeeLabel(apt.agency_fee_months)}`
+    );
+  }
+  if (apt.utilities_included) {
+    terms.push(`Utilities: ${utilitiesIncludedLabel(apt.utilities_included)}`);
+  }
+  if (terms.length) {
+    bits.push("");
+    bits.push(terms.join(" · "));
+  }
+
   if (area) {
     bits.push("");
     bits.push(`📍 ${area.name}`);

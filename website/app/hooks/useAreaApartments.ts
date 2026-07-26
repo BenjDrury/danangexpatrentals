@@ -2,7 +2,10 @@
 
 import { useMemo } from "react";
 import type { Apartment } from "types";
-import type { AreaListFilters, SortOption, UnitFilter } from "../components/area/FilterBar";
+import type {
+  AreaListFilters,
+  UnitFilter,
+} from "../components/area/FilterBar";
 
 function bedroomToUnitFilter(bedrooms: number): UnitFilter {
   if (bedrooms === 0) return "studio";
@@ -30,14 +33,49 @@ export function useAreaApartments(
   return useMemo(() => {
     let list = apartments.filter((apt) => {
       if (!matchesUnitFilter(apt, filters.unitType)) return false;
+      if (
+        filters.propertyType !== "all" &&
+        apt.property_type !== filters.propertyType
+      ) {
+        return false;
+      }
       if (filters.minPrice != null && apt.price < filters.minPrice) return false;
       if (filters.maxPrice != null && apt.price > filters.maxPrice) return false;
       if (filters.furnishedOnly && !isFurnished(apt)) return false;
-      if (
-        filters.minLeaseMonths != null &&
-        (apt.min_lease_months == null || apt.min_lease_months < filters.minLeaseMonths)
-      )
-        return false;
+      if (filters.maxLeaseMonths != null) {
+        // Keep flexible (null) or required min lease within what the renter will accept.
+        if (
+          apt.min_lease_months != null &&
+          apt.min_lease_months > filters.maxLeaseMonths
+        ) {
+          return false;
+        }
+      }
+      if (filters.maxDepositMonths != null) {
+        if (
+          apt.deposit_months != null &&
+          apt.deposit_months > filters.maxDepositMonths
+        ) {
+          return false;
+        }
+      }
+      if (filters.noAgencyFeeOnly) {
+        if (apt.agency_fee_months == null || apt.agency_fee_months > 0) {
+          return false;
+        }
+      }
+      if (filters.utilities !== "all") {
+        if (filters.utilities === "included_or_partial") {
+          if (
+            apt.utilities_included !== "included" &&
+            apt.utilities_included !== "partial"
+          ) {
+            return false;
+          }
+        } else if (apt.utilities_included !== filters.utilities) {
+          return false;
+        }
+      }
       return true;
     });
 

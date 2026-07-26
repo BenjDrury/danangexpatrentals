@@ -111,6 +111,11 @@ function Block({ block }: { block: GuideBlock }) {
               sizes="(max-width: 768px) 100vw, 48rem"
             />
           </div>
+          {block.image.credit ? (
+            <p className="border-b border-line bg-sand/40 px-4 py-1.5 text-[11px] text-muted">
+              {block.image.credit}
+            </p>
+          ) : null}
           <div className="p-5 sm:p-7">
             <p className="text-sm font-medium text-ocean">Example day</p>
             <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight text-charcoal">

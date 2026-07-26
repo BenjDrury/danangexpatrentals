@@ -33,7 +33,7 @@ export type GuideBlock =
       type: "tour";
       title: string;
       tagline: string;
-      image: { src: string; alt: string };
+      image: { src: string; alt: string; credit?: string };
       duration: string;
       cost: string;
       steps: string[];
@@ -501,8 +501,9 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
         title: "Market morning + home cooking",
         tagline: "The cheapest, most local way to feel settled.",
         image: {
-          src: "/danang-hands.jpg",
-          alt: "Everyday textures of living in Da Nang",
+          src: "/danang-market-morning.jpg",
+          alt: "Fresh leafy greens at a Vietnamese morning market stall",
+          credit: "Photo: Takeaway / Wikimedia Commons (CC BY-SA 3.0)",
         },
         duration: "2–3 hours",
         cost: "~$5–15 for a solid haul",

@@ -94,19 +94,31 @@ export async function removeFacebookGroup(
 
 export async function inviteTeamMember(
   email: string,
-): Promise<{ error?: string; inviteUrl?: string; token?: string }> {
+): Promise<{
+  error?: string;
+  inviteUrl?: string;
+  loginUrl?: string;
+  token?: string;
+  emailed?: boolean;
+  emailError?: string;
+}> {
   const session = await requirePartner();
   if (!session) return { error: "Unauthorized." };
 
   const result = await createPartnerInvite(email);
   if (result.error) return { error: result.error };
 
-  await captureServer("team_member_invited", {}, session);
+  await captureServer("team_member_invited", {
+    emailed: Boolean(result.emailed),
+  }, session);
 
   revalidatePath("/settings");
   return {
     inviteUrl: result.inviteUrl,
+    loginUrl: result.loginUrl,
     token: result.invite?.token,
+    emailed: result.emailed,
+    emailError: result.emailError,
   };
 }
 

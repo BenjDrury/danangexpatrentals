@@ -17,7 +17,14 @@ export { AreaOverview } from "./AreaOverview";
 export { AreaRentSnapshot } from "./AreaRentSnapshot";
 export { AreaRightForYou } from "./AreaRightForYou";
 export { AreaTrustFooter } from "./AreaTrustFooter";
-export { FilterBar, type AreaListFilters, type SortOption, type UnitFilter } from "./FilterBar";
+export {
+  FilterBar,
+  type AreaListFilters,
+  type SortOption,
+  type UnitFilter,
+  type PropertyTypeFilter,
+  type UtilitiesFilter,
+} from "./FilterBar";
 export { RangeBar } from "./RangeBar";
 export { StatBadge } from "./StatBadge";
 export { StickyAreaCta } from "./StickyAreaCta";

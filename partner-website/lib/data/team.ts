@@ -1,6 +1,11 @@
 import { randomBytes } from "crypto";
 import type { PartnerInviteStatus } from "types";
 import { requirePartner } from "@/lib/auth";
+import {
+  generateAuthLoginLink,
+  getPartnerAppUrl,
+  sendPartnerInviteEmail,
+} from "@/lib/email/auth-links";
 import { createClient, getServiceRoleClient } from "@/lib/supabase/server";
 
 export type TeamMember = {
@@ -130,7 +135,14 @@ function mapInviteRow(row: {
 
 export async function createPartnerInvite(
   emailRaw: string,
-): Promise<{ invite?: TeamInviteRow; inviteUrl?: string; error?: string }> {
+): Promise<{
+  invite?: TeamInviteRow;
+  inviteUrl?: string;
+  loginUrl?: string;
+  emailed?: boolean;
+  emailError?: string;
+  error?: string;
+}> {
   const session = await requirePartner();
   if (!session) return { error: "Unauthorized." };
 
@@ -196,10 +208,56 @@ export async function createPartnerInvite(
   }
 
   const invite = mapInviteRow(data);
-  return {
+  const invitePath = `/invite/${invite.token}`;
+  const result: {
+    invite: TeamInviteRow;
+    inviteUrl: string;
+    loginUrl?: string;
+    emailed?: boolean;
+    emailError?: string;
+  } = {
     invite,
-    inviteUrl: `/invite/${invite.token}`,
+    inviteUrl: invitePath,
   };
+
+  if (!service) {
+    result.emailError =
+      "Invite created, but email needs SUPABASE_SERVICE_ROLE_KEY + RESEND_API_KEY.";
+    return result;
+  }
+
+  const siteUrl = await getPartnerAppUrl();
+  const absoluteInviteUrl = `${siteUrl}${invitePath}`;
+  const redirectTo = `${siteUrl}/auth/callback?next=${encodeURIComponent(invitePath)}`;
+
+  const { data: company } = await service
+    .from("estate_companies")
+    .select("name")
+    .eq("id", session.estateCompanyId)
+    .maybeSingle();
+
+  const generated = await generateAuthLoginLink(service, email, redirectTo);
+  if (!generated.link) {
+    result.emailError =
+      generated.error ?? "Invite created, but could not build login link.";
+    return result;
+  }
+
+  result.loginUrl = generated.link.actionLink;
+  const emailed = await sendPartnerInviteEmail({
+    to: email,
+    companyName: (company?.name as string) || "your team",
+    loginLink: generated.link.actionLink,
+    inviteUrl: absoluteInviteUrl,
+  });
+
+  if (emailed.error) {
+    result.emailError = emailed.error;
+  } else {
+    result.emailed = true;
+  }
+
+  return result;
 }
 
 export async function revokePartnerInvite(
@@ -389,6 +447,28 @@ export async function createAccountAndAcceptInvite(params: {
     // fall through to create
   }
 
+  if (userId) {
+    const { data: existing } = await service
+      .from("profiles")
+      .select("estate_company_id, role")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (existing?.role === "admin") {
+      return { error: "Admin accounts can’t join a partner company via invite." };
+    }
+    if (
+      existing?.role === "partner" &&
+      existing.estate_company_id &&
+      existing.estate_company_id !== invite.estateCompanyId
+    ) {
+      return {
+        error: "An account with this email is already linked to another company. Sign in to manage it.",
+        email,
+      };
+    }
+  }
+
   if (!userId) {
     const { data: created, error: createError } =
       await service.auth.admin.createUser({
@@ -404,11 +484,21 @@ export async function createAccountAndAcceptInvite(params: {
     }
     userId = created.user.id;
   } else {
-    // Existing user — they should sign in instead of creating
-    return {
-      error: "An account with this email already exists. Sign in to accept.",
-      email,
-    };
+    // User may already exist from generateLink({ type: "invite" }) when we
+    // emailed the one-click login link — set their password instead.
+    const { error: updateError } = await service.auth.admin.updateUserById(
+      userId,
+      {
+        password,
+        email_confirm: true,
+        user_metadata: params.displayName
+          ? { display_name: params.displayName }
+          : undefined,
+      },
+    );
+    if (updateError) {
+      return { error: updateError.message };
+    }
   }
 
   const { error: profileError } = await service.from("profiles").upsert(

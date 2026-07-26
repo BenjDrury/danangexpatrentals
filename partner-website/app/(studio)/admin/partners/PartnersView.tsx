@@ -3,9 +3,11 @@
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  addPartnerInvite,
   deleteLanguageFeedback,
   startImpersonation,
   updateUsdVndRate,
+  type AddPartnerState,
   type FxRateState,
 } from "@/app/(studio)/admin/actions";
 import { CopyDeepLinkButton } from "@/components/CopyDeepLinkButton";
@@ -18,6 +20,213 @@ import {
 } from "@/lib/language-feedback";
 
 const fxInitial: FxRateState = {};
+const addPartnerInitial: AddPartnerState = {};
+
+function absoluteInviteUrl(path: string): string {
+  if (typeof window === "undefined") return path;
+  return new URL(path, window.location.origin).toString();
+}
+
+function InviteLinkReady({
+  inviteUrl,
+  loginUrl,
+  email,
+  emailed,
+  emailError,
+}: {
+  inviteUrl: string;
+  loginUrl?: string;
+  email?: string;
+  emailed?: boolean;
+  emailError?: string;
+}) {
+  const { t } = useLocale();
+  const [copied, setCopied] = useState(false);
+  const absoluteInvite = absoluteInviteUrl(inviteUrl);
+  const copyTarget = loginUrl || absoluteInvite;
+
+  return (
+    <div className="mt-4 space-y-2 rounded-quieter border border-palm/30 bg-palm/5 px-4 py-3">
+      <p className="text-sm font-medium text-palm">
+        {emailed
+          ? t("admin.addPartnerEmailSent", { email: email || "them" })
+          : t("admin.addPartnerInviteReady", { email: email || "them" })}
+      </p>
+      {emailError ? (
+        <p className="text-sm text-red-700" role="status">
+          {emailError}
+        </p>
+      ) : null}
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+        {loginUrl
+          ? t("admin.addPartnerLoginLinkLabel")
+          : t("admin.addPartnerInviteLinkLabel")}
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="min-w-0 flex-1 break-all rounded-quieter bg-white/80 px-2.5 py-1.5 text-xs text-charcoal">
+          {copyTarget}
+        </code>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(copyTarget);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 2000);
+            } catch {
+              // ignore
+            }
+          }}
+          className="shrink-0 rounded-quieter border border-palm/40 bg-white px-3 py-1.5 text-xs font-semibold text-palm transition hover:border-palm/60"
+        >
+          {copied ? t("admin.addPartnerLinkCopied") : t("admin.addPartnerCopyLink")}
+        </button>
+      </div>
+      {loginUrl ? (
+        <p className="text-xs text-muted">
+          {t("admin.addPartnerInviteFallback", { url: absoluteInvite })}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function AddPartnerCard() {
+  const { t } = useLocale();
+  const [state, formAction, pending] = useActionState(
+    addPartnerInvite,
+    addPartnerInitial,
+  );
+
+  return (
+    <section className="rounded-soft border border-line/80 bg-white/70 p-5">
+      <h2 className="font-display text-lg font-semibold text-charcoal">
+        {t("admin.addPartnerTitle")}
+      </h2>
+      <p className="mt-1 text-sm text-muted">{t("admin.addPartnerHint")}</p>
+      <form action={formAction} className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="block">
+          <span className="text-sm font-medium text-charcoal">
+            {t("admin.addPartnerCompany")}
+          </span>
+          <input
+            type="text"
+            name="company_name"
+            required
+            maxLength={120}
+            placeholder={t("admin.addPartnerCompanyPlaceholder")}
+            className="mt-1.5 block w-full rounded-quieter border border-line bg-foam/70 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
+          />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium text-charcoal">
+            {t("admin.addPartnerEmail")}
+          </span>
+          <input
+            type="email"
+            name="email"
+            required
+            autoComplete="off"
+            placeholder={t("admin.addPartnerEmailPlaceholder")}
+            className="mt-1.5 block w-full rounded-quieter border border-line bg-foam/70 px-3.5 py-2.5 text-charcoal outline-none transition focus:border-ocean focus:ring-2 focus:ring-ocean/20"
+          />
+        </label>
+        <div className="sm:col-span-2">
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-quieter bg-admin px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-admin-deep disabled:opacity-50"
+          >
+            {pending
+              ? t("admin.addPartnerSubmitting")
+              : t("admin.addPartnerSubmit")}
+          </button>
+        </div>
+      </form>
+      {state.error ? (
+        <p className="mt-3 text-sm text-red-700" role="status">
+          {state.error}
+        </p>
+      ) : null}
+      {state.inviteUrl ? (
+        <InviteLinkReady
+          inviteUrl={state.inviteUrl}
+          loginUrl={state.loginUrl}
+          email={state.email}
+          emailed={state.emailed}
+          emailError={state.emailError}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function InviteExistingForm({
+  companyId,
+  companyName,
+  onDone,
+}: {
+  companyId: string;
+  companyName: string;
+  onDone: () => void;
+}) {
+  const { t } = useLocale();
+  const [state, formAction, pending] = useActionState(
+    addPartnerInvite,
+    addPartnerInitial,
+  );
+
+  return (
+    <div className="mt-2 w-full space-y-2 rounded-quieter border border-admin/25 bg-admin-soft/30 px-3 py-3 sm:max-w-md">
+      <p className="text-xs text-muted">{t("admin.inviteExistingHint")}</p>
+      <form action={formAction} className="flex flex-wrap items-end gap-2">
+        <input type="hidden" name="estate_company_id" value={companyId} />
+        <input type="hidden" name="company_name" value={companyName} />
+        <label className="min-w-[12rem] flex-1">
+          <span className="sr-only">{t("admin.addPartnerEmail")}</span>
+          <input
+            type="email"
+            name="email"
+            required
+            autoComplete="off"
+            placeholder={t("admin.addPartnerEmailPlaceholder")}
+            className="block w-full rounded-quieter border border-line bg-white px-3 py-2 text-sm text-charcoal outline-none transition focus:border-admin focus:ring-2 focus:ring-admin/20"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={pending}
+          className="rounded-quieter bg-admin px-3 py-2 text-sm font-semibold text-white transition hover:bg-admin-deep disabled:opacity-50"
+        >
+          {pending
+            ? t("admin.addPartnerSubmitting")
+            : t("admin.inviteExistingSubmit")}
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="rounded-quieter border border-line px-3 py-2 text-sm font-medium text-muted transition hover:text-charcoal"
+        >
+          {t("admin.inviteExistingCancel")}
+        </button>
+      </form>
+      {state.error ? (
+        <p className="text-sm text-red-700" role="status">
+          {state.error}
+        </p>
+      ) : null}
+      {state.inviteUrl ? (
+        <InviteLinkReady
+          inviteUrl={state.inviteUrl}
+          loginUrl={state.loginUrl}
+          email={state.email}
+          emailed={state.emailed}
+          emailError={state.emailError}
+        />
+      ) : null}
+    </div>
+  );
+}
 
 function FxRateCard({
   settingsRate,
@@ -207,6 +416,7 @@ export function PartnersView({
 }) {
   const { t } = useLocale();
   const [query, setQuery] = useState("");
+  const [inviteCompanyId, setInviteCompanyId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -238,6 +448,8 @@ export function PartnersView({
         </h1>
         <p className="max-w-xl text-sm text-muted">{t("admin.partnersSubtitle")}</p>
       </header>
+
+      <AddPartnerCard />
 
       <FxRateCard
         settingsRate={settingsRate}
@@ -280,44 +492,68 @@ export function PartnersView({
                   p.companyName?.trim() ||
                   p.displayName?.trim() ||
                   t("admin.unnamedPartner");
+                const inviting = Boolean(
+                  p.companyOnly &&
+                    p.estateCompanyId &&
+                    inviteCompanyId === p.estateCompanyId,
+                );
                 return (
-                  <li
-                    key={p.profileId}
-                    className="flex flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5"
-                  >
-                    <div className="min-w-0">
+                  <li key={p.profileId} className="px-4 py-3.5 sm:px-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-charcoal">{title}</p>
+                          {p.companyOnly ? (
+                            <span className="rounded-quieter bg-admin-soft/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-admin-deep">
+                              {t("admin.companyOnly")}
+                            </span>
+                          ) : null}
+                          {p.estateCompanyId ? (
+                            <CopyDeepLinkButton companyId={p.estateCompanyId} />
+                          ) : null}
+                        </div>
+                        <p className="mt-0.5 truncate text-sm text-muted">
+                          {p.companyOnly
+                            ? t("admin.noUserYet")
+                            : p.email || t("admin.noEmail")}
+                          {p.estateCompanyId
+                            ? ` · ${t("admin.listingCount").replace("{count}", String(p.listingCount))}`
+                            : ` · ${t("admin.noCompany")}`}
+                        </p>
+                      </div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-charcoal">{title}</p>
-                        {p.companyOnly ? (
-                          <span className="rounded-quieter bg-admin-soft/70 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-admin-deep">
-                            {t("admin.companyOnly")}
-                          </span>
+                        {p.companyOnly && p.estateCompanyId && !inviting ? (
+                          <button
+                            type="button"
+                            onClick={() => setInviteCompanyId(p.estateCompanyId)}
+                            className="rounded-quieter border border-admin/30 bg-white px-3.5 py-2 text-sm font-semibold text-admin-deep transition hover:border-admin/50"
+                          >
+                            {t("admin.inviteExisting")}
+                          </button>
                         ) : null}
                         {p.estateCompanyId ? (
-                          <CopyDeepLinkButton companyId={p.estateCompanyId} />
-                        ) : null}
+                          <form action={startImpersonation.bind(null, p.estateCompanyId)}>
+                            <button
+                              type="submit"
+                              className="rounded-quieter border border-admin/30 bg-admin-soft/50 px-3.5 py-2 text-sm font-semibold text-admin-deep transition hover:border-admin/50"
+                            >
+                              {t("admin.become")}
+                            </button>
+                          </form>
+                        ) : (
+                          <span className="text-xs text-muted">
+                            {t("admin.cannotBecome")}
+                          </span>
+                        )}
                       </div>
-                      <p className="mt-0.5 truncate text-sm text-muted">
-                        {p.companyOnly
-                          ? t("admin.noUserYet")
-                          : p.email || t("admin.noEmail")}
-                        {p.estateCompanyId
-                          ? ` · ${t("admin.listingCount").replace("{count}", String(p.listingCount))}`
-                          : ` · ${t("admin.noCompany")}`}
-                      </p>
                     </div>
-                    {p.estateCompanyId ? (
-                      <form action={startImpersonation.bind(null, p.estateCompanyId)}>
-                        <button
-                          type="submit"
-                          className="rounded-quieter border border-admin/30 bg-admin-soft/50 px-3.5 py-2 text-sm font-semibold text-admin-deep transition hover:border-admin/50"
-                        >
-                          {t("admin.become")}
-                        </button>
-                      </form>
-                    ) : (
-                      <span className="text-xs text-muted">{t("admin.cannotBecome")}</span>
-                    )}
+                    {inviting && p.estateCompanyId ? (
+                      <InviteExistingForm
+                        companyId={p.estateCompanyId}
+                        companyName={p.companyName?.trim() || title}
+                        onDone={() => setInviteCompanyId(null)}
+                      />
+                    ) : null}
                   </li>
                 );
               })}

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { ANALYTICS_OPT_OUT_COOKIE } from "@/lib/analytics-constants";
+import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
 
 const IMPERSONATE_COOKIE = "partner_impersonate_company_id";
 
@@ -21,14 +22,21 @@ function safeRelativePath(next: string | null | undefined): string {
 }
 
 function setAnalyticsOptOut(response: NextResponse, optedOut: boolean) {
+  const base = withSharedCookieDomain({
+    path: "/",
+    sameSite: "lax" as const,
+  });
   if (optedOut) {
     response.cookies.set(ANALYTICS_OPT_OUT_COOKIE, "1", {
-      path: "/",
-      sameSite: "lax",
+      ...base,
       maxAge: 60 * 60 * 24 * 365,
     });
   } else {
-    response.cookies.delete(ANALYTICS_OPT_OUT_COOKIE);
+    // Must set maxAge 0 with the same Domain, or the parent-domain cookie sticks.
+    response.cookies.set(ANALYTICS_OPT_OUT_COOKIE, "", {
+      ...base,
+      maxAge: 0,
+    });
   }
 }
 
@@ -39,6 +47,10 @@ export async function updateSession(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     getSupabaseKey(),
     {
+      cookieOptions: withSharedCookieDomain({
+        path: "/",
+        sameSite: "lax",
+      }),
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -47,11 +59,11 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, withSharedCookieDomain(options)),
           );
         },
       },
-    }
+    },
   );
 
   // Prefer getClaims() alone: local JWT verify when possible. Calling getUser()
@@ -73,7 +85,7 @@ export async function updateSession(request: NextRequest) {
     supabaseResponse.cookies.delete(IMPERSONATE_COOKIE);
   }
 
-  // Admins never send PostHog events — cookie is read at client init.
+  // Admins never send PostHog events — cookie is read at client init (all hosts).
   if (isAuthenticated && claims?.sub) {
     const { data: profile } = await supabase
       .from("profiles")

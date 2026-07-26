@@ -8,6 +8,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { capture } from "@/lib/analytics";
 import { syncPostHogIdentity } from "@/lib/analytics-identity";
+import { requestMagicLink } from "./actions";
 import { getPublicSiteUrl } from "@/lib/public-url";
 
 function safeNext(next: string | null): string {
@@ -47,6 +48,8 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
   const [hashAuth] = useState<HashAuth | null>(readHashAuth);
   const [completingMagicLink, setCompletingMagicLink] = useState(
     () =>
@@ -155,6 +158,7 @@ function LoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setMagicSent(false);
     setLoading(true);
 
     const supabase = createClient();
@@ -177,6 +181,28 @@ function LoginForm() {
 
     router.push(nextPath);
     router.refresh();
+  }
+
+  async function handleMagicLink() {
+    setError(null);
+    setMagicSent(false);
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError(t("login.magicLinkNeedEmail"));
+      return;
+    }
+
+    setMagicLoading(true);
+    const result = await requestMagicLink({ email: trimmed, next: nextPath });
+    setMagicLoading(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    setMagicSent(true);
+    capture("magic_link_requested");
   }
 
   if (completingMagicLink) {
@@ -227,12 +253,34 @@ function LoginForm() {
           {error}
         </p>
       )}
+      {magicSent && !error ? (
+        <p className="text-sm text-palm" role="status">
+          {t("login.magicLinkSent")}
+        </p>
+      ) : null}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || magicLoading}
         className="w-full rounded-quieter bg-ocean px-4 py-3 text-sm font-semibold text-white transition hover:bg-ocean-deep focus:outline-none focus:ring-2 focus:ring-ocean/40 focus:ring-offset-2 focus:ring-offset-foam disabled:opacity-50"
       >
         {loading ? t("login.submitting") : t("login.submit")}
+      </button>
+      <div className="relative py-1 text-center">
+        <span className="relative z-10 bg-white/80 px-3 text-xs font-medium uppercase tracking-wide text-muted">
+          {t("login.or")}
+        </span>
+        <span
+          className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-line/80"
+          aria-hidden
+        />
+      </div>
+      <button
+        type="button"
+        disabled={loading || magicLoading}
+        onClick={() => void handleMagicLink()}
+        className="w-full rounded-quieter border border-line bg-foam/50 px-4 py-3 text-sm font-semibold text-charcoal transition hover:border-ocean/40 hover:bg-foam focus:outline-none focus:ring-2 focus:ring-ocean/30 focus:ring-offset-2 focus:ring-offset-foam disabled:opacity-50"
+      >
+        {magicLoading ? t("login.magicLinkSending") : t("login.magicLinkSubmit")}
       </button>
     </form>
   );

@@ -1,6 +1,10 @@
 "use server";
 
-import { LEAD_NOTIFY_EMAIL, RESEND_FROM_EMAIL } from "backend";
+import {
+  LEAD_NOTIFY_EMAIL,
+  RESEND_FROM_EMAIL,
+  RESEND_REPLY_TO_EMAIL,
+} from "backend";
 import { supabase } from "@/lib/supabase";
 import { Resend } from "resend";
 import { captureServer } from "@/lib/analytics-server";
@@ -65,6 +69,7 @@ export async function submitPartnerApplication(
     try {
       await resend.emails.send({
         from: RESEND_FROM_EMAIL,
+        replyTo: RESEND_REPLY_TO_EMAIL,
         to: LEAD_NOTIFY_EMAIL,
         subject: `Partner application: ${name}${companyName ? ` (${companyName})` : ""}`,
         text: [

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Apartment } from "types";
-import { listingPriceLabel } from "types";
+import { formatMonthsOfRent, listingPriceLabel, propertyTypeLabel } from "types";
 import { capture } from "@/lib/analytics";
 import { apartmentPath } from "@/lib/area-utils";
 
@@ -15,6 +15,7 @@ type ApartmentCardProps = {
 
 export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCardProps) {
   const meta = [
+    apartment.property_type ? propertyTypeLabel(apartment.property_type) : null,
     apartment.bedrooms ? `${apartment.bedrooms} BR` : null,
     apartment.bathrooms != null ? `${apartment.bathrooms} bath` : null,
     apartment.size_sqm != null ? `${apartment.size_sqm} m²` : null,
@@ -36,6 +37,15 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
           year: "numeric",
         })
       : null;
+
+  const termsBits = [
+    apartment.min_lease_months != null
+      ? `Min ${formatMonthsOfRent(apartment.min_lease_months)}`
+      : null,
+    apartment.deposit_months != null
+      ? `Deposit ${formatMonthsOfRent(apartment.deposit_months)}`
+      : null,
+  ].filter(Boolean) as string[];
 
   const listingProps = {
     apartment_id: apartment.id,
@@ -84,6 +94,9 @@ export function ApartmentCard({ apartment, areaName, contactHref }: ApartmentCar
         )}
         {availableFromLabel ? (
           <p className="mt-2 text-sm text-muted">Available from {availableFromLabel}</p>
+        ) : null}
+        {termsBits.length > 0 ? (
+          <p className="mt-2 text-sm text-muted">{termsBits.join(" · ")}</p>
         ) : null}
         {apartment.features?.length > 0 && (
           <p className="mt-2 text-sm text-muted">

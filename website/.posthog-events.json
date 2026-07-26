@@ -1,27 +1,187 @@
 [
   {
+    "event_name": "lead_submitted",
+    "event_description": "User successfully submitted the concierge / contact form (client-side).",
+    "file": "app/components/ConciergeForm.tsx"
+  },
+  {
+    "event_name": "lead_submit_failed",
+    "event_description": "Concierge / contact form submission failed (client-side).",
+    "file": "app/components/ConciergeForm.tsx"
+  },
+  {
+    "event_name": "lead_submitted_server",
+    "event_description": "Server confirmed a lead was saved and notification sent.",
+    "file": "app/actions/lead.ts"
+  },
+  {
+    "event_name": "listing_viewed",
+    "event_description": "User viewed an apartment listing detail page.",
+    "file": "app/components/TrackListingView.tsx"
+  },
+  {
+    "event_name": "listing_card_clicked",
+    "event_description": "User clicked a listing card (image, title, or details).",
+    "file": "app/components/area/ApartmentCard.tsx"
+  },
+  {
+    "event_name": "apartment_inquiry_clicked",
+    "event_description": "User clicked Inquire about this apartment on a listing detail page.",
+    "file": "app/components/area/ApartmentInquiryLink.tsx"
+  },
+  {
+    "event_name": "apartment_request_clicked",
+    "event_description": "User clicked Request this apartment on a listing card.",
+    "file": "app/components/area/ApartmentCard.tsx"
+  },
+  {
+    "event_name": "area_cta_clicked",
+    "event_description": "User clicked Get apartment matches from the sticky area CTA bar.",
+    "file": "app/components/area/StickyAreaCta.tsx"
+  },
+  {
+    "event_name": "whatsapp_cta_clicked",
+    "event_description": "User clicked Chat on WhatsApp (sticky CTA, footer, or inferred CTA button).",
+    "file": "app/components/area/StickyAreaCta.tsx"
+  },
+  {
+    "event_name": "contact_cta_clicked",
+    "event_description": "User clicked a CTA linking to the contact / concierge form.",
+    "file": "app/components/CtaButton.tsx"
+  },
+  {
+    "event_name": "explore_apartments_clicked",
+    "event_description": "User clicked Explore apartments from nav or a CTA.",
+    "file": "app/components/Nav.tsx"
+  },
+  {
+    "event_name": "browse_apartments_clicked",
+    "event_description": "User clicked browse apartments within an area section.",
+    "file": "app/components/area/AreaApartmentsSection.tsx"
+  },
+  {
+    "event_name": "apartment_filters_changed",
+    "event_description": "User changed apartment browse filters (beds, property type, price, lease, deposit, agency fee, utilities, sort).",
+    "file": "app/components/area/FilterBar.tsx"
+  },
+  {
+    "event_name": "nav_link_clicked",
+    "event_description": "User clicked a primary navigation link.",
+    "file": "app/components/Nav.tsx"
+  },
+  {
+    "event_name": "footer_link_clicked",
+    "event_description": "User clicked a footer or secondary content link.",
+    "file": "app/components/Footer.tsx"
+  },
+  {
     "event_name": "listing_guide_clicked",
-    "event_description": "User clicked an informational guide link from an apartment detail page (cost of living, area guide, visas, etc.).",
+    "event_description": "User clicked an informational guide link from an apartment detail page.",
     "file": "app/components/area/ListingGuides.tsx"
   },
   {
-    "event_name": "partner_application_submitted",
-    "event_description": "A prospective partner successfully submits the public partner application form (client-side).",
-    "file": "app/partners/apply/PartnerApplyForm.tsx"
+    "event_name": "area_find_home_clicked",
+    "event_description": "User clicked Find a home CTA on a neighbourhood / areas page.",
+    "file": "app/areas/page.tsx"
   },
   {
-    "event_name": "partner_application_submit_failed",
-    "event_description": "A prospective partner's application form submission failed (client-side).",
-    "file": "app/partners/apply/PartnerApplyForm.tsx"
+    "event_name": "area_guide_clicked",
+    "event_description": "User clicked a CTA linking to a specific area guide page.",
+    "file": "app/components/CtaButton.tsx"
   },
   {
-    "event_name": "partner_application_submitted_server",
-    "event_description": "A partner application was saved and notified on the server.",
-    "file": "app/actions/partner-application.ts"
+    "event_name": "neighbourhoods_cta_clicked",
+    "event_description": "User clicked a CTA linking to the neighbourhoods / areas index.",
+    "file": "app/components/CtaButton.tsx"
+  },
+  {
+    "event_name": "trust_page_cta_clicked",
+    "event_description": "User clicked a CTA linking to how-it-works or why-us.",
+    "file": "app/components/CtaButton.tsx"
+  },
+  {
+    "event_name": "cta_clicked",
+    "event_description": "Generic CTA click when href does not match a more specific inferred event.",
+    "file": "app/components/CtaButton.tsx"
+  },
+  {
+    "event_name": "partners_cta_clicked",
+    "event_description": "User clicked a CTA linking to the partners page.",
+    "file": "app/components/CtaButton.tsx"
   },
   {
     "event_name": "partner_apply_cta_clicked",
     "event_description": "User clicked a CTA linking to the partner application form.",
     "file": "app/partners/PartnersPageContent.tsx"
+  },
+  {
+    "event_name": "partner_studio_clicked",
+    "event_description": "User clicked a CTA linking to Partner Studio login.",
+    "file": "app/partners/PartnersPageContent.tsx"
+  },
+  {
+    "event_name": "partners_whatsapp_clicked",
+    "event_description": "User clicked WhatsApp from the partners page.",
+    "file": "app/partners/PartnersPageContent.tsx"
+  },
+  {
+    "event_name": "partners_locale_changed",
+    "event_description": "User switched language on the partners page.",
+    "file": "app/partners/PartnersPageContent.tsx"
+  },
+  {
+    "event_name": "partner_application_submitted",
+    "event_description": "Prospective partner successfully submitted the public application form (client-side).",
+    "file": "app/partners/apply/PartnerApplyForm.tsx"
+  },
+  {
+    "event_name": "partner_application_submit_failed",
+    "event_description": "Partner application form submission failed (client-side).",
+    "file": "app/partners/apply/PartnerApplyForm.tsx"
+  },
+  {
+    "event_name": "partner_application_submitted_server",
+    "event_description": "Partner application was saved and notified on the server.",
+    "file": "app/actions/partner-application.ts"
+  },
+  {
+    "event_name": "registry_area_guide_clicked",
+    "event_description": "User clicked an area guide link from coworking/activities registry cards.",
+    "file": "app/components/guide/RegistryCards.tsx"
+  },
+  {
+    "event_name": "registry_map_clicked",
+    "event_description": "User clicked a map link from registry cards.",
+    "file": "app/components/guide/RegistryCards.tsx"
+  },
+  {
+    "event_name": "coworking_outbound_clicked",
+    "event_description": "User clicked an outbound coworking venue link.",
+    "file": "app/components/guide/RegistryCards.tsx"
+  },
+  {
+    "event_name": "activity_outbound_clicked",
+    "event_description": "User clicked an outbound activity venue link.",
+    "file": "app/components/guide/RegistryCards.tsx"
+  },
+  {
+    "event_name": "coworking_filters_changed",
+    "event_description": "User changed coworking registry filters.",
+    "file": "app/components/guide/CoworkingRegistry.tsx"
+  },
+  {
+    "event_name": "coworking_filters_reset",
+    "event_description": "User reset coworking registry filters.",
+    "file": "app/components/guide/CoworkingRegistry.tsx"
+  },
+  {
+    "event_name": "activity_filters_changed",
+    "event_description": "User changed activities registry filters.",
+    "file": "app/components/guide/ActivitiesRegistry.tsx"
+  },
+  {
+    "event_name": "activity_filters_reset",
+    "event_description": "User reset activities registry filters.",
+    "file": "app/components/guide/ActivitiesRegistry.tsx"
   }
 ]

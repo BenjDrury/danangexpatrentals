@@ -32,6 +32,7 @@ import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
 import { tmpdir } from "os";
+import { filterScrapedPosts } from "./lib/fb-post-quality.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const scriptsDir = join(__dirname, "..");
@@ -241,6 +242,17 @@ end tell
     if (logoOnly) {
       best.posts = [];
       return best;
+    }
+    const before = best.posts?.length ?? 0;
+    const { kept, rejected } = filterScrapedPosts(best.posts || []);
+    best.posts = kept;
+    if (rejected.length) {
+      console.log(
+        `Filtered ${rejected.length}/${before} weak posts before lightbox:`
+      );
+      for (const r of rejected) {
+        console.log(`  skip early (${r.reason}): ${r.preview}`);
+      }
     }
     return enrichImagesFromLightbox(best);
   } finally {

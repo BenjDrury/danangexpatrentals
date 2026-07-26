@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { permanentRedirect, notFound } from "next/navigation";
-import { listingPriceLabel } from "types";
+import {
+  agencyFeeLabel,
+  formatMonthsOfRent,
+  listingPriceLabel,
+  propertyTypeLabel,
+  utilitiesIncludedLabel,
+} from "types";
 import { TrackListingView } from "@/app/components/TrackListingView";
 import { ApartmentInquiryLink } from "@/app/components/area/ApartmentInquiryLink";
 import { ListingGuides } from "@/app/components/area/ListingGuides";
@@ -180,6 +186,11 @@ export default async function ApartmentPage({ params }: Props) {
             </p>
 
             <ul className="mt-6 space-y-2 text-charcoal/80">
+              {apartment.property_type ? (
+                <li>
+                  <strong>Type:</strong> {propertyTypeLabel(apartment.property_type)}
+                </li>
+              ) : null}
               <li>
                 <strong>Bedrooms:</strong> {apartment.bedrooms}
               </li>
@@ -204,10 +215,30 @@ export default async function ApartmentPage({ params }: Props) {
               )}
               {apartment.min_lease_months != null && (
                 <li>
-                  <strong>Min. lease:</strong> {apartment.min_lease_months}{" "}
-                  month{apartment.min_lease_months !== 1 ? "s" : ""}
+                  <strong>Min. lease:</strong>{" "}
+                  {formatMonthsOfRent(apartment.min_lease_months)}
                 </li>
               )}
+              {apartment.deposit_months != null && (
+                <li>
+                  <strong>Deposit:</strong>{" "}
+                  {formatMonthsOfRent(apartment.deposit_months)} of rent
+                </li>
+              )}
+              {apartment.agency_fee_months != null && (
+                <li>
+                  <strong>Agency fee:</strong>{" "}
+                  {apartment.agency_fee_months === 0
+                    ? agencyFeeLabel(0)
+                    : `${agencyFeeLabel(apartment.agency_fee_months)} of rent`}
+                </li>
+              )}
+              {apartment.utilities_included ? (
+                <li>
+                  <strong>Utilities:</strong>{" "}
+                  {utilitiesIncludedLabel(apartment.utilities_included)}
+                </li>
+              ) : null}
             </ul>
 
             {apartment.features.length > 0 && (

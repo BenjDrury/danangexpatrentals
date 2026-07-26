@@ -12,10 +12,14 @@ import { capture } from "@/lib/analytics";
 
 const DEFAULT_FILTERS: AreaListFilters = {
   unitType: "all",
+  propertyType: "all",
   minPrice: null,
   maxPrice: null,
   furnishedOnly: false,
-  minLeaseMonths: null,
+  maxLeaseMonths: null,
+  maxDepositMonths: null,
+  noAgencyFeeOnly: false,
+  utilities: "all",
   sort: "recommended",
 };
 

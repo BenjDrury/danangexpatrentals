@@ -234,9 +234,31 @@
     if (!text || text.length < 40) return false;
     if (/^(Intro|Group posts|Recent photos|Number of unread)/i.test(text)) return false;
     if (/Member of .+ since /i.test(text) && text.length < 200) return false;
+    // Comments / shares are not original listings (often paste the same unit again).
+    if (/\bcommented on\b/i.test(text)) return false;
+    if (/\bđã bình luận về bài viết của\b/i.test(text)) return false;
+    if (/\breplied to\b.+\bcomment\b/i.test(text)) return false;
+    if (/\bshared (a|an|this) (post|link|photo)\b/i.test(text)) return false;
+    // Vertical/RTL scrape junk: "e t n o S s r p d o u i 5 1…"
+    const tokens = text.split(/\s+/).filter(Boolean);
+    if (tokens.length >= 10) {
+      const single = tokens.filter((t) => t.length === 1).length;
+      const readable = tokens.filter((t) => t.length >= 2).length;
+      if (single / tokens.length >= 0.28) return false;
+      if (readable / tokens.length < 0.55) return false;
+    }
     return /(cho thuê|for rent|bedroom|phòng ngủ|căn hộ|apartment|villa|nhà|giá|triệu|million|\$\d|studio|thuê|kiệt|full (nội thất|furniture)|pn\b)/i.test(
       text
     );
+  }
+
+  function normalizeDedupe(text) {
+    return text
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/gi, " ")
+      .replace(/[^a-z0-9à-ỹ\s]/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   function cleanPostText(text) {
@@ -282,6 +304,18 @@
 
   const posts = [];
   const seenText = new Set();
+  const seenUnits = new Set();
+
+  function unitDedupeKey(body) {
+    const n = normalizeDedupe(body);
+    const unit =
+      n.match(/\b(?:vip|apt|apartment|can ho|phong|room)\s*#?\s*(\d{2,4})\b/) ||
+      n.match(/\b(\d{3})\b(?=.*\b(?:apartment|can ho|btm|hotel)\b)/);
+    const building = n.match(/\b(btm\s*danang|muong thanh|novotel|azura)\b/);
+    if (unit && building) return `unit:${unit[1]}|bldg:${building[1].replace(/\s+/g, "")}`;
+    if (unit && /\b17(?:[.,]?5|tr5)?\b/.test(n)) return `unit:${unit[1]}|price`;
+    return null;
+  }
 
   function pushPost(rawText, root) {
     if (posts.length >= limit) return false;
@@ -291,14 +325,27 @@
     const marker = body.match(/posted to .+?(?:·|:)\s*(.+)$/i);
     if (marker) body = marker[1].trim();
     body = body.replace(
-      /^.*?((?:NCC\s*[-–—:]?\s*)?(?:CHO THUÊ|Cho thuê|House for rent|For rent|Bedroom|\d+-Bedroom|Căn hộ).+)$/i,
+      /^.*?((?:NCC\s*[-–—:]?\s*)?(?:CHO THUÊ|Cho thuê|House for rent|For rent|Bedroom|\d+-Bedroom|Căn hộ|VIP APARTMENT).+)$/i,
       "$1"
     );
     if (body.length < 30) body = text;
     body = body.replace(/\s*\+\d+\s*$/, "").trim();
-    const key = body.slice(0, 100);
-    if (seenText.has(key)) return false;
-    seenText.add(key);
+    // Re-check after trimming chrome ("posted to…") — leftover may be garbled.
+    {
+      const bodyTokens = body.split(/\s+/).filter(Boolean);
+      const singleRatio =
+        bodyTokens.length > 0
+          ? bodyTokens.filter((t) => t.length === 1).length / bodyTokens.length
+          : 0;
+      if (bodyTokens.length >= 10 && singleRatio >= 0.28) return false;
+      if (!looksLikeListing(body) && !looksLikeListing(text)) return false;
+    }
+    const key = normalizeDedupe(body).slice(0, 160);
+    if (key && seenText.has(key)) return false;
+    if (key) seenText.add(key);
+    const unitKey = unitDedupeKey(body);
+    if (unitKey && seenUnits.has(unitKey)) return false;
+    if (unitKey) seenUnits.add(unitKey);
 
     let images = collectImages(root, maxImages);
     let permalink = findPermalink(root);

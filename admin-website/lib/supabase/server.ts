@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
 
 function getSupabaseKey() {
   return (
@@ -16,6 +17,10 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     getSupabaseKey(),
     {
+      cookieOptions: withSharedCookieDomain({
+        path: "/",
+        sameSite: "lax",
+      }),
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -23,14 +28,14 @@ export async function createClient() {
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, withSharedCookieDomain(options)),
             );
           } catch {
             // Ignore when called from Server Component (middleware refreshes session).
           }
         },
       },
-    }
+    },
   );
 }
 
@@ -41,6 +46,6 @@ export function getServiceRoleClient() {
   return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     key,
-    { auth: { persistSession: false } }
+    { auth: { persistSession: false } },
   );
 }

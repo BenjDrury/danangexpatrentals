@@ -1,78 +1,163 @@
 [
   {
+    "event_name": "user_signed_in",
+    "event_description": "User signs into Partner Studio via password or magic link. Property: method.",
+    "file": "app/login/page.tsx"
+  },
+  {
+    "event_name": "magic_link_requested",
+    "event_description": "User requests a passwordless magic-link email from Partner Studio login (Supabase generateLink + Resend).",
+    "file": "app/login/page.tsx"
+  },
+  {
+    "event_name": "user_signed_out",
+    "event_description": "User signs out of Partner Studio.",
+    "file": "components/SignOutButton.tsx"
+  },
+  {
+    "event_name": "partner_apply_cta_clicked",
+    "event_description": "User clicked Apply to become a partner from login or unauthorized page.",
+    "file": "app/login/page.tsx"
+  },
+  {
     "event_name": "listing_created",
-    "event_description": "A partner successfully creates a new property listing (server-side).",
+    "event_description": "Partner successfully creates a new property listing (server-side). Properties: listing_id, bedrooms, price_usd, price_currency, has_min_lease, has_deposit, has_agency_fee, has_utilities, property_type.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "listing_updated",
+    "event_description": "Partner saves edits to an existing listing (server-side). Properties: listing_id, has_min_lease, has_deposit, has_agency_fee, has_utilities, property_type.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "listing_status_changed",
+    "event_description": "Partner changes listing availability status (server-side).",
     "file": "app/(studio)/listings/actions.ts"
   },
   {
     "event_name": "listing_submitted_for_review",
-    "event_description": "A partner submits a draft listing to go live for admin review (client-side).",
+    "event_description": "Partner submits a draft listing for admin review.",
     "file": "app/(studio)/listings/[id]/StatusToggle.tsx"
   },
   {
     "event_name": "listing_approved",
-    "event_description": "An admin approves a pending-review listing to make it available (client-side).",
+    "event_description": "Admin approves a pending-review listing.",
     "file": "app/(studio)/listings/[id]/StatusToggle.tsx"
   },
   {
+    "event_name": "listing_rejected",
+    "event_description": "Admin rejects a pending-review listing.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
     "event_name": "listing_deleted",
-    "event_description": "A partner hard-deletes a listing and its photos (server-side).",
+    "event_description": "Partner hard-deletes a listing and its photos.",
     "file": "app/(studio)/listings/actions.ts"
   },
   {
     "event_name": "listing_bumped",
-    "event_description": "A partner bumps a listing to refresh its sort position (client-side).",
+    "event_description": "Partner bumps a listing to refresh its sort position.",
     "file": "app/(studio)/listings/[id]/PostComposer.tsx"
   },
   {
     "event_name": "listing_validity_confirmed",
-    "event_description": "A partner confirms whether a listing is still available, reserved, or rented (client-side).",
+    "event_description": "Partner confirms whether a listing is still available, reserved, or rented.",
     "file": "app/(studio)/HomeView.tsx"
   },
   {
+    "event_name": "listing_main_image_set",
+    "event_description": "Partner sets the main listing photo.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "listing_photos_saved",
+    "event_description": "Partner saves listing photo changes.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
+    "event_name": "listing_commission_saved",
+    "event_description": "Partner saves commission settings on a listing.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
     "event_name": "contact_created",
-    "event_description": "A partner creates a new contact/lead record, optionally linked to a listing (server-side).",
+    "event_description": "Partner creates a new contact/lead record.",
+    "file": "app/(studio)/contacts/actions.ts"
+  },
+  {
+    "event_name": "contact_updated",
+    "event_description": "Partner updates a contact record.",
     "file": "app/(studio)/contacts/actions.ts"
   },
   {
     "event_name": "contact_deleted",
-    "event_description": "A partner deletes a contact and unlinks their deals (server-side).",
+    "event_description": "Partner deletes a contact and unlinks their deals.",
     "file": "app/(studio)/contacts/actions.ts"
   },
   {
     "event_name": "deal_contact_connected",
-    "event_description": "A partner links a contact to a listing, creating a deal pipeline entry (server-side).",
-    "file": "app/(studio)/listings/actions.ts"
+    "event_description": "Partner links a contact to a listing, creating a deal pipeline entry.",
+    "file": "app/(studio)/contacts/actions.ts"
+  },
+  {
+    "event_name": "deal_commission_updated",
+    "event_description": "Partner updates commission on a deal.",
+    "file": "app/(studio)/contacts/actions.ts"
+  },
+  {
+    "event_name": "deal_disconnected",
+    "event_description": "Partner disconnects a contact from a listing deal.",
+    "file": "app/(studio)/contacts/actions.ts"
   },
   {
     "event_name": "post_draft_saved",
-    "event_description": "A partner saves a social-media post draft caption for a listing (client-side).",
+    "event_description": "Partner saves a social-media post draft caption for a listing.",
     "file": "app/(studio)/listings/[id]/PostComposer.tsx"
   },
   {
+    "event_name": "share_link_opened",
+    "event_description": "Partner opens or copies a public share link for a listing.",
+    "file": "app/(studio)/listings/[id]/ListingShareLinks.tsx"
+  },
+  {
+    "event_name": "guide_link_opened",
+    "event_description": "Partner opens a guide link from Studio guides.",
+    "file": "app/(studio)/guides/GuidesView.tsx"
+  },
+  {
     "event_name": "team_member_invited",
-    "event_description": "A partner or admin generates an invite link for a new team member (client-side).",
+    "event_description": "Partner generates a team invite emailed via Resend with a one-click login link when possible. Property: emailed.",
+    "file": "app/(studio)/settings/SettingsView.tsx"
+  },
+  {
+    "event_name": "team_invite_link_copied",
+    "event_description": "Partner copies a pending team invite link.",
     "file": "app/(studio)/settings/SettingsView.tsx"
   },
   {
     "event_name": "team_invite_accepted",
-    "event_description": "A new team member accepts their invite and joins the studio (client-side).",
+    "event_description": "New team member accepts their invite and joins the studio.",
     "file": "app/invite/[token]/InviteAcceptView.tsx"
   },
   {
+    "event_name": "team_invite_revoked",
+    "event_description": "Partner or admin revokes a pending team invite.",
+    "file": "app/(studio)/settings/actions.ts"
+  },
+  {
+    "event_name": "facebook_oauth_started",
+    "event_description": "Partner starts the Facebook OAuth connect flow from Settings.",
+    "file": "app/(studio)/settings/SettingsView.tsx"
+  },
+  {
     "event_name": "facebook_integration_connected",
-    "event_description": "A partner successfully completes the Facebook OAuth flow and connects their Page (server-side).",
+    "event_description": "Partner successfully completes Facebook OAuth and connects their Page.",
     "file": "app/api/integrations/facebook/callback/route.ts"
   },
   {
     "event_name": "facebook_integration_disconnected",
-    "event_description": "A partner disconnects their Facebook Page integration from the studio (client-side).",
+    "event_description": "Partner disconnects their Facebook Page integration.",
     "file": "app/(studio)/settings/SettingsView.tsx"
-  },
-  {
-    "event_name": "facebook_listing_posted",
-    "event_description": "A partner publishes a listing caption and selected photos to their connected Facebook Page from Promote (server + client). Properties: listing_id, photo_count, group_count.",
-    "file": "app/(studio)/listings/actions.ts"
   },
   {
     "event_name": "facebook_publish_overlay_opened",
@@ -80,53 +165,53 @@
     "file": "app/(studio)/listings/[id]/PostComposer.tsx"
   },
   {
+    "event_name": "facebook_listing_posted",
+    "event_description": "Partner publishes a listing to their connected Facebook Page. Properties: listing_id, photo_count, group_count.",
+    "file": "app/(studio)/listings/actions.ts"
+  },
+  {
     "event_name": "facebook_group_blast_started",
-    "event_description": "Partner starts the guided group posting flow after optional Page publish. Properties: listing_id, group_count, posted_to_page.",
+    "event_description": "Partner starts the guided group posting flow. Properties: listing_id, group_count, posted_to_page.",
     "file": "app/(studio)/listings/[id]/FacebookPublishOverlay.tsx"
   },
   {
     "event_name": "facebook_group_blast_marked",
-    "event_description": "Partner marks a Facebook group as posted during the guided blast. Properties: listing_id, group_id.",
+    "event_description": "Partner marks a Facebook group as posted during the guided blast.",
     "file": "app/(studio)/listings/[id]/FacebookPublishOverlay.tsx"
   },
   {
     "event_name": "facebook_group_post_recorded",
-    "event_description": "Server records a guided group post against listing history. Properties: listing_id, has_group_id.",
+    "event_description": "Server records a guided group post against listing history.",
     "file": "app/(studio)/listings/actions.ts"
   },
   {
     "event_name": "facebook_post_history_cleared",
-    "event_description": "Partner clears Facebook post history for a listing (all or older than N days). Properties: listing_id, cleared, older_than_days.",
+    "event_description": "Partner clears Facebook post history for a listing.",
     "file": "app/(studio)/listings/actions.ts"
   },
   {
     "event_name": "facebook_group_added",
-    "event_description": "Partner adds a Facebook group URL (Settings or Promote overlay). Optional property: source=promote_overlay.",
+    "event_description": "Partner adds a Facebook group URL (Settings or Promote overlay).",
     "file": "app/(studio)/settings/actions.ts"
   },
   {
-    "event_name": "user_signed_in",
-    "event_description": "A user signs into Partner Studio via password or magic link (client-side). Property: method (password | magic_link).",
-    "file": "app/login/page.tsx"
-  },
-  {
-    "event_name": "partner_apply_cta_clicked",
-    "event_description": "User clicked Apply to become a partner from the Partner Studio login page.",
-    "file": "app/login/page.tsx"
+    "event_name": "facebook_group_removed",
+    "event_description": "Partner removes a Facebook group URL from Settings.",
+    "file": "app/(studio)/settings/actions.ts"
   },
   {
     "event_name": "partner_company_updated",
-    "event_description": "A partner saves company settings (name, logo, phone, WhatsApp/Zalo, email) in Settings (server + client).",
+    "event_description": "Partner saves company settings (name, logo, phone, WhatsApp/Zalo, email).",
     "file": "app/(studio)/settings/actions.ts"
   },
   {
     "event_name": "partner_company_logo_uploaded",
-    "event_description": "A partner uploads a company logo image in Settings before saving.",
+    "event_description": "Partner uploads a company logo image in Settings before saving.",
     "file": "app/(studio)/settings/CompanySection.tsx"
   },
   {
     "event_name": "partner_company_logo_removed",
-    "event_description": "A partner removes the company logo in Settings before saving.",
+    "event_description": "Partner removes the company logo in Settings before saving.",
     "file": "app/(studio)/settings/CompanySection.tsx"
   }
 ]

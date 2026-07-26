@@ -213,11 +213,25 @@ export function ListingForm({
             </select>
           </Field>
 
+          <Field label={t("form.propertyType")} htmlFor="property_type">
+            <select
+              id="property_type"
+              name="property_type"
+              defaultValue={listing?.property_type ?? ""}
+              className={inputClass}
+            >
+              <option value="">{t("form.propertyTypeUnspecified")}</option>
+              <option value="apartment">{t("form.propertyType.apartment")}</option>
+              <option value="house">{t("form.propertyType.house")}</option>
+              <option value="villa">{t("form.propertyType.villa")}</option>
+              <option value="serviced">{t("form.propertyType.serviced")}</option>
+            </select>
+          </Field>
+
           <Field
             label={t("form.availableFrom")}
             htmlFor="available_from"
             hint={t("form.availableFromHint")}
-            className="sm:col-span-2"
           >
             <input
               id="available_from"
@@ -326,6 +340,83 @@ export function ListingForm({
               </span>
             </p>
           ) : null}
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-3 border-t border-line/70 pt-5">
+        <legend className="font-display text-base font-semibold text-charcoal">
+          {t("form.section.terms")}
+        </legend>
+        <p className="text-xs text-muted">{t("form.section.termsHint")}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label={t("form.minLease")}
+            htmlFor="min_lease_months"
+            hint={t("form.minLeaseHint")}
+          >
+            <input
+              id="min_lease_months"
+              name="min_lease_months"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={listing?.min_lease_months ?? ""}
+              className={inputClass}
+              placeholder="6"
+            />
+          </Field>
+
+          <Field
+            label={t("form.depositMonths")}
+            htmlFor="deposit_months"
+            hint={t("form.depositMonthsHint")}
+          >
+            <input
+              id="deposit_months"
+              name="deposit_months"
+              type="number"
+              min={0}
+              step={0.5}
+              defaultValue={listing?.deposit_months ?? ""}
+              className={inputClass}
+              placeholder="1"
+            />
+          </Field>
+
+          <Field
+            label={t("form.agencyFeeMonths")}
+            htmlFor="agency_fee_months"
+            hint={t("form.agencyFeeMonthsHint")}
+          >
+            <input
+              id="agency_fee_months"
+              name="agency_fee_months"
+              type="number"
+              min={0}
+              step={0.5}
+              defaultValue={listing?.agency_fee_months ?? ""}
+              className={inputClass}
+              placeholder="0"
+            />
+          </Field>
+
+          <Field
+            label={t("form.utilitiesIncluded")}
+            htmlFor="utilities_included"
+            hint={t("form.utilitiesIncludedHint")}
+          >
+            <select
+              id="utilities_included"
+              name="utilities_included"
+              defaultValue={listing?.utilities_included ?? ""}
+              className={inputClass}
+            >
+              <option value="">{t("form.utilitiesUnspecified")}</option>
+              <option value="not_included">{t("form.utilities.not_included")}</option>
+              <option value="partial">{t("form.utilities.partial")}</option>
+              <option value="included">{t("form.utilities.included")}</option>
+            </select>
+          </Field>
         </div>
       </fieldset>
 

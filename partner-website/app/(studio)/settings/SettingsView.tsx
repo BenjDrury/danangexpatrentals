@@ -167,12 +167,24 @@ export function SettingsView({
                   setLastInviteUrl(null);
                   return;
                 }
-                const path = result.inviteUrl ?? (result.token ? `/invite/${result.token}` : null);
+                const path =
+                  result.inviteUrl ??
+                  (result.token ? `/invite/${result.token}` : null);
                 if (path) {
-                  setLastInviteUrl(absoluteInviteUrl(path));
-                  setMessage(t("settings.team.inviteCreated"));
+                  setLastInviteUrl(result.loginUrl ?? absoluteInviteUrl(path));
+                  if (result.emailed) {
+                    setMessage(t("settings.team.inviteEmailed"));
+                  } else if (result.emailError) {
+                    setMessage(
+                      `${t("settings.team.inviteCreated")} ${result.emailError}`,
+                    );
+                  } else {
+                    setMessage(t("settings.team.inviteCreated"));
+                  }
                   setInviteEmail("");
-                  capture("team_member_invited");
+                  capture("team_member_invited", {
+                    emailed: Boolean(result.emailed),
+                  });
                 }
                 router.refresh();
               });

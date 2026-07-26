@@ -11,12 +11,14 @@
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.0",
+    "backend": "*",
     "dotenv": "^16.6.1",
     "next": "^15.0.0",
     "posthog-js": "^1.257.2",
     "posthog-node": "^4.16.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "resend": "^4.0.0",
     "types": "*"
   },
   "devDependencies": {

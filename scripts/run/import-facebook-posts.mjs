@@ -24,6 +24,7 @@ import { config } from "dotenv";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { filterScrapedPosts } from "./lib/fb-post-quality.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const scriptsDir = join(__dirname, "..");
@@ -344,6 +345,22 @@ async function main() {
   if (!Array.isArray(posts)) {
     console.error("JSON must be an array of post objects.");
     process.exit(1);
+  }
+
+  {
+    const shaped = posts.map((p) => ({
+      ...p,
+      text: p.content || p.text || "",
+    }));
+    const before = shaped.length;
+    const { kept, rejected } = filterScrapedPosts(shaped);
+    posts = kept;
+    if (rejected.length) {
+      console.log(`Filtered ${rejected.length}/${before} weak posts before import:`);
+      for (const r of rejected) {
+        console.log(`  skip early (${r.reason}): ${r.preview}`);
+      }
+    }
   }
 
   const supabase = createClient(url, key);

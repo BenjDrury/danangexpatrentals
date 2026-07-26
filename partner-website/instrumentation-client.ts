@@ -1,5 +1,6 @@
 import posthog from "posthog-js";
 import { ANALYTICS_OPT_OUT_COOKIE } from "@/lib/analytics-constants";
+import { getSharedCookieDomain } from "@/lib/shared-cookie-domain";
 
 const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
 
@@ -18,12 +19,14 @@ function isOptedOutByCookie(): boolean {
 
 if (token) {
   const optedOut = isOptedOutByCookie();
+  const crossSubdomain = Boolean(getSharedCookieDomain());
   posthog.init(token, {
     api_host: "/ingest",
     ui_host: "https://eu.posthog.com",
     defaults: "2026-01-30",
     capture_exceptions: !optedOut,
     opt_out_capturing_by_default: optedOut,
+    cross_subdomain_cookie: crossSubdomain,
     debug: process.env.NODE_ENV === "development",
   });
 }

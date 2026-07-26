@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { withSharedCookieDomain } from "@/lib/shared-cookie-domain";
 
 function getSupabaseKey() {
   return (
@@ -10,6 +11,12 @@ function getSupabaseKey() {
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    getSupabaseKey()
+    getSupabaseKey(),
+    {
+      cookieOptions: withSharedCookieDomain({
+        path: "/",
+        sameSite: "lax",
+      }),
+    },
   );
 }

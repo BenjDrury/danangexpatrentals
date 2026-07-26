@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Outfit } from "next/font/google";
+import { AuthAnalytics } from "@/components/AuthAnalytics";
 import { Footer } from "./components/Footer";
 import { Nav } from "./components/Nav";
 import { WHATSAPP_URL } from "./lib/contact-links";
@@ -92,6 +93,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }}
         />
+        <AuthAnalytics />
         <Nav />
         <main className="flex-1">{children}</main>
         <Footer whatsappUrl={WHATSAPP_URL} />

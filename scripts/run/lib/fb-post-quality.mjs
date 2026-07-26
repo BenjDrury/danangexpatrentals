@@ -243,15 +243,13 @@ export function rejectPostReason(text, seen = { keys: new Set(), tokenSets: [] }
   if (isCommentOrShareActivity(body)) return "comment-or-share";
   if (isGarbledText(body)) return "garbled-text";
 
+  // Exact-ish fingerprint only — group posts are all apartments; don't drop
+  // similar units just because wording overlaps.
   const key = listingDedupeKey(body);
   if (key && seen.keys.has(key)) return "near-duplicate-key";
 
-  const tokens = listingTokenSet(body);
-  if (tokens.size >= 8) {
-    for (const prev of seen.tokenSets) {
-      if (jaccardSimilarity(tokens, prev) >= 0.55) return "near-duplicate-text";
-    }
-  }
+  const norm = normalizeListingText(body).slice(0, 160);
+  if (norm.length >= 40 && seen.keys.has(`text:${norm}`)) return "dup-text";
 
   return null;
 }
@@ -278,8 +276,8 @@ export function filterScrapedPosts(posts) {
     }
     const key = listingDedupeKey(text);
     if (key) seen.keys.add(key);
-    const tokens = listingTokenSet(text);
-    if (tokens.size >= 8) seen.tokenSets.push(tokens);
+    const norm = normalizeListingText(text).slice(0, 160);
+    if (norm.length >= 40) seen.keys.add(`text:${norm}`);
     kept.push(post);
   }
 

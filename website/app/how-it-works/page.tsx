@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
         <ul className="mt-8 space-y-4 text-charcoal/80">
           <li className="flex gap-3">
             <span className="text-ocean">✓</span>
-            You&apos;ll get a WhatsApp message (or email) to confirm we received your request.
+            You&apos;ll get an email (or WhatsApp, if you left a number) to confirm we received your request.
           </li>
           <li className="flex gap-3">
             <span className="text-ocean">✓</span>

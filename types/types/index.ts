@@ -30,6 +30,8 @@ export {
 export {
   formatMonthsOfRent,
   propertyTypeLabel,
+  parsePropertyType,
+  inferPropertyType,
   utilitiesIncludedLabel,
   agencyFeeLabel,
 } from "../lib/listing-terms";

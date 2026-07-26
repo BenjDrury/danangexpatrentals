@@ -19,6 +19,50 @@ export function propertyTypeLabel(type: PropertyType): string {
   }
 }
 
+const PROPERTY_TYPES: PropertyType[] = [
+  "apartment",
+  "house",
+  "villa",
+  "serviced",
+];
+
+/** Normalize a raw property_type string; returns null if unknown. */
+export function parsePropertyType(value: unknown): PropertyType | null {
+  if (typeof value !== "string") return null;
+  const v = value.trim().toLowerCase();
+  return (PROPERTY_TYPES as string[]).includes(v) ? (v as PropertyType) : null;
+}
+
+/**
+ * Infer property type from listing title/description when the field is unset.
+ * Prefers villa → serviced → house → apartment cues; defaults to apartment.
+ */
+export function inferPropertyType(
+  title: string | null | undefined,
+  description?: string | null
+): PropertyType {
+  const t = `${title ?? ""} ${description ?? ""}`.toLowerCase();
+  if (/\bvilla\b|biệt thự|biet thu/.test(t)) return "villa";
+  if (
+    /\bserviced\b|service apartment|căn hộ dịch vụ|can ho dich vu/.test(t)
+  ) {
+    return "serviced";
+  }
+  if (/\bhouse\b|\btownhouse\b|\bnhà phố\b|\bnha pho\b/.test(t)) return "house";
+  // Standalone "nhà" / "nha" often means house in VN rental posts
+  if (/(?:^|[^\w])nhà(?:[^\w]|$)|(?:^|[^\w])nha(?:[^\w]|$)/.test(t)) {
+    return "house";
+  }
+  if (
+    /\bapartment\b|\bcondo\b|\bstudio\b|\bpenthouse\b|\bcăn hộ\b|\bcan ho\b|\bflat\b/.test(
+      t
+    )
+  ) {
+    return "apartment";
+  }
+  return "apartment";
+}
+
 export function utilitiesIncludedLabel(value: UtilitiesIncluded): string {
   switch (value) {
     case "not_included":

@@ -59,11 +59,6 @@ export function useAreaApartments(
           return false;
         }
       }
-      if (filters.noAgencyFeeOnly) {
-        if (apt.agency_fee_months == null || apt.agency_fee_months > 0) {
-          return false;
-        }
-      }
       if (filters.utilities !== "all") {
         if (filters.utilities === "included_or_partial") {
           if (

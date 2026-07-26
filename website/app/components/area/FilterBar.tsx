@@ -18,7 +18,6 @@ export type AreaListFilters = {
   maxLeaseMonths: number | null;
   /** Show listings whose deposit is at most this many months of rent (or unspecified). */
   maxDepositMonths: number | null;
-  noAgencyFeeOnly: boolean;
   utilities: UtilitiesFilter;
   sort: SortOption;
 };
@@ -34,7 +33,6 @@ export function createDefaultAreaListFilters(
     furnishedOnly: false,
     maxLeaseMonths: null,
     maxDepositMonths: null,
-    noAgencyFeeOnly: false,
     utilities: "all",
     sort,
   };
@@ -52,7 +50,6 @@ export function areaListFiltersAreActive(
     filters.furnishedOnly !== defaults.furnishedOnly ||
     filters.maxLeaseMonths !== defaults.maxLeaseMonths ||
     filters.maxDepositMonths !== defaults.maxDepositMonths ||
-    filters.noAgencyFeeOnly !== defaults.noAgencyFeeOnly ||
     filters.utilities !== defaults.utilities ||
     filters.sort !== defaults.sort
   );
@@ -120,7 +117,6 @@ export function FilterBar({
       furnished_only: next.furnishedOnly,
       max_lease_months: next.maxLeaseMonths,
       max_deposit_months: next.maxDepositMonths,
-      no_agency_fee_only: next.noAgencyFeeOnly,
       utilities: next.utilities,
       sort: next.sort,
       changed: Object.keys(patch).join(","),
@@ -304,15 +300,6 @@ export function FilterBar({
             className="h-4 w-4 rounded border-line text-ocean focus:ring-ocean/30"
           />
           <span className="text-sm font-medium text-muted">Furnished only</span>
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={filters.noAgencyFeeOnly}
-            onChange={(e) => update({ noAgencyFeeOnly: e.target.checked })}
-            className="h-4 w-4 rounded border-line text-ocean focus:ring-ocean/30"
-          />
-          <span className="text-sm font-medium text-muted">No agency fee</span>
         </label>
       </div>
     </div>

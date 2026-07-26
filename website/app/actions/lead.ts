@@ -52,13 +52,13 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
   const moveDate = formData.get("move_date") as string;
   const lengthOfStay = formData.get("length_of_stay") as string;
   const preferredArea = (formData.get("preferred_area") as string) || null;
-  const whatsapp = (formData.get("whatsapp") as string)?.trim();
+  const whatsapp = (formData.get("whatsapp") as string)?.trim() || null;
   const email = (formData.get("email") as string)?.trim() || null;
   const apartmentId = optionalUuid(formData.get("apartment_id"));
   const areaId = optionalAreaId(formData.get("area_id"));
 
-  if (!whatsapp) {
-    return { ok: false, error: "WhatsApp number is required." };
+  if (!email || !email.includes("@")) {
+    return { ok: false, error: "Email is required." };
   }
 
   const lead = {
@@ -100,11 +100,11 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
         replyTo: RESEND_REPLY_TO_EMAIL,
         to: LEAD_NOTIFY_EMAIL,
         subject: apartmentId
-          ? `Listing inquiry: ${whatsapp}`
-          : `New lead: ${whatsapp} – ${budgetRange || "no budget"} – ${moveDate || "no date"}`,
+          ? `Listing inquiry: ${email}`
+          : `New lead: ${email} – ${budgetRange || "no budget"} – ${moveDate || "no date"}`,
         text: [
-          `WhatsApp: ${whatsapp}`,
-          email ? `Email: ${email}` : null,
+          `Email: ${email}`,
+          whatsapp ? `WhatsApp: ${whatsapp}` : null,
           `Budget: ${budgetRange || "—"}`,
           `Move date: ${moveDate || "—"}`,
           `Length of stay: ${lengthOfStay || "—"}`,
@@ -125,7 +125,8 @@ export async function submitLead(formData: FormData): Promise<LeadState> {
     length_of_stay: lengthOfStay || null,
     preferred_area: preferredArea,
     has_move_date: !!moveDate,
-    has_email: !!email,
+    has_email: true,
+    has_whatsapp: !!whatsapp,
     has_apartment_id: !!apartmentId,
     has_area_id: !!areaId,
     source: apartmentId ? "listing_inquiry" : "website",

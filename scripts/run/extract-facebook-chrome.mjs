@@ -33,12 +33,14 @@ import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
 import { tmpdir } from "os";
-import { filterScrapedPosts } from "./lib/fb-post-quality.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const { sanitizeListingDescription } = require(
   "../../types/dist/lib/sanitize-listing-description.js"
+);
+const { inferPropertyType, parsePropertyType } = require(
+  "../../types/dist/lib/listing-terms.js"
 );
 const scriptsDir = join(__dirname, "..");
 config({ path: join(scriptsDir, ".env") });
@@ -69,8 +71,11 @@ const scrollCount = logoOnly
   ? 0
   : Math.max(
       0,
-      Math.min(30, Number(flag("scrolls", String(Math.max(4, limit)))) || Math.max(4, limit))
+      // Facebook virtualizes the feed — we need many small scroll steps so we
+      // can capture posts before they leave the DOM (merged across steps).
+      Math.min(40, Number(flag("scrolls", String(Math.max(20, limit * 4)))) || Math.max(20, limit * 4))
     );
+
 const status = String(flag("status", "draft") || "draft");
 const areaArg = flag("area", null);
 const navigateUrl = flag("url", null);
@@ -106,12 +111,49 @@ function asQuote(s) {
   return `"${String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
 
+/** Scroll Facebook's virtualized feed (often an inner overflow div, not the window). */
+function scrollFeedJs(delta = 550) {
+  return `(() => {
+  function findFeedScroller() {
+    let best = null;
+    let bestScore = -1;
+    for (const el of document.querySelectorAll("div")) {
+      const st = getComputedStyle(el);
+      if (!/(auto|scroll)/.test(st.overflowY)) continue;
+      if (el.scrollHeight <= el.clientHeight + 100) continue;
+      if (el.clientHeight < 220) continue;
+      const articles = el.querySelectorAll('[role="article"]').length;
+      const score = articles * 5000 + Math.min(el.scrollHeight - el.clientHeight, 50000);
+      if (score > bestScore) {
+        bestScore = score;
+        best = el;
+      }
+    }
+    return best;
+  }
+  for (const el of document.querySelectorAll('[role="tab"], [role="button"], a, span')) {
+    const t = (el.innerText || "").trim();
+    if (/^(group posts|posts|bài viết)$/i.test(t)) {
+      try { el.click(); } catch (e) {}
+    }
+  }
+  const scroller = findFeedScroller();
+  if (scroller) {
+    const before = scroller.scrollTop;
+    scroller.scrollBy(0, ${Number(delta) || 550});
+    window.scrollBy(0, Math.round((${Number(delta) || 550}) * 0.25));
+    return "inner:" + Math.round(before) + "->" + Math.round(scroller.scrollTop);
+  }
+  const before = window.scrollY || 0;
+  window.scrollBy(0, ${Number(delta) || 550});
+  return "window:" + Math.round(before) + "->" + Math.round(window.scrollY || 0);
+})();`;
+}
+
 const EXTRACT_JS_PATH = join(__dirname, "lib", "fb-chrome-extract.in.js");
 
 function loadExtractJs() {
-  return readFileSync(EXTRACT_JS_PATH, "utf8")
-    .replace(/__LIMIT__/g, String(limit))
-    .replace(/__IMAGES__/g, String(maxImages));
+  return readFileSync(EXTRACT_JS_PATH, "utf8").replace(/__LIMIT__/g, String(limit));
 }
 
 function runOsascript(source) {
@@ -136,6 +178,26 @@ function runOsascript(source) {
   }
 }
 
+function cleanPartnerName(name) {
+  let s = String(name || "").replace(/\s+/g, " ").trim();
+  // Strip FB profile chrome that often glues onto the real name.
+  for (let i = 0; i < 4; i++) {
+    const next = s
+      .replace(
+        /^(digital creator|recent photos|photos|group posts|posts|bài viết)\s+/gi,
+        ""
+      )
+      .replace(
+        /\s+(digital creator|recent photos|photos|group posts|posts|bài viết)\s*$/gi,
+        ""
+      )
+      .trim();
+    if (next === s) break;
+    s = next;
+  }
+  return s;
+}
+
 function navigateChrome(url) {
   runOsascript(`
 tell application "Google Chrome"
@@ -149,14 +211,293 @@ end tell
   execFileSync("sleep", ["8"]);
 }
 
+function imageUrlKey(url) {
+  if (!url) return "";
+  return url.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || url.split("?")[0];
+}
+
+function runChromeJs(code) {
+  const dir = mkdtempSync(join(tmpdir(), "fb-js-"));
+  const jsPath = join(dir, "run.js");
+  writeFileSync(jsPath, code, "utf8");
+  try {
+    return runOsascript(`
+set jsPath to ${asQuote(jsPath)}
+set jsCode to read POSIX file jsPath as «class utf8»
+tell application "Google Chrome"
+  set t to active tab of front window
+  return execute t javascript jsCode
+end tell
+`);
+  } finally {
+    try {
+      rmSync(dir, { recursive: true, force: true });
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function escapeLightbox() {
+  runChromeJs(
+    `document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;`
+  );
+  execFileSync("sleep", ["0.35"]);
+}
+
+function collectLightboxUrls() {
+  const raw = runChromeJs(`(() => {
+  function upgrade(url) {
+    return (url || "").replace(/ctp=p\\d+x\\d+/g, "ctp=s2048x2048").replace(/&amp;/g, "&");
+  }
+  function key(src) {
+    const m = src.match(/\\/(\\d+_\\d+_\\d+_n)\\./);
+    return m ? m[1] : src.split("?")[0];
+  }
+  const dialog =
+    document.querySelector('[role="dialog"]') ||
+    document.querySelector('[aria-label*="Photo viewer"]') ||
+    document.querySelector('[aria-label*="Photo"]');
+  if (!dialog) return JSON.stringify({ ok: false, urls: [] });
+  const urls = [];
+  const seen = new Set();
+  function add(src) {
+    src = upgrade(src);
+    if (!src || !/scontent|fbcdn/.test(src)) return;
+    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|static\\.xx\\.fbcdn|ctp=p\\d+x\\d+|s80x80|s64x64/.test(src)) return;
+    const k = key(src);
+    if (seen.has(k)) return;
+    seen.add(k);
+    urls.push(src);
+  }
+  for (const img of dialog.querySelectorAll("img")) {
+    add(img.currentSrc || img.src || "");
+    const srcset = img.getAttribute("srcset") || "";
+    for (const part of srcset.split(",")) {
+      const u = part.trim().split(/\\s+/)[0];
+      if (u) add(u);
+    }
+  }
+  return JSON.stringify({ ok: true, urls: urls.slice(0, ${maxImages}) });
+})();`);
+  if (!raw || raw === "missing value") return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed?.urls) ? parsed.urls : [];
+  } catch {
+    return [];
+  }
+}
+
+function findCardDomHelpersJs() {
+  return `
+  function visibleText(root) {
+    if (!root) return "";
+    const parts = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const el = node.parentElement;
+        if (!el) return NodeFilter.FILTER_REJECT;
+        if (el.closest('[aria-hidden="true"], [hidden], style, script')) return NodeFilter.FILTER_REJECT;
+        const t = (node.nodeValue || "").replace(/\\s+/g, " ").trim();
+        if (!t || t.length === 1) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    while (walker.nextNode()) parts.push(walker.currentNode.nodeValue.replace(/\\s+/g, " ").trim());
+    return parts.join(" ").replace(/\\s+/g, " ").trim();
+  }
+  function cardKeyFromRaw(raw) {
+    let body = (raw || "").replace(/\\s+/g, " ").trim();
+    body = body.replace(/^[\\s\\S]{0,140}?posted to\\s+.+?(?:·|:|\\.)\\s*/i, "");
+    body = body.replace(/^Shared with Public group\\s*/i, "");
+    return body.toLowerCase().replace(/[^a-z0-9à-ỹ\\s]/gi, " ").replace(/\\s+/g, " ").trim().slice(0, 120);
+  }
+  function bodyFromCard(raw) {
+    let body = (raw || "").replace(/\\s+/g, " ").trim();
+    body = body.replace(/^[\\s\\S]{0,140}?posted to\\s+.+?(?:·|:|\\.)\\s*/i, "");
+    body = body.replace(/^Shared with Public group\\s*/i, "");
+    body = body.replace(/\\s*\\+\\d+\\s*$/, "").trim();
+    // Drop trailing FB chrome after the listing body.
+    body = body.replace(/\\s*Contact:.*$/i, (m, offset) => {
+      // Keep contact line if it includes the price just before — strip only messenger junk after phone.
+      return m;
+    });
+    body = body.replace(/\\s*\\+[0-9a-z]{4,}.*$/i, "").trim();
+    body = body.replace(/\\s*Photos from .+?$/i, "").trim();
+    return body.slice(0, 5000);
+  }
+  function listingImgs(root) {
+    return [...root.querySelectorAll("img")].filter((img) => {
+      const s = img.currentSrc || img.src || "";
+      if (!/scontent|fbcdn/.test(s)) return false;
+      if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|p160x160|static\\.xx\\.fbcdn/.test(s)) return false;
+      return (img.naturalWidth || 0) >= 80 || (img.naturalWidth || 0) === 0;
+    });
+  }
+  function findCardEl(want) {
+    const needle = (want || "").replace(/\\*+/g, " ").trim();
+    const tip = needle.slice(0, 36);
+    const starts = [];
+    const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (tw.nextNode()) {
+      const v = tw.currentNode.nodeValue || "";
+      if (/posted to/i.test(v) || (tip.length >= 12 && v.toLowerCase().includes(tip.slice(0, 18)))) {
+        starts.push(tw.currentNode);
+      }
+    }
+    for (const node of starts) {
+      let el = node.parentElement;
+      let best = null;
+      for (let i = 0; i < 28 && el; i++) {
+        const raw = visibleText(el);
+        const posted = (raw.match(/\\sposted to\\s/gi) || []).length;
+        const rawLow = raw.toLowerCase();
+        const looksLikeWant =
+          tip.length >= 12 && rawLow.includes(tip.slice(0, 24).toLowerCase());
+        if (
+          raw.length >= 40 &&
+          raw.length <= 8000 &&
+          (posted === 1 || looksLikeWant)
+        ) {
+          best = el;
+          if (listingImgs(el).length >= 1 && (looksLikeWant || raw.length >= 160)) break;
+        }
+        el = el.parentElement;
+      }
+      if (!best) continue;
+      const key = cardKeyFromRaw(visibleText(best));
+      const rawLow = visibleText(best).toLowerCase();
+      if (
+        key === want ||
+        key.startsWith(want.slice(0, 50)) ||
+        want.startsWith(key.slice(0, 50)) ||
+        (tip.length >= 12 && rawLow.includes(tip.slice(0, 24).toLowerCase()))
+      ) {
+        return best;
+      }
+    }
+    return null;
+  }
+  function clickSeeMore(card) {
+    let n = 0;
+    const nodes = [...card.querySelectorAll('[role="button"], div[tabindex="0"], span')];
+    for (const el of nodes) {
+      const t = (el.innerText || "").replace(/\\s+/g, " ").trim();
+      if (
+        /^(see more|xem thêm|read more|xem tiếp)$/i.test(t) ||
+        /…\\s*(see more|xem thêm)/i.test(t) ||
+        /\\.\\.\\.\\s*(see more|xem thêm)/i.test(t)
+      ) {
+        try { el.click(); n++; } catch (e) {}
+      }
+    }
+    return n;
+  }
+`;
+}
+
+/** Expand "See more" on a card (DOM updates async — caller must sleep after). */
+function expandCardSeeMore(cardKey) {
+  return runChromeJs(`(() => {
+  ${findCardDomHelpersJs()}
+  const want = ${JSON.stringify(cardKey)};
+  const card = findCardEl(want);
+  if (!card) return "no-card";
+  card.scrollIntoView({ block: "center", behavior: "instant" });
+  const n = clickSeeMore(card);
+  return "expanded:" + n;
+})();`);
+}
+
+/** Re-read full card text after See more has expanded. */
+function readCardText(cardKey) {
+  const raw = runChromeJs(`(() => {
+  ${findCardDomHelpersJs()}
+  const want = ${JSON.stringify(cardKey)};
+  const card = findCardEl(want);
+  if (!card) return JSON.stringify({ ok: false });
+  const raw = visibleText(card);
+  return JSON.stringify({ ok: true, text: bodyFromCard(raw), key: cardKeyFromRaw(raw) });
+})();`);
+  if (!raw || raw === "missing value") return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed?.ok ? parsed.text : null;
+  } catch {
+    return null;
+  }
+}
+
+function openCardPhotos(cardKey) {
+  return runChromeJs(`(() => {
+  ${findCardDomHelpersJs()}
+  const want = ${JSON.stringify(cardKey)};
+  const card = findCardEl(want);
+  if (!card) return "no-card";
+  card.scrollIntoView({ block: "center", behavior: "instant" });
+  clickSeeMore(card);
+  const controls = [...card.querySelectorAll('[role="button"], a, div[tabindex="0"]')];
+  for (const el of controls) {
+    const label = ((el.getAttribute("aria-label") || "") + " " + (el.innerText || "")).trim();
+    if (/\\d+\\s*(photos?|ảnh)/i.test(label) || /^see all photos$/i.test(label)) {
+      try { el.click(); return "opened-photos-btn"; } catch (e) {}
+    }
+  }
+  const imgs = listingImgs(card);
+  imgs.sort((a, b) => (b.naturalWidth * b.naturalHeight) - (a.naturalWidth * a.naturalHeight));
+  if (!imgs.length) return "no-photo";
+  try {
+    const wrap = imgs[0].closest('a, [role="button"], [tabindex]');
+    if (wrap) { wrap.click(); return "opened-tile-wrap"; }
+    imgs[0].click();
+    return "opened-tile";
+  } catch (e) {
+    return "click-fail";
+  }
+})();`);
+}
+
+function harvestCardAlbum() {
+  const urls = [];
+  const seen = new Set();
+  const addAll = (batch) => {
+    for (const u of batch || []) {
+      const k = imageUrlKey(u);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      urls.push(u);
+    }
+  };
+  execFileSync("sleep", ["0.7"]);
+  addAll(collectLightboxUrls());
+  if (!urls.length) return urls;
+  for (let step = 0; step < Math.min(maxImages, 16); step++) {
+    const stepped = runChromeJs(`(() => {
+  const n = document.querySelector('[role="dialog"] [aria-label="Next"], [role="dialog"] [aria-label="Next photo"]');
+  if (n) { n.click(); return "ok"; }
+  return "no";
+})();`);
+    if (stepped === "no") break;
+    execFileSync("sleep", ["0.28"]);
+    addAll(collectLightboxUrls());
+    if (urls.length >= maxImages) break;
+  }
+  escapeLightbox();
+  return urls.slice(0, maxImages);
+}
+
+/**
+ * Simple card loop:
+ *   scroll feed → for each visible contribution card → read text →
+ *   click that card's photo button → page through album → next card.
+ */
 function findAndExtract() {
   const tmp = mkdtempSync(join(tmpdir(), "fb-extract-"));
   const jsPath = join(tmp, "extract.js");
-  const extractJs = loadExtractJs();
-  writeFileSync(jsPath, extractJs, "utf8");
+  writeFileSync(jsPath, loadExtractJs(), "utf8");
 
   try {
-    // Activate matching Chrome tab once
     runOsascript(`
 set matchHint to ${asQuote(matchHint)}
 tell application "Google Chrome"
@@ -192,30 +533,30 @@ tell application "Google Chrome"
   execute t javascript "window.scrollTo(0, 0); true;"
 end tell
 `);
+    execFileSync("sleep", ["0.8"]);
+    runChromeJs(`(() => {
+  for (const el of document.querySelectorAll('[role="tab"], [role="button"], a, span')) {
+    const t = (el.innerText || "").trim();
+    if (/^(group posts|posts|bài viết)$/i.test(t)) { try { el.click(); } catch (e) {} }
+  }
+  return true;
+})();`);
     execFileSync("sleep", ["0.6"]);
 
     /** @type {any} */
-    let best = null;
+    let company = null;
+    /** @type {any[]} */
+    const posts = [];
+    const seenKeys = new Set();
+    let stagnant = 0;
+
     for (let step = 0; step <= scrollCount; step++) {
       if (step > 0) {
-        // Small steps so we don't jump past the first N listings
-        runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "window.scrollBy(0, 850); true;"
-  delay 0.35
-  execute t javascript "(() => { for (const el of document.querySelectorAll('[role=\\"button\\"], div[tabindex=\\"0\\"]')) { const t = (el.innerText || '').trim(); if (/^see more$/i.test(t) || /^xem thêm$/i.test(t)) { try { el.click(); } catch (e) {} } } return true; })();"
-end tell
-`);
-        execFileSync("sleep", ["0.45"]);
-      } else {
-        runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "(() => { for (const el of document.querySelectorAll('[role=\\"button\\"], div[tabindex=\\"0\\"]')) { const t = (el.innerText || '').trim(); if (/^see more$/i.test(t) || /^xem thêm$/i.test(t)) { try { el.click(); } catch (e) {} } } return true; })();"
-end tell
-`);
-        execFileSync("sleep", ["0.35"]);
+        const scrollHow = runChromeJs(scrollFeedJs(600));
+        execFileSync("sleep", ["0.65"]);
+        if (step === 1 || step % 4 === 0) {
+          console.log(`  scroll ${step}: ${scrollHow || "?"}`);
+        }
       }
 
       const raw = runOsascript(`
@@ -227,39 +568,91 @@ tell application "Google Chrome"
 end tell
 `);
       if (!raw || raw === "missing value") {
-        console.warn(`  extract step ${step}: empty result`);
+        console.warn(`  feed step ${step}: empty`);
+        stagnant += 1;
         continue;
       }
       let data;
       try {
         data = JSON.parse(raw);
       } catch {
-        console.warn(`  extract step ${step}: bad JSON`);
+        console.warn(`  feed step ${step}: bad JSON`);
+        stagnant += 1;
         continue;
       }
-      const n = data.posts?.length ?? 0;
-      best = data;
-      console.log(`  feed step ${step}: ${n}/${limit} posts`);
-      if (n >= limit) break;
-    }
+      if (!company && data.company) company = data.company;
 
-    if (!best) throw new Error("Chrome returned empty extract result");
-    if (logoOnly) {
-      best.posts = [];
-      return best;
-    }
-    const before = best.posts?.length ?? 0;
-    const { kept, rejected } = filterScrapedPosts(best.posts || []);
-    best.posts = kept;
-    if (rejected.length) {
+      if (logoOnly) {
+        return {
+          scrapedAt: data.scrapedAt,
+          pageUrl: data.pageUrl,
+          company,
+          posts: [],
+        };
+      }
+
+      const cards = Array.isArray(data.cards) ? data.cards : [];
+      let gained = 0;
+      for (const card of cards) {
+        if (posts.length >= limit) break;
+        if (!card?.key || seenKeys.has(card.key)) continue;
+        seenKeys.add(card.key);
+        gained += 1;
+        console.log(
+          `  card ${posts.length + 1}/${limit}: ${String(card.text || "").slice(0, 64)}`
+        );
+        // Expand "See more" then re-read — prices live below the fold.
+        const expandHow = expandCardSeeMore(card.key);
+        execFileSync("sleep", ["0.9"]);
+        const fullText = readCardText(card.key) || card.text;
+        const priceHint = parsePriceVndToUsd(fullText);
+        console.log(
+          `    text: ${fullText.length} chars after ${expandHow || "expand"}; price=${priceHint.priceDisplay || "none"}`
+        );
+        const openHow = openCardPhotos(card.key);
+        let images = [];
+        if (
+          openHow &&
+          openHow !== "no-card" &&
+          openHow !== "no-photo" &&
+          openHow !== "click-fail"
+        ) {
+          images = harvestCardAlbum();
+          console.log(`    photos: ${images.length} (${openHow})`);
+        } else {
+          console.warn(`    photos: skipped (${openHow || "miss"})`);
+          escapeLightbox();
+        }
+        posts.push({
+          text: fullText,
+          images,
+          permalink: card.permalink || null,
+          postId: card.postId || null,
+        });
+      }
+
       console.log(
-        `Filtered ${rejected.length}/${before} weak posts before lightbox:`
+        `  feed step ${step}: visible=${cards.length}, total=${posts.length}/${limit}` +
+          (gained ? ` (+${gained})` : "")
       );
-      for (const r of rejected) {
-        console.log(`  skip early (${r.reason}): ${r.preview}`);
+
+      if (posts.length >= limit) break;
+      if (gained === 0) stagnant += 1;
+      else stagnant = 0;
+      if (stagnant >= 8) {
+        console.log("  stopping: no new cards after several scrolls");
+        break;
       }
     }
-    return enrichImagesFromLightbox(best);
+
+    if (!company) throw new Error("Chrome returned empty extract result");
+    console.log(`Captured ${posts.length} listing card(s) with per-card photo harvest.`);
+    return {
+      scrapedAt: new Date().toISOString(),
+      pageUrl: company.pageUrl,
+      company,
+      posts,
+    };
   } finally {
     try {
       rmSync(tmp, { recursive: true, force: true });
@@ -269,269 +662,6 @@ end tell
   }
 }
 
-function imageUrlKey(url) {
-  if (!url) return "";
-  return url.match(/\/(\d+_\d+_\d+_n)\./)?.[1] || url.split("?")[0];
-}
-
-function enrichImagesFromLightbox(data) {
-  if (!data?.posts?.length) return data;
-  console.log("Enriching photos via Chrome lightbox…");
-  const posts = data.posts;
-  const dir = mkdtempSync(join(tmpdir(), "fb-lightbox-"));
-  /** Image keys already claimed by an earlier post — never reuse across listings. */
-  const claimedKeys = new Set();
-  try {
-    runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "window.scrollTo(0,0); true;"
-end tell
-`);
-    execFileSync("sleep", ["0.5"]);
-
-    for (let i = 0; i < posts.length; i++) {
-      const feedKeys = new Set((posts[i].images || []).map(imageUrlKey).filter(Boolean));
-      const snippet = (posts[i].text || "").replace(/\s+/g, " ").slice(0, 48);
-      const openPath = join(dir, `open-${i}.js`);
-      const collectPath = join(dir, `collect-${i}.js`);
-      writeFileSync(
-        openPath,
-        `(() => {
-  const needles = [
-    ${JSON.stringify(snippet)},
-    ${JSON.stringify(snippet.slice(0, 28))},
-    ${JSON.stringify((posts[i].text || "").match(/(?:CHO THUÊ|Cho thuê|House for rent|For rent|VIP APARTMENT|CĂN HỘ|NCC)[^.]{0,40}/i)?.[0] || "")},
-  ].filter(Boolean);
-  function tryOpen(article) {
-    // Prefer photo tiles inside this article only — never the global feed.
-    const imgs = [...article.querySelectorAll("img")].filter((img) => {
-      const s = img.currentSrc || img.src || "";
-      return /scontent|fbcdn/.test(s) && (img.naturalWidth || 0) >= 120;
-    });
-    if (imgs.length) {
-      imgs.sort((a,b)=>(b.naturalWidth*b.naturalHeight)-(a.naturalWidth*a.naturalHeight));
-      try { imgs[0].click(); return true; } catch (e) {}
-    }
-    const plus = [...article.querySelectorAll("span, div, a")].find((n) =>
-      /^\\+\\d+$/.test((n.innerText || "").trim())
-    );
-    if (plus) {
-      try { plus.click(); return true; } catch (e) {}
-    }
-    return false;
-  }
-  function articleForNode(node) {
-    let el = node.parentElement;
-    for (let d = 0; d < 25 && el; d++) {
-      if (el.getAttribute && el.getAttribute("role") === "article") return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-  for (const needle of needles) {
-    if (!needle || needle.length < 10) continue;
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    while (walker.nextNode()) {
-      const v = (walker.currentNode.nodeValue || "").replace(/\\s+/g, " ");
-      if (!v.includes(needle.slice(0, Math.min(18, needle.length)))) continue;
-      const article = articleForNode(walker.currentNode);
-      if (article && tryOpen(article)) return "opened:" + needle.slice(0, 24);
-      // Last resort: walk up from the text node, still not global nth-image.
-      let el = walker.currentNode.parentElement;
-      for (let d = 0; d < 16 && el; d++) {
-        if (tryOpen(el)) return "opened-ancestor:" + needle.slice(0, 20);
-        el = el.parentElement;
-      }
-    }
-  }
-  // Do NOT fall back to "Nth large image on page" — that reopens the same album
-  // for every post and contaminates listings with identical photos.
-  return "miss";
-})();`,
-        "utf8"
-      );
-      writeFileSync(
-        collectPath,
-        `(() => {
-  function upgrade(url) {
-    return (url || "").replace(/ctp=p\\d+x\\d+/g, "ctp=s2048x2048").replace(/&amp;/g, "&");
-  }
-  function key(src) {
-    const m = src.match(/\\/(\\d+_\\d+_\\d+_n)\\./);
-    return m ? m[1] : src.split("?")[0];
-  }
-  // ONLY the open photo dialog — never document.body (that pulls every post's imgs).
-  const dialog =
-    document.querySelector('[role="dialog"]') ||
-    document.querySelector('[aria-label*="Photo viewer"]') ||
-    document.querySelector('[aria-label*="Photo"]');
-  if (!dialog) return JSON.stringify({ ok: false, reason: "no-dialog", urls: [] });
-  const urls = [];
-  const seen = new Set();
-  function add(src) {
-    src = upgrade(src);
-    if (!src || !/scontent|fbcdn/.test(src)) return;
-    if (/s24x24|s32x32|s40x40|s48x48|s50x50|s60x60|s200x200|p160x160|static\\.xx\\.fbcdn|ctp=p\\d+x\\d+|s80x80|s64x64/.test(src)) return;
-    const k = key(src);
-    if (seen.has(k)) return;
-    seen.add(k);
-    urls.push(src);
-  }
-  for (const img of dialog.querySelectorAll("img")) {
-    add(img.currentSrc || img.src || "");
-    const srcset = img.getAttribute("srcset") || "";
-    for (const part of srcset.split(",")) {
-      const u = part.trim().split(/\\s+/)[0];
-      if (u) add(u);
-    }
-  }
-  const html = dialog.innerHTML || "";
-  const re = /https:\\/\\/[^"'\\\\\\s<>]+(?:scontent|fbcdn\\.net)[^"'\\\\\\s<>]*/g;
-  let m;
-  while ((m = re.exec(html)) !== null) add(m[0]);
-  return JSON.stringify({ ok: true, urls: urls.slice(0, ${maxImages}) });
-})();`,
-        "utf8"
-      );
-
-      try {
-        const openResult = runOsascript(`
-set jsPath to ${asQuote(openPath)}
-set jsCode to read POSIX file jsPath as «class utf8»
-tell application "Google Chrome"
-  set t to active tab of front window
-  return execute t javascript jsCode
-end tell
-`);
-        if (!openResult || openResult === "miss") {
-          console.warn(
-            `  lightbox post ${i + 1}: could not open album — keeping feed images only`
-          );
-          for (const k of feedKeys) claimedKeys.add(k);
-          continue;
-        }
-        execFileSync("sleep", ["1.0"]);
-        const allExtra = [];
-        const seenExtra = new Set();
-        const harvest = () => {
-          const collectedRaw = runOsascript(`
-set jsPath to ${asQuote(collectPath)}
-set jsCode to read POSIX file jsPath as «class utf8»
-tell application "Google Chrome"
-  set t to active tab of front window
-  return execute t javascript jsCode
-end tell
-`);
-          if (!collectedRaw || collectedRaw === "missing value") return false;
-          try {
-            const parsed = JSON.parse(collectedRaw);
-            const batch = Array.isArray(parsed) ? parsed : parsed?.urls;
-            if (!Array.isArray(batch) || (parsed?.ok === false && !batch.length)) {
-              return false;
-            }
-            for (const u of batch) {
-              const k = imageUrlKey(u);
-              if (!k || seenExtra.has(k)) continue;
-              seenExtra.add(k);
-              allExtra.push(u);
-            }
-            return true;
-          } catch {
-            return false;
-          }
-        };
-        const firstOk = harvest();
-        if (!firstOk) {
-          console.warn(
-            `  lightbox post ${i + 1}: no dialog after open (${openResult}) — keeping feed images`
-          );
-          runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;"
-end tell
-`);
-          for (const k of feedKeys) claimedKeys.add(k);
-          execFileSync("sleep", ["0.35"]);
-          continue;
-        }
-        for (let step = 0; step < Math.min(18, maxImages); step++) {
-          const stepped = runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  return execute t javascript "(() => { const n = document.querySelector('[role=\\"dialog\\"] [aria-label=\\"Next\\"], [role=\\"dialog\\"] [aria-label=\\"Next photo\\"]'); if (n) { n.click(); return 'ok'; } return 'no'; })();"
-end tell
-`);
-          if (stepped === "no") break;
-          execFileSync("sleep", ["0.35"]);
-          harvest();
-          if (allExtra.length >= maxImages) break;
-        }
-        runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;"
-end tell
-`);
-        execFileSync("sleep", ["0.35"]);
-
-        // Drop photos already used by an earlier listing in this scrape.
-        const freshExtra = allExtra.filter((u) => !claimedKeys.has(imageUrlKey(u)));
-        const overlap =
-          allExtra.length === 0
-            ? 0
-            : (allExtra.length - freshExtra.length) / allExtra.length;
-        if (allExtra.length >= 3 && overlap >= 0.5) {
-          console.warn(
-            `  lightbox post ${i + 1}: ${Math.round(overlap * 100)}% overlap with earlier posts — keeping feed images only (${openResult})`
-          );
-          for (const k of feedKeys) claimedKeys.add(k);
-        } else {
-          const merged = [];
-          const seen = new Set();
-          for (const u of [...(posts[i].images || []), ...freshExtra]) {
-            const k = imageUrlKey(u);
-            if (!k || seen.has(k) || claimedKeys.has(k)) continue;
-            seen.add(k);
-            merged.push(u);
-            if (merged.length >= maxImages) break;
-          }
-          for (const u of merged) claimedKeys.add(imageUrlKey(u));
-          posts[i].images = merged;
-          console.log(
-            `  lightbox post ${i + 1}: ${merged.length} images (${openResult}${overlap > 0 ? `, filtered ${Math.round(overlap * 100)}% reused` : ""})`
-          );
-        }
-
-        runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true})); true;"
-end tell
-`);
-        execFileSync("sleep", ["0.45"]);
-        runOsascript(`
-tell application "Google Chrome"
-  set t to active tab of front window
-  execute t javascript "window.scrollBy(0, 700); true;"
-end tell
-`);
-        execFileSync("sleep", ["0.35"]);
-      } catch (e) {
-        console.warn(`  lightbox post ${i + 1} skipped:`, (e.message || String(e)).slice(0, 120));
-        for (const k of feedKeys) claimedKeys.add(k);
-      }
-    }
-  } finally {
-    try {
-      rmSync(dir, { recursive: true, force: true });
-    } catch {
-      /* ignore */
-    }
-  }
-  return data;
-}
 
 function extractTitle(content) {
   if (!content || typeof content !== "string") return "Imported listing";
@@ -562,16 +692,25 @@ function parsePriceVndToUsd(content) {
   if (!content) return { priceUsd: 0, priceDisplay: "" };
   const normalized = content.replace(/,/g, "").toLowerCase();
   let vnd = 0;
+  // "8.2 triệu", "8tr", "8 million"
   const millionMatch = normalized.match(
-    /(\d+(?:\.\d+)?)\s*(?:million|tr(?:iệu)?|m)(?:\s*\/?\s*month)?/i
+    /(\d+(?:\.\d+)?)\s*(?:million|triệu|tr)\b(?:\s*\/?\s*month)?/i
   );
   if (millionMatch) {
     vnd = parseFloat(millionMatch[1]) * 1_000_000;
   } else {
-    const usdMatch = normalized.match(/\$\s*(\d[\d,]*(?:\.\d+)?)/);
-    if (usdMatch) {
-      const usd = Math.round(parseFloat(usdMatch[1].replace(/,/g, "")));
-      return { priceUsd: usd, priceDisplay: `~$${usd}/month` };
+    // "8200000 VND/month", "8 200 000đ"
+    const vndMatch = normalized.match(
+      /(\d{6,10})\s*(?:vnd|vnđ|đ|d)\b(?:\s*\/?\s*month)?/i
+    );
+    if (vndMatch) {
+      vnd = parseInt(vndMatch[1], 10);
+    } else {
+      const usdMatch = normalized.match(/\$\s*(\d[\d.]*)/);
+      if (usdMatch) {
+        const usd = Math.round(parseFloat(usdMatch[1]));
+        return { priceUsd: usd, priceDisplay: `~$${usd}/month` };
+      }
     }
   }
   const priceUsd = vnd > 0 ? Math.round(vnd / vndToUsd) : 0;
@@ -615,6 +754,7 @@ REQUIRED JSON SHAPE:
   "features": ["<string>", ...],
   "available_from": "<YYYY-MM-DD or null>",
   "min_lease_months": <number or null>,
+  "property_type": "<apartment|house|villa|serviced>",
   "contact_phone": "<string or null>",
   "contact_whatsapp": "<string or null>",
   "contact_email": "<string or null>"
@@ -627,11 +767,12 @@ If the post mentions a ward/area not listed, choose the closest match or use "ot
 FIELD RULES:
 - title: Short, clear English for expats. E.g. "3BR furnished house near Dragon Bridge" or "Studio near My Khe beach". Max 120 characters. Do not paste raw Vietnamese marketing headers like "NCC - CHO THUÊ…" — translate/summarize.
 - description: Clear English summary for expats. Keep location, price, rooms, and key amenities. Do NOT include phone numbers, emails, Zalo, WhatsApp, or other contact details — those belong in contact_* fields only. You may keep original Vietnamese phrases in parentheses when helpful.
-- price: Monthly rent in USD. Convert from VND using ${vndToUsd} VND = 1 USD. Integer. Use 0 only if no price given.
-- price_display: e.g. "~$1000/month" or "Price on request".
+- price: Monthly rent in USD. Convert from VND using ${vndToUsd} VND = 1 USD. Integer. Use 0 only if no price given. Prices often appear as "8,200,000 VND/month", "8.2 triệu", or "8tr/tháng" after the post is expanded — always extract them when present.
+- price_display: e.g. "~$328/month". Only use "Price on request" when the post truly has no rent amount.
 - bedrooms, bathrooms: Integers; bathrooms null if unknown.
 - features: lowercase short phrases: furnished, balcony, parking, near beach, wifi, air conditioning, etc.
 - available_from / min_lease_months: only when stated; else null.
+- property_type: one of apartment, house, villa, serviced. Use villa for villas/biệt thự; house for houses/townhouses/nhà; serviced for serviced apartments; apartment for condo/studio/căn hộ/flat. Default apartment when unclear.
 - contact_phone / contact_whatsapp / contact_email: extract seller contact from the post when present (phone, Zalo, WhatsApp, email). Normalize phones to digits with optional leading +. Use null when absent. Do not invent contacts.`;
 }
 
@@ -763,6 +904,7 @@ async function extractWithLLM(content, areas) {
           parsed.min_lease_months != null && parsed.min_lease_months !== ""
             ? Math.max(0, Number(parsed.min_lease_months))
             : null,
+        property_type: parsePropertyType(parsed.property_type),
         contact_phone: normalizeContactPhone(parsed.contact_phone),
         contact_whatsapp: normalizeContactPhone(parsed.contact_whatsapp),
         contact_email: normalizeContactEmail(parsed.contact_email),
@@ -880,7 +1022,8 @@ async function seed(data) {
 
   const companyPayload = {
     facebook_id: String(facebookId),
-    name: String(company.name || `FB Partner – ${facebookId}`).slice(0, 500),
+    name: cleanPartnerName(company.name || `FB Partner – ${facebookId}`).slice(0, 500) ||
+      `FB Partner – ${facebookId}`,
     page_url: company.pageUrl || null,
     updated_at: new Date().toISOString(),
   };
@@ -962,6 +1105,60 @@ async function seed(data) {
       existing = byPostId;
     }
     if (existing) {
+      // Backfill photos when we previously saved a text-only draft.
+      const imageUrls = Array.isArray(post.images) ? post.images.slice(0, maxImages) : [];
+      if (imageUrls.length) {
+        const { data: aptRow } = await supabase
+          .from("apartments")
+          .select("id, images, main_image")
+          .eq("id", existing.id)
+          .maybeSingle();
+        const have = Array.isArray(aptRow?.images) ? aptRow.images.length : 0;
+        if (have < 2) {
+          const hash = postHash(post);
+          const stored = [];
+          for (let i = 0; i < imageUrls.length; i++) {
+            try {
+              const buf = await downloadImage(imageUrls[i]);
+              const contentHash = createHash("sha1").update(buf).digest("hex");
+              if (usedImageContentHashes.has(contentHash)) continue;
+              const storagePath = `${facebookId}/${hash}/bf-${i}.jpg`;
+              const up = await supabase.storage
+                .from("apartments")
+                .upload(storagePath, buf, {
+                  contentType: "image/jpeg",
+                  upsert: true,
+                });
+              if (up.error) throw up.error;
+              usedImageContentHashes.add(contentHash);
+              stored.push(
+                supabase.storage.from("apartments").getPublicUrl(storagePath)
+                  .data.publicUrl
+              );
+            } catch (e) {
+              console.warn(`  backfill image fail ${i}:`, e.message || e);
+            }
+          }
+          if (stored.length) {
+            const { error: imgErr } = await supabase
+              .from("apartments")
+              .update({
+                images: stored,
+                main_image: stored[0],
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", existing.id);
+            if (imgErr) {
+              console.warn("  image backfill failed:", imgErr.message);
+            } else {
+              console.log(
+                `  backfilled ${stored.length} photos:`,
+                extractTitle(content).slice(0, 50)
+              );
+            }
+          }
+        }
+      }
       skipped += 1;
       console.log("  skip duplicate:", extractTitle(content).slice(0, 60));
       // Still mine contact from skipped posts so company profile can fill in.
@@ -1060,6 +1257,9 @@ async function seed(data) {
       features: extracted?.features ?? [],
       available_from: extracted?.available_from ?? null,
       min_lease_months: extracted?.min_lease_months ?? null,
+      property_type:
+        extracted?.property_type ||
+        inferPropertyType(title, extracted?.description ?? content),
       sort_order: 0,
       status,
       last_validity_check: new Date().toISOString(),

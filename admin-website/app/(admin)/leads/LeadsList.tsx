@@ -61,7 +61,7 @@ export function LeadsList({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="font-display text-lg font-semibold text-charcoal">
-                  {lead.whatsapp}
+                  {lead.email || lead.whatsapp || "Lead"}
                 </h2>
                 <time className="mt-0.5 block text-sm text-muted" dateTime={lead.created_at}>
                   {formatWhen(lead.created_at)}
@@ -81,6 +81,12 @@ export function LeadsList({
                   Email
                 </dt>
                 <dd className="mt-0.5 text-charcoal">{dash(lead.email)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  WhatsApp
+                </dt>
+                <dd className="mt-0.5 text-charcoal">{dash(lead.whatsapp)}</dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-muted">

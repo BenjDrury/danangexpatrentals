@@ -7,7 +7,7 @@ export type Lead = {
   move_date: string | null;
   length_of_stay: string | null;
   preferred_area: string | null;
-  whatsapp: string;
+  whatsapp: string | null;
   email: string | null;
   apartment_id: string | null;
   area_id: string | null;
@@ -22,7 +22,7 @@ function mapLead(row: Record<string, unknown>): Lead {
     move_date: (row.move_date as string | null) ?? null,
     length_of_stay: (row.length_of_stay as string | null) ?? null,
     preferred_area: (row.preferred_area as string | null) ?? null,
-    whatsapp: String(row.whatsapp ?? ""),
+    whatsapp: (row.whatsapp as string | null) ?? null,
     email: (row.email as string | null) ?? null,
     apartment_id: (row.apartment_id as string | null) ?? null,
     area_id: (row.area_id as string | null) ?? null,

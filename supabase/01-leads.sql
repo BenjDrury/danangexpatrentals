@@ -8,7 +8,7 @@ create table if not exists public.leads (
   move_date text,
   length_of_stay text,
   preferred_area text,
-  whatsapp text not null,
+  whatsapp text,
   email text,
   source text not null default 'website'
 );

@@ -33,7 +33,8 @@ export function ConciergeForm({
           length_of_stay: String(formData.get("length_of_stay") || "") || null,
           preferred_area: String(formData.get("preferred_area") || "") || null,
           has_move_date: !!formData.get("move_date"),
-          has_email: !!formData.get("email"),
+          has_email: true,
+          has_whatsapp: !!String(formData.get("whatsapp") || "").trim(),
           has_apartment_id: !!formData.get("apartment_id"),
           has_area_id: !!formData.get("area_id"),
           source: initialApartmentId ? "concierge_form_listing" : "concierge_form",
@@ -57,8 +58,8 @@ export function ConciergeForm({
         </p>
         <p className="mt-2 text-muted">
           {listingTitle
-            ? "Watch for a WhatsApp message about this apartment."
-            : "Watch for a WhatsApp message from us."}
+            ? "Watch for an email about this apartment."
+            : "Watch for an email from us."}
         </p>
       </div>
     );
@@ -145,28 +146,30 @@ export function ConciergeForm({
         <input type="hidden" name="apartment_id" value={initialApartmentId} />
       )}
       <div>
-        <label htmlFor="whatsapp" className="mb-1.5 block text-sm font-medium text-charcoal">
-          WhatsApp number <span className="text-ocean">*</span>
-        </label>
-        <input
-          type="text"
-          id="whatsapp"
-          name="whatsapp"
-          required
-          placeholder="e.g. +84 912 345 678"
-          className={inputClass}
-        />
-      </div>
-      <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-charcoal">
-          Email <span className="text-muted">(optional)</span>
+          Email <span className="text-ocean">*</span>
         </label>
         <input
           type="email"
           id="email"
           name="email"
+          required
           placeholder="you@example.com"
           className={inputClass}
+          autoComplete="email"
+        />
+      </div>
+      <div>
+        <label htmlFor="whatsapp" className="mb-1.5 block text-sm font-medium text-charcoal">
+          WhatsApp number <span className="text-muted">(optional)</span>
+        </label>
+        <input
+          type="text"
+          id="whatsapp"
+          name="whatsapp"
+          placeholder="e.g. +84 912 345 678"
+          className={inputClass}
+          autoComplete="tel"
         />
       </div>
       <button

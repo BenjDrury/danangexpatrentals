@@ -32,6 +32,9 @@ const require = createRequire(import.meta.url);
 const { sanitizeListingDescription } = require(
   "../../types/dist/lib/sanitize-listing-description.js"
 );
+const { inferPropertyType, parsePropertyType } = require(
+  "../../types/dist/lib/listing-terms.js"
+);
 const scriptsDir = join(__dirname, "..");
 config({ path: join(scriptsDir, ".env") });
 config({ path: join(scriptsDir, ".secret.local") });
@@ -57,7 +60,7 @@ if (!url || !key) {
 }
 
 /** @typedef {{ id: string, name: string, vibe?: string }} AreaRow */
-/** @typedef {{ area_id: string, title: string, description: string | null, price: number, price_display: string, bedrooms: number, bathrooms: number | null, size_sqm: number | null, features: string[], available_from: string | null, min_lease_months: number | null }} ExtractedApartment */
+/** @typedef {{ area_id: string, title: string, description: string | null, price: number, price_display: string, bedrooms: number, bathrooms: number | null, size_sqm: number | null, features: string[], available_from: string | null, min_lease_months: number | null, property_type: string | null }} ExtractedApartment */
 
 /**
  * Extract title from content (first line or first sentence, cleaned).
@@ -136,7 +139,8 @@ REQUIRED JSON SHAPE (use these keys exactly; use null for optional fields when n
   "size_sqm": <number or null>,
   "features": ["<string>", ...],
   "available_from": "<YYYY-MM-DD or null>",
-  "min_lease_months": <number or null>
+  "min_lease_months": <number or null>,
+  "property_type": "<apartment|house|villa|serviced>"
 }
 
 AREAS (area_id must be exactly one of these ids):
@@ -154,6 +158,7 @@ FIELD RULES:
 - features: Array of lowercase short phrases expats care about: e.g. "furnished", "balcony", "washing machine", "near beach", "wifi", "air conditioning", "parking", "gym", "pool". Empty array [] if none.
 - available_from: "YYYY-MM-DD" only if a specific date is given; otherwise null.
 - min_lease_months: Integer (e.g. 6 for "6 month minimum") or null.
+- property_type: one of apartment, house, villa, serviced. Use villa for villas; house for houses/townhouses; serviced for serviced apartments; apartment for condo/studio/flat. Default apartment when unclear.
 
 Again: respond with nothing but a single valid JSON object. No markdown, no backticks, no extra text.`;
 }
@@ -227,6 +232,7 @@ async function extractWithLLM(content, areas) {
         parsed.min_lease_months != null && parsed.min_lease_months !== ""
           ? Math.max(0, Number(parsed.min_lease_months))
           : null,
+      property_type: parsePropertyType(parsed.property_type),
     };
   } catch (e) {
     console.warn("LLM extraction failed:", e.message);
@@ -300,6 +306,9 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
       features: extracted.features || [],
       available_from: extracted.available_from,
       min_lease_months: extracted.min_lease_months,
+      property_type:
+        extracted.property_type ||
+        inferPropertyType(extracted.title, extracted.description),
       sort_order: 0,
     };
   }
@@ -327,6 +336,7 @@ function toApartmentRow(post, estateCompanyId, areaId, extracted) {
     features: [],
     available_from: null,
     min_lease_months: null,
+    property_type: inferPropertyType(title, description),
     sort_order: 0,
   };
 }

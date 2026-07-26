@@ -79,7 +79,7 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium text-charcoal">Match / concierge form:</span>{" "}
-            WhatsApp number (required), email (optional), budget range, move date,
+            Email (required), WhatsApp number (optional), budget range, move date,
             length of stay, preferred area, and related notes; plus any apartment
             or area IDs you came from.
           </li>

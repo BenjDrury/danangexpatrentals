@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import posthog from "posthog-js";
 
 function safeNext(next: string | null): string {
   if (!next) return "/";
@@ -30,7 +31,7 @@ function LoginForm() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -39,6 +40,10 @@ function LoginForm() {
     if (signInError) {
       setError(signInError.message);
       return;
+    }
+
+    if (signInData.user) {
+      posthog.identify(signInData.user.id, { email: signInData.user.email });
     }
 
     router.push(nextPath);

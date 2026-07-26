@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
+import posthog from "posthog-js";
 
 type SignOutButtonProps = {
   className?: string;
@@ -16,6 +17,7 @@ export function SignOutButton({
 
   async function signOut() {
     const supabase = createClient();
+    posthog.reset();
     await supabase.auth.signOut();
     router.push("/login");
     router.refresh();

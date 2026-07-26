@@ -138,6 +138,7 @@ export function InviteAcceptView({
         setError(result.error);
         return;
       }
+      posthog.capture("team_invite_accepted", { method: "existing_account" });
       setDone(true);
       router.refresh();
     });

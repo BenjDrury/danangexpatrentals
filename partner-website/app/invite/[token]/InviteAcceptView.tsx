@@ -8,6 +8,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import type { PartnerInviteStatus } from "types";
 import { acceptInviteAction, createAccountFromInviteAction } from "./actions";
+import posthog from "posthog-js";
 
 export function InviteAcceptView({
   token,
@@ -114,6 +115,7 @@ export function InviteAcceptView({
         setError(result.error);
         return;
       }
+      posthog.capture("team_invite_accepted", { method: "existing_account" });
       setDone(true);
     });
   }
@@ -164,6 +166,7 @@ export function InviteAcceptView({
         setError(signInError.message);
         return;
       }
+      posthog.capture("team_invite_accepted", { method: "new_account" });
       setDone(true);
       router.refresh();
     });

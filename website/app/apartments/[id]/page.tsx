@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { listingPriceLabel } from "types";
 import { TrackListingView } from "@/app/components/TrackListingView";
+import { ApartmentInquiryLink } from "@/app/components/area/ApartmentInquiryLink";
 import { CONTENT_CONTAINER, SECTION_PADDING } from "../../lib/constants";
 import { getApartmentById, getAreaById } from "@/lib/data";
 
@@ -152,12 +153,12 @@ export default async function ApartmentPage({ params }: Props) {
               </div>
             )}
 
-            <Link
+            <ApartmentInquiryLink
               href="/contact"
+              apartmentId={apartment.id}
+              areaId={area?.id}
               className="mt-8 inline-flex w-full justify-center rounded-quieter bg-ocean px-6 py-4 text-base font-semibold text-white transition hover:bg-ocean-deep"
-            >
-              Inquire about this apartment
-            </Link>
+            />
           </div>
         </div>
         </div>

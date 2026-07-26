@@ -434,7 +434,10 @@ export function SettingsView({
                       setMessage(
                         result.error ?? t("settings.fb.flash.disconnected"),
                       );
-                      if (!result.error) router.refresh();
+                      if (!result.error) {
+                        posthog.capture("facebook_integration_disconnected");
+                        router.refresh();
+                      }
                     });
                   }}
                   className="rounded-quieter border border-line bg-white px-4 py-2.5 text-sm font-medium text-charcoal transition hover:border-coral/40 hover:text-coral disabled:opacity-50"

@@ -32,10 +32,15 @@ export function areaDisplayName(area: {
   name: string;
   canonical_area_name?: string | null;
 }): string {
-  const canonical = area.canonical_area_name?.trim();
-  if (canonical) return canonical;
+  const raw = area.canonical_area_name?.trim() || area.name.trim();
+  return humanizeAreaLabel(raw);
+}
 
-  const name = area.name.trim();
+/** Strip zone-code prefixes and normalize "X (Y)" → "X & Y". */
+export function humanizeAreaLabel(raw: string): string {
+  const name = raw.trim();
+  if (!name) return name;
+
   const slash = name.indexOf("/");
   if (slash >= 0) {
     const after = name.slice(slash + 1).trim();
@@ -43,7 +48,22 @@ export function areaDisplayName(area: {
     if (paren) return `${paren[1].trim()} & ${paren[2].trim()}`;
     if (after) return after;
   }
+
+  const parenOnly = name.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (parenOnly && /^(beach|airport|south|north|cbd|lien|cam|hoa)/i.test(parenOnly[1])) {
+    return `${parenOnly[1].trim()} & ${parenOnly[2].trim()}`;
+  }
+
   return name;
+}
+
+/** True when the URL segment is already the canonical public slug (or sole id fallback). */
+export function isAreaCanonicalParam(
+  slugOrId: string,
+  area: AreaPathFields
+): boolean {
+  const canonical = areaPath(area).replace(/^\/areas\//, "");
+  return slugOrId === canonical;
 }
 
 /** Canonical public path for an area (`/areas/{slug}`). */

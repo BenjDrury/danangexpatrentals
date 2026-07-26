@@ -12,7 +12,6 @@ import {
   areaDisplayName,
   areaPath,
   formatAreaPriceDisplay,
-  slugify,
 } from "@/lib/area-utils";
 import {
   breadcrumbJsonLd,
@@ -64,9 +63,9 @@ export default async function AreaPage({ params }: Props) {
 
   if (!area) notFound();
 
-  const canonicalSlug = slugify(area.name) || area.id;
+  const canonicalSlug = areaPath(area).replace(/^\/areas\//, "");
   if (slugOrId !== canonicalSlug) {
-    permanentRedirect(areaPath(area));
+    permanentRedirect(`/areas/${canonicalSlug}`);
   }
 
   const apartments = await getApartments({ area_id: area.id });

@@ -23,9 +23,14 @@ export default async function AdminApartmentTypesPage() {
               className="flex flex-wrap items-center justify-between gap-3 py-4"
             >
               <div className="min-w-0">
-                <span className="font-display text-lg font-semibold text-charcoal">
-                  {t.title}
-                </span>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                  <span className="font-display text-lg font-semibold text-charcoal">
+                    {t.title}
+                  </span>
+                  <span className="text-xs font-medium text-muted">
+                    Sort {t.sort_order}
+                  </span>
+                </div>
                 <p className="mt-0.5 text-sm text-muted line-clamp-1">{t.desc}</p>
               </div>
               <Link

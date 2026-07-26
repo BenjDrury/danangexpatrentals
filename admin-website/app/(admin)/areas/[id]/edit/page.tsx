@@ -19,9 +19,20 @@ export default async function EditAreaPage({ params }: Props) {
         ← Areas
       </Link>
       <h1 className="mt-4 page-title">Edit area: {area.name}</h1>
-      <p className="mt-1 text-muted">ID: {area.id}</p>
+      <p className="mt-1 text-sm text-muted" title={area.id}>
+        Neighbourhood guide content & hero images
+      </p>
 
-      <AreaEditForm area={area} />
+      <AreaEditForm
+        area={{
+          id: area.id,
+          name: area.name,
+          images: Array.isArray(area.images) ? (area.images as string[]) : [],
+          vibe: area.vibe ?? "",
+          price_range: area.price_range ?? "",
+          who: area.who ?? "",
+        }}
+      />
     </div>
   );
 }
